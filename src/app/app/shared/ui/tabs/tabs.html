@@ -1,0 +1,12 @@
+<div class="ui-tabs" role="tablist" aria-label="Survey status tabs">
+    @for (tab of tabs(); track tab.id) {
+    <button class="ui-tab" [class.ui-tab--active]="isActive(tab.id)" role="tab" [attr.aria-selected]="isActive(tab.id)"
+        [attr.aria-controls]="tab.id + '-panel'" [id]="tab.id + '-tab'" [tabIndex]="isActive(tab.id) ? 0 : -1"
+        type="button" (click)="selectTab(tab.id)">
+        <span class="ui-tab__label">{{ tab.label }}</span>
+        @if (tab.badge !== undefined) {
+        <span class="ui-tab__badge">{{ tab.badge }}</span>
+        }
+    </button>
+    }
+</div>

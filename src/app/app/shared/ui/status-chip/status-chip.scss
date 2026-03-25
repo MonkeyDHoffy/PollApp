@@ -1,0 +1,19 @@
+.status-chip {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-height: 32px;
+	padding: 7px 12px;
+	border-radius: 0;
+	border-top-right-radius: 14px;
+	font-family: var(--font-ui-bold);
+	font-size: 1rem;
+	line-height: 1;
+	color: #2b1a16;
+	background: #f8b871;
+}
+
+.status-chip--draft {
+	background: #e5d9cb;
+	color: #362925;
+}

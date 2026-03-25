@@ -1,0 +1,86 @@
+<main class="landing">
+  <section class="landing__empty"></section>
+
+  @if (previewOpen()) {
+  <section class="preview-panel" aria-label="Component preview panel">
+    <p class="preview-panel__title">Buttons & Status</p>
+
+    <div class="preview-grid preview-grid--three">
+      <div class="preview-panel__frame">
+        <p class="preview-panel__group-title">Secondary button</p>
+        <div class="preview-panel__row">
+          <p class="preview-panel__name">Button / Secondary / Muted</p>
+          <app-button label="Add option" variant="secondary" secondaryStyle="muted" />
+        </div>
+        <div class="preview-panel__row">
+          <p class="preview-panel__name">Button / Secondary / Base</p>
+          <app-button label="Add option" variant="secondary" secondaryStyle="base" />
+        </div>
+      </div>
+
+      <div class="preview-panel__frame">
+        <p class="preview-panel__group-title">Filter button</p>
+        <div class="preview-panel__row">
+          <p class="preview-panel__name">Button / Filter / Base</p>
+          <app-button label="Past survey" variant="filter" filterStyle="base" />
+        </div>
+        <div class="preview-panel__row">
+          <p class="preview-panel__name">Button / Filter / Base 2</p>
+          <app-button label="Past survey" variant="filter" filterStyle="base" />
+        </div>
+        <div class="preview-panel__row">
+          <p class="preview-panel__name">Button / Filter / Active</p>
+          <app-button label="Past survey" variant="filter" filterStyle="active" />
+        </div>
+      </div>
+
+      <div class="preview-panel__frame">
+        <p class="preview-panel__group-title">Survey status</p>
+        <div class="preview-panel__row">
+          <p class="preview-panel__name">Status / Published</p>
+          <app-status-chip label="Published" status="published" />
+        </div>
+        <div class="preview-panel__row">
+          <p class="preview-panel__name">Status / Draft</p>
+          <app-status-chip label="Draft" status="draft" />
+        </div>
+      </div>
+    </div>
+
+    <div class="preview-panel__frame preview-panel__frame--wide">
+      <p class="preview-panel__group-title">Tertiary Button</p>
+      <div class="preview-panel__row">
+        <p class="preview-panel__name">Button / Tertiary / Base</p>
+        <app-button label="Add answer" variant="tertiary" tertiaryStyle="base" />
+      </div>
+      <div class="preview-panel__row">
+        <p class="preview-panel__name">Button / Tertiary / Muted</p>
+        <app-button label="Add answer" variant="tertiary" tertiaryStyle="muted" />
+      </div>
+    </div>
+
+    <div class="preview-panel__frame">
+      <p class="preview-panel__group-title">Primary button</p>
+      <div class="preview-panel__row">
+        <p class="preview-panel__name">Button / Primary / Base</p>
+        <app-button label="New survey" variant="primary" primaryStyle="base" />
+      </div>
+      <div class="preview-panel__row">
+        <p class="preview-panel__name">Button / Primary / Add</p>
+        <app-button label="New survey" variant="primary" primaryStyle="add" />
+      </div>
+      <div class="preview-panel__row">
+        <p class="preview-panel__name">Button / Primary / Confirm</p>
+        <app-button label="New survey" variant="primary" primaryStyle="confirm" />
+      </div>
+    </div>
+  </section>
+  }
+</main>
+
+<footer class="app-footer">
+  <a class="app-footer__link" href="https://www.hoffja.de" target="_blank" rel="noopener noreferrer">www.hoffja.de</a>
+  <button class="app-footer__toggle" type="button" (click)="togglePreview()">
+    {{ previewOpen() ? 'Hide component preview' : 'Open component preview' }}
+  </button>
+</footer>

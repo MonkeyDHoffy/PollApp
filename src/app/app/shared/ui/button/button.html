@@ -1,0 +1,37 @@
+<button class="ui-button" [class.ui-button--primary]="variant() === 'primary'"
+    [class.ui-button--secondary]="variant() === 'secondary'" [class.ui-button--filter]="variant() === 'filter'"
+    [class.ui-button--tertiary]="variant() === 'tertiary'" [class.ui-button--ghost]="variant() === 'ghost'"
+    [class.ui-button--primary-base]="variant() === 'primary' && primaryStyle() === 'base'"
+    [class.ui-button--primary-add]="isAddStyle()" [class.ui-button--primary-confirm]="isConfirmStyle()"
+    [class.ui-button--secondary-muted]="isSecondaryMuted()" [class.ui-button--filter-active]="isFilterActive()"
+    [class.ui-button--tertiary-muted]="isTertiaryMuted()" [class.ui-button--sm]="size() === 'sm'"
+    [class.ui-button--md]="size() === 'md'" [class.ui-button--lg]="size() === 'lg'"
+    [class.ui-button--icon-inline]="variant() === 'tertiary'" [class.ui-button--with-icon]="hasIcon()"
+    [disabled]="disabled()" [type]="type()" (click)="onClick()">
+    @if (variant() === 'tertiary') {
+    <span class="ui-button__content ui-button__content--tertiary">
+        <span class="ui-button__label">{{ label() }}</span>
+        <span aria-hidden="true" class="ui-button__icon ui-button__icon--png">
+            <img class="ui-button__icon-png" src="/assets/add_circle.png" alt="" />
+        </span>
+    </span>
+    } @else {
+    <span class="ui-button__label">{{ label() }}</span>
+    @if (isAddIcon()) {
+    <span aria-hidden="true" class="ui-button__icon">
+        <svg class="ui-button__icon-svg" viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+            <circle cx="12" cy="12" r="9" />
+            <path d="M12 8v8M8 12h8" />
+        </svg>
+    </span>
+    }
+    }
+    @if (isCheckIcon()) {
+    <span aria-hidden="true" class="ui-button__icon">
+        <svg class="ui-button__icon-svg ui-button__icon-svg--check" viewBox="0 0 24 24" focusable="false"
+            aria-hidden="true">
+            <path d="M6.5 12.5l3.6 3.6L17.5 8.7" />
+        </svg>
+    </span>
+    }
+</button>

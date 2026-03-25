@@ -1,0 +1,146 @@
+.landing {
+	min-height: calc(100dvh - 64px);
+	padding: 24px;
+	display: grid;
+	align-content: start;
+	gap: 16px;
+}
+
+.landing__empty {
+	min-height: 62dvh;
+}
+
+.preview-panel {
+	justify-self: center;
+	width: min(980px, 100%);
+	background: rgba(255, 255, 255, 0.82);
+	border: 1px solid var(--color-border);
+	border-radius: 16px;
+	padding: 16px;
+	backdrop-filter: blur(4px);
+	display: grid;
+	gap: 14px;
+}
+
+.preview-panel__title {
+	margin: 0 0 12px;
+	font-family: var(--font-ui-bold);
+	font-size: 1.3rem;
+	color: #2d2739;
+}
+
+.preview-panel__frame {
+	border: 2px dashed #a763ff;
+	border-radius: 10px;
+	padding: 16px;
+	display: grid;
+	gap: 16px;
+	background: #e9e7e8;
+}
+
+.preview-panel__frame--wide {
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	align-items: center;
+	background: #2f1d43;
+	border: 0;
+	border-radius: 8px;
+}
+
+.preview-panel__frame--wide .preview-panel__group-title {
+	color: #f8f2ff;
+}
+
+.preview-panel__frame--wide .preview-panel__name {
+	color: #d8cde5;
+}
+
+.preview-panel__group-title {
+	margin: 0;
+	font-family: var(--font-ui-bold);
+	font-size: 1.7rem;
+	line-height: 1;
+	color: #2f293b;
+	grid-column: 1 / -1;
+}
+
+.preview-grid {
+	display: grid;
+	gap: 12px;
+}
+
+.preview-grid--three {
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.preview-panel__row {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 16px;
+}
+
+.preview-panel__name {
+	margin: 0;
+	font-family: var(--font-ui-bold);
+	font-size: 0.82rem;
+	line-height: 1.2;
+	color: #4f4660;
+	min-width: 150px;
+}
+
+@media (max-width: 560px) {
+	.preview-grid--three {
+		grid-template-columns: 1fr;
+	}
+
+	.preview-panel__frame--wide {
+		grid-template-columns: 1fr;
+	}
+
+	.preview-panel__row {
+		flex-direction: column;
+		align-items: flex-start;
+	}
+
+	.preview-panel__name {
+		min-width: 0;
+	}
+}
+
+.app-footer {
+	height: 64px;
+	padding: 0 16px;
+	border-top: 1px solid #dbd8d2;
+	background: rgba(255, 255, 255, 0.72);
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	position: sticky;
+	bottom: 0;
+	backdrop-filter: blur(4px);
+}
+
+.app-footer__link {
+	font-size: 0.9rem;
+	color: #58535f;
+	text-decoration: none;
+}
+
+.app-footer__link:hover {
+	text-decoration: underline;
+}
+
+.app-footer__toggle {
+	border: 1px solid #c8c3cf;
+	background: #f8f5fc;
+	color: #443d52;
+	border-radius: 999px;
+	padding: 8px 14px;
+	font-size: 0.85rem;
+	cursor: pointer;
+}
+
+.app-footer__toggle:hover {
+	background: #f1edf8;
+}

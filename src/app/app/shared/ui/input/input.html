@@ -1,0 +1,18 @@
+<div class="ui-input">
+    <label class="ui-input__label" [for]="fieldId()">
+        {{ label() }}
+        @if (required()) {
+        <span class="ui-input__required">*</span>
+        }
+    </label>
+
+    <input class="ui-input__field" [class.ui-input__field--error]="!!error()" [id]="fieldId()"
+        [placeholder]="placeholder()" [required]="required()" [type]="type()" [value]="value()"
+        [attr.aria-invalid]="error() ? 'true' : 'false'" (input)="onInput($event)" (blur)="onBlur()" />
+
+    @if (error()) {
+    <p class="ui-input__message ui-input__message--error">{{ error() }}</p>
+    } @else if (hint()) {
+    <p class="ui-input__message">{{ hint() }}</p>
+    }
+</div>
