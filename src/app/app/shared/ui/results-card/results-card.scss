@@ -1,0 +1,68 @@
+.results-card {
+  width: 340px;
+  padding: 14px 12px 10px;
+  display: grid;
+  gap: 14px;
+}
+
+.results-card__title {
+  margin: 0;
+  font-family: 'Mulish', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1;
+  color: #393244;
+}
+
+.results-card__question {
+  margin: 0;
+  font-family: 'Mulish', sans-serif;
+  font-size: 36px;
+  font-weight: 700;
+  line-height: 1;
+  color: #332a3f;
+}
+
+.results-card__list {
+  display: grid;
+  gap: 10px;
+}
+
+.results-card__row {
+  display: grid;
+  grid-template-columns: 20px 1fr auto;
+  align-items: center;
+  column-gap: 10px;
+}
+
+.results-card__label {
+  font-family: 'Mulish', sans-serif;
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1;
+  color: #352f3f;
+}
+
+.results-card__bar {
+  height: 17px;
+  border-radius: 999px;
+  background: #dedddf;
+  overflow: hidden;
+}
+
+.results-card__bar-fill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: #f0ad63;
+}
+
+.results-card__value {
+  min-width: 40px;
+  text-align: right;
+  font-family: 'Mulish', sans-serif;
+  font-size: 23px;
+  font-weight: 700;
+  line-height: 1;
+  color: #cf8b46;
+}

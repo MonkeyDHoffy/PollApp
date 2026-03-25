@@ -202,6 +202,54 @@
 	height: 14px;
 }
 
+.ui-button--delete,
+.ui-button--edit {
+	width: auto;
+	height: auto;
+	min-width: auto;
+	min-height: auto;
+	padding: 0;
+	border: 0;
+	background: transparent;
+	overflow: visible;
+}
+
+.ui-button__icon-png--delete-container,
+.ui-button__icon-png--edit-container {
+	position: relative;
+	display: inline-block;
+	width: 26px;
+	height: 26px;
+}
+
+.ui-button__icon-png--delete,
+.ui-button__icon-png--edit {
+	display: block;
+	width: 100%;
+	height: 100%;
+	object-fit: contain;
+	position: absolute;
+	top: 0;
+	left: 0;
+	transition: opacity 150ms ease;
+}
+
+.ui-button__icon-png--delete-default {
+	opacity: 1;
+}
+
+.ui-button__icon-png--delete-hover {
+	opacity: 0;
+}
+
+.ui-button--delete:hover:not(:disabled) .ui-button__icon-png--delete-default {
+	opacity: 0;
+}
+
+.ui-button--delete:hover:not(:disabled) .ui-button__icon-png--delete-hover {
+	opacity: 1;
+}
+
 .ui-button--ghost {
 	background: transparent;
 	color: var(--color-primary-strong);

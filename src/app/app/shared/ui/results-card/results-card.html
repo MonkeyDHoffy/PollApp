@@ -1,0 +1,16 @@
+<section class="results-card" aria-label="Survey results card">
+    <p class="results-card__title">{{ title() }}</p>
+    <h3 class="results-card__question">{{ questionNumber() }}. {{ question() }}</h3>
+
+    <div class="results-card__list">
+        @for (row of rows(); track row.id) {
+        <div class="results-card__row">
+            <span class="results-card__label">{{ row.label }}</span>
+            <span class="results-card__bar" aria-hidden="true">
+                <span class="results-card__bar-fill" [style.width.%]="row.percentage"></span>
+            </span>
+            <span class="results-card__value">{{ row.percentageText }}</span>
+        </div>
+        }
+    </div>
+</section>

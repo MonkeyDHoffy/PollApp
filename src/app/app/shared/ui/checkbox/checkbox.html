@@ -1,0 +1,6 @@
+<button class="ui-checkbox" type="button" role="checkbox" [class.ui-checkbox--highlight]="state() === 'highlight'"
+    [class.ui-checkbox--checked]="isChecked()" [attr.aria-checked]="isChecked()" [attr.aria-label]="ariaLabel()">
+    @if (isChecked()) {
+    <span class="ui-checkbox__mark" aria-hidden="true">✓</span>
+    }
+</button>

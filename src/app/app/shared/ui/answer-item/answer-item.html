@@ -1,0 +1,4 @@
+<div class="answer-item" [class.answer-item--highlight]="state() === 'highlight'">
+    <app-checkbox [state]="checkboxState()" ariaLabel="Answer checkbox" />
+    <span class="answer-item__label">{{ prefix() }}. {{ label() }}</span>
+</div>

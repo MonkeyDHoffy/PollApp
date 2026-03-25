@@ -59,6 +59,77 @@
       </div>
     </div>
 
+    <div class="preview-panel__frame preview-panel__frame--delete">
+      <p class="preview-panel__group-title">Delete</p>
+      <div class="preview-panel__row">
+        <p class="preview-panel__name">Button / Delete / Base</p>
+        <app-button ariaLabel="Delete" variant="delete" deleteStyle="base" />
+      </div>
+    </div>
+
+    <div class="preview-panel__frame preview-panel__frame--delete">
+      <p class="preview-panel__group-title">Edit</p>
+      <div class="preview-panel__row">
+        <p class="preview-panel__name">Button / Edit / Base</p>
+        <app-button ariaLabel="Edit" variant="edit" />
+      </div>
+    </div>
+
+    <div class="preview-panel__frame preview-panel__frame--answers">
+      <div class="preview-panel__answers-col">
+        <p class="preview-panel__group-title preview-panel__group-title--sm">Check box</p>
+        <div class="preview-panel__answers-list preview-panel__answers-list--checkbox-only">
+          <app-checkbox state="default" ariaLabel="Checkbox default" />
+          <app-checkbox state="highlight" ariaLabel="Checkbox highlight" />
+          <app-checkbox state="checked" ariaLabel="Checkbox checked" />
+        </div>
+      </div>
+      <div class="preview-panel__answers-col">
+        <p class="preview-panel__group-title preview-panel__group-title--sm">Answer</p>
+        <div class="preview-panel__answers-list">
+          <app-answer-item state="default" [optionIndex]="0" label="27.08.2025" />
+          <app-answer-item state="highlight" [optionIndex]="1" label="27.08.2025" />
+          <app-answer-item state="checked" [optionIndex]="2" label="27.08.2025" />
+        </div>
+      </div>
+    </div>
+
+    <div class="preview-panel__frame preview-panel__frame--survey-list">
+      <app-survey-list-view [items]="[
+        {
+          category: 'Team activities',
+          title: 'Let\'s Plan the Next Team Event Together',
+          badgeLabel: 'Ends in 1 Day',
+          tone: 'base'
+        },
+        {
+          category: 'Team activities',
+          title: 'Let\'s Plan the Next Team Event Together',
+          badgeLabel: 'Ends in 1 Day',
+          tone: 'muted'
+        }
+      ]" />
+    </div>
+
+    <div class="preview-panel__frame preview-panel__frame--highlight-card">
+      <p class="preview-panel__group-title">Highlights card</p>
+      <div class="preview-panel__highlight-grid">
+        <app-highlight-card category="Team activities" title="Let's Plan the Next Team Event Together"
+          badgeLabel="Ends in 1 Day" tone="base" />
+        <app-highlight-card category="Team activities" title="Let's Plan the Next Team Event Together"
+          badgeLabel="Ends in 1 Day" tone="muted" />
+      </div>
+    </div>
+
+    <div class="preview-panel__frame preview-panel__frame--results">
+      <app-results-card title="Results" [questionNumber]="1" question="Some question?" [results]="[
+          { label: 'A', percentage: 27 },
+          { label: 'B', percentage: 44 },
+          { label: 'C', percentage: 3 },
+          { label: 'D', percentage: 26 }
+        ]" />
+    </div>
+
     <div class="preview-panel__frame">
       <p class="preview-panel__group-title">Primary button</p>
       <div class="preview-panel__row">

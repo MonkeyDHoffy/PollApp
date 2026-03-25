@@ -1,14 +1,26 @@
 <button class="ui-button" [class.ui-button--primary]="variant() === 'primary'"
     [class.ui-button--secondary]="variant() === 'secondary'" [class.ui-button--filter]="variant() === 'filter'"
-    [class.ui-button--tertiary]="variant() === 'tertiary'" [class.ui-button--ghost]="variant() === 'ghost'"
+    [class.ui-button--tertiary]="variant() === 'tertiary'" [class.ui-button--delete]="variant() === 'delete'"
+    [class.ui-button--edit]="variant() === 'edit'" [class.ui-button--ghost]="variant() === 'ghost'"
     [class.ui-button--primary-base]="variant() === 'primary' && primaryStyle() === 'base'"
     [class.ui-button--primary-add]="isAddStyle()" [class.ui-button--primary-confirm]="isConfirmStyle()"
     [class.ui-button--secondary-muted]="isSecondaryMuted()" [class.ui-button--filter-active]="isFilterActive()"
     [class.ui-button--tertiary-muted]="isTertiaryMuted()" [class.ui-button--sm]="size() === 'sm'"
     [class.ui-button--md]="size() === 'md'" [class.ui-button--lg]="size() === 'lg'"
     [class.ui-button--icon-inline]="variant() === 'tertiary'" [class.ui-button--with-icon]="hasIcon()"
-    [disabled]="disabled()" [type]="type()" (click)="onClick()">
-    @if (variant() === 'tertiary') {
+    [disabled]="disabled()" [type]="type()" [attr.aria-label]="ariaLabel()" (click)="onClick()">
+    @if (variant() === 'delete') {
+    <span class="ui-button__icon-png--delete-container">
+        <img class="ui-button__icon-png--delete ui-button__icon-png--delete-default" src="/assets/delete/default.png"
+            alt="" />
+        <img class="ui-button__icon-png--delete ui-button__icon-png--delete-hover" src="/assets/delete/hover.png"
+            alt="" />
+    </span>
+    } @else if (variant() === 'edit') {
+    <span class="ui-button__icon-png--edit-container">
+        <img class="ui-button__icon-png--edit" [src]="editIconSrc()" alt="" />
+    </span>
+    } @else if (variant() === 'tertiary') {
     <span class="ui-button__content ui-button__content--tertiary">
         <span class="ui-button__label">{{ label() }}</span>
         <span aria-hidden="true" class="ui-button__icon ui-button__icon--png">

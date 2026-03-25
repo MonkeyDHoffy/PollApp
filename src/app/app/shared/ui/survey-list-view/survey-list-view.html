@@ -1,0 +1,13 @@
+<section class="survey-list-view" aria-label="Survey list view">
+    <p class="survey-list-view__heading">{{ heading() }}</p>
+
+    <div class="survey-list-view__frame">
+        @for (row of rows(); track row.id) {
+        <article class="survey-list-view__item" [class.survey-list-view__item--muted]="row.tone === 'muted'">
+            <p class="survey-list-view__category">{{ row.category }}</p>
+            <h3 class="survey-list-view__title">{{ row.title }}</h3>
+            <p class="survey-list-view__badge">{{ row.badgeLabel }}</p>
+        </article>
+        }
+    </div>
+</section>

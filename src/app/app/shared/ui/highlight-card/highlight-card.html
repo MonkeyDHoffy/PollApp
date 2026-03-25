@@ -1,0 +1,9 @@
+<article class="highlight-card" [class.highlight-card--muted]="tone() === 'muted'"
+    [class.highlight-card--title-lg]="titleSizeClass() === 'highlight-card--title-lg'"
+    [class.highlight-card--title-md]="titleSizeClass() === 'highlight-card--title-md'"
+    [class.highlight-card--title-sm]="titleSizeClass() === 'highlight-card--title-sm'"
+    [class.highlight-card--title-xs]="titleSizeClass() === 'highlight-card--title-xs'">
+    <p class="highlight-card__category">{{ category() }}</p>
+    <h3 class="highlight-card__title">{{ title() }}</h3>
+    <p class="highlight-card__badge">{{ badgeLabel() }}</p>
+</article>
