@@ -15,7 +15,8 @@
                         engage your
                         audience, and turn feedback into action.
                     </p>
-                    <app-button label="New survey" variant="primary" primaryStyle="base" />
+                    <app-button label="New survey" variant="primary" primaryStyle="base"
+                        (pressed)="openCreateSurveyModal()" />
                 </div>
 
                 <div class="hero__visuals">
@@ -66,4 +67,100 @@
             <app-survey-list-view [items]="filteredSurveys()" heading="Survey view in the list" />
         </section>
     </div>
+
+    @if (createSurveyOpen()) {
+    <div class="create-survey-modal" role="dialog" aria-modal="true" aria-label="Create new survey">
+        <div class="create-survey-modal__backdrop" (click)="closeCreateSurveyModal()"></div>
+        <section class="create-survey-modal__panel">
+            <header class="create-survey-modal__header">
+                <div>
+                    <span class="create-survey-modal__badge">Draft</span>
+                    <h2 class="create-survey-modal__title">Create new survey</h2>
+                </div>
+                <button type="button" class="create-survey-modal__cancel" (click)="closeCreateSurveyModal()">
+                    Cancel
+                </button>
+            </header>
+
+            <form class="create-survey-modal__form" [formGroup]="createSurveyForm" (ngSubmit)="publishSurvey()">
+                <div class="create-survey-modal__meta-grid">
+                    <label class="create-survey-modal__field">
+                        <span>Survey name</span>
+                        <input type="text" formControlName="title" placeholder="Team Event Survey" />
+                    </label>
+
+                    <label class="create-survey-modal__field">
+                        <span>Describing text (optional)</span>
+                        <textarea formControlName="description" rows="3" placeholder="Short survey description"></textarea>
+                    </label>
+
+                    <label class="create-survey-modal__field">
+                        <span>Set end date (optional)</span>
+                        <input type="date" formControlName="endDate" />
+                    </label>
+
+                    <label class="create-survey-modal__field">
+                        <span>Choose category</span>
+                        <select formControlName="category">
+                            <option value="" disabled>Select category</option>
+                            @for (category of categories; track category) {
+                            <option [value]="category">{{ category }}</option>
+                            }
+                        </select>
+                    </label>
+                </div>
+
+                <div class="create-survey-modal__questions" formArrayName="questions">
+                    @for (question of questionsArray.controls; track $index; let qIdx = $index) {
+                    <div class="create-survey-modal__question" [formGroupName]="qIdx">
+                        <div class="create-survey-modal__question-header">
+                            <p>{{ qIdx + 1 }}. Question</p>
+                            @if (questionsArray.length > 1) {
+                            <button type="button" class="create-survey-modal__remove" (click)="removeQuestion(qIdx)">
+                                Delete
+                            </button>
+                            }
+                        </div>
+
+                        <input type="text" formControlName="questionText" placeholder="Which date would work best for you?" />
+
+                        <div class="create-survey-modal__answers-head">
+                            <p>Answers</p>
+                            <label class="create-survey-modal__checkbox-row">
+                                <input type="checkbox" formControlName="allowMultiple" />
+                                <span>Allow multiple answers</span>
+                            </label>
+                        </div>
+
+                        <div formArrayName="answers" class="create-survey-modal__answers-list">
+                            @for (answer of questionAnswersArray(qIdx).controls; track $index; let aIdx = $index) {
+                            <div class="create-survey-modal__answer-row">
+                                <span>{{ answerLabel(aIdx) }}.</span>
+                                <input [formControlName]="aIdx" type="text" placeholder="Answer option" />
+                                @if (questionAnswersArray(qIdx).length > 2) {
+                                <button type="button" class="create-survey-modal__remove"
+                                    (click)="removeAnswer(qIdx, aIdx)">
+                                    Delete
+                                </button>
+                                }
+                            </div>
+                            }
+                        </div>
+
+                        <button type="button" class="create-survey-modal__link-btn" (click)="addAnswer(qIdx)">
+                            Add answer
+                        </button>
+                    </div>
+                    }
+                </div>
+
+                <div class="create-survey-modal__actions-row">
+                    <button type="button" class="create-survey-modal__secondary" (click)="addQuestion()">Add next
+                        question</button>
+                    <button type="submit" class="create-survey-modal__publish">Publish</button>
+                </div>
+            </form>
+        </section>
+    </div>
+    }
 </div>
