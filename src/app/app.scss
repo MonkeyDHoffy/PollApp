@@ -106,6 +106,43 @@
 	justify-items: start;
 }
 
+.preview-panel__frame--input {
+	max-width: 520px;
+	padding: 10px 14px 14px;
+	background: #35273a;
+	border-color: #8e53ff;
+	justify-items: start;
+	gap: 10px;
+}
+
+.preview-panel__frame--input .preview-panel__group-title {
+	color: #f1ecf8;
+}
+
+.preview-panel__input-list {
+	width: 100%;
+	display: grid;
+	gap: 12px;
+}
+
+.preview-panel__frame--dropdown-menu {
+	max-width: 410px;
+	padding: 12px 14px 14px;
+	background: #35273a;
+	border-color: #8e53ff;
+	justify-items: start;
+	gap: 14px;
+}
+
+.preview-panel__frame--dropdown-menu .preview-panel__group-title {
+	color: #f1ecf8;
+}
+
+.preview-panel__dropdown-menu-list {
+	display: grid;
+	gap: 16px;
+}
+
 .preview-panel__frame--results {
 	max-width: 380px;
 	justify-self: start;

@@ -1,0 +1,289 @@
+// Layout and spacing
+.home {
+  width: 100%;
+  min-height: 100vh;
+  background: #35273a;
+  color: #f5f5f5;
+}
+
+// Hero section
+.hero {
+  padding: 40px 40px;
+  background: #35273a;
+
+  @media (max-width: 768px) {
+    padding: 24px 20px;
+  }
+}
+
+.hero__logo {
+  height: 40px;
+  margin-bottom: 60px;
+
+  @media (max-width: 768px) {
+    height: 32px;
+    margin-bottom: 40px;
+  }
+}
+
+.hero__container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 80px;
+  align-items: center;
+  max-width: 1200px;
+  margin: 0 auto;
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+    gap: 40px;
+  }
+}
+
+.hero__content {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.hero__title {
+  font-family: 'Mulish', sans-serif;
+  font-size: 56px;
+  font-weight: 700;
+  line-height: 1.2;
+  color: #f0ad63;
+
+  @media (max-width: 768px) {
+    font-size: 36px;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 28px;
+  }
+}
+
+.hero__description {
+  font-family: 'Mulish', sans-serif;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.6;
+  color: #c4b3c8;
+  margin: 0;
+  max-width: 400px;
+}
+
+.hero__visuals {
+  position: relative;
+  height: 500px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  @media (max-width: 768px) {
+    height: 400px;
+  }
+
+  @media (max-width: 480px) {
+    height: 300px;
+  }
+}
+
+.hero__phone {
+  width: 100%;
+  max-width: 280px;
+  height: auto;
+  position: relative;
+  z-index: 2;
+
+  @media (max-width: 768px) {
+    max-width: 200px;
+  }
+
+  @media (max-width: 480px) {
+    max-width: 150px;
+  }
+}
+
+.hero__icon {
+  position: absolute;
+  opacity: 0.8;
+
+  @media (max-width: 768px) {
+    opacity: 0.6;
+  }
+}
+
+.hero__icon--question {
+  width: 80px;
+  top: 20px;
+  right: 40px;
+
+  @media (max-width: 768px) {
+    width: 60px;
+    right: 20px;
+    top: 40px;
+  }
+
+  @media (max-width: 480px) {
+    width: 50px;
+    right: 10px;
+  }
+}
+
+.hero__icon--bubble {
+  width: 100px;
+  left: 20px;
+  top: 160px;
+
+  @media (max-width: 768px) {
+    width: 80px;
+    left: 40px;
+    top: 140px;
+  }
+
+  @media (max-width: 480px) {
+    width: 60px;
+    left: 20px;
+    top: 120px;
+  }
+}
+
+.hero__icon--star {
+  width: 70px;
+  bottom: 80px;
+  left: 80px;
+
+  @media (max-width: 768px) {
+    width: 55px;
+    left: 60px;
+    bottom: 60px;
+  }
+
+  @media (max-width: 480px) {
+    width: 45px;
+    left: 40px;
+    bottom: 40px;
+  }
+}
+
+.hero__icon--check {
+  width: 90px;
+  bottom: 100px;
+  right: 60px;
+
+  @media (max-width: 768px) {
+    width: 70px;
+    right: 80px;
+    bottom: 80px;
+  }
+
+  @media (max-width: 480px) {
+    width: 55px;
+    right: 50px;
+    bottom: 60px;
+  }
+}
+
+// Surveys section
+.surveys {
+  padding: 80px 40px;
+  background: #35273a;
+  max-width: 1200px;
+  margin: 0 auto;
+
+  @media (max-width: 768px) {
+    padding: 60px 20px;
+  }
+
+  @media (max-width: 480px) {
+    padding: 40px 16px;
+  }
+}
+
+.surveys__title {
+  font-family: 'Mulish', sans-serif;
+  font-size: 48px;
+  font-weight: 700;
+  color: #f0ad63;
+  margin: 0 0 60px 0;
+
+  @media (max-width: 768px) {
+    font-size: 36px;
+    margin-bottom: 40px;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 28px;
+    margin-bottom: 32px;
+  }
+}
+
+.surveys__subtitle {
+  font-family: 'Mulish', sans-serif;
+  font-size: 18px;
+  font-weight: 400;
+  color: #c4b3c8;
+  margin: 0 0 24px 0;
+
+  @media (max-width: 768px) {
+    font-size: 16px;
+  }
+}
+
+.surveys__ending-soon {
+  margin-bottom: 60px;
+
+  @media (max-width: 768px) {
+    margin-bottom: 40px;
+  }
+}
+
+.surveys__highlight-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 24px;
+  margin-bottom: 40px;
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+}
+
+.surveys__controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 40px;
+  gap: 24px;
+  flex-wrap: wrap;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+}
+
+.surveys__filter-buttons {
+  display: flex;
+  gap: 12px;
+
+  @media (max-width: 768px) {
+    gap: 8px;
+    width: 100%;
+
+    app-button {
+      flex: 1;
+    }
+  }
+}
+
+.surveys__sort {
+  min-width: 250px;
+
+  @media (max-width: 768px) {
+    min-width: auto;
+    width: 100%;
+  }
+}

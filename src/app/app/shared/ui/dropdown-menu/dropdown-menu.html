@@ -1,0 +1,31 @@
+<div class="ui-dropdown" [class.ui-dropdown--open]="open()">
+  <button
+    class="ui-dropdown__trigger"
+    type="button"
+    [class.ui-dropdown__trigger--ghost]="appearance() === 'ghost'"
+    [attr.aria-expanded]="open()"
+    (click)="onToggle()"
+  >
+    <span class="ui-dropdown__label">{{ label() }}</span>
+    <span
+      class="ui-dropdown__arrow"
+      [class.ui-dropdown__arrow--up]="open()"
+      [class.ui-dropdown__arrow--accent]="accentArrow()"
+      aria-hidden="true"
+    ></span>
+  </button>
+
+  @if (open()) {
+  <ul class="ui-dropdown__menu" role="listbox">
+    @for (option of options(); track option) {
+    <li class="ui-dropdown__menu-item">
+      <button class="ui-dropdown__menu-option" type="button" (click)="onSelect(option)">{{ option }}</button>
+    </li>
+    }
+  </ul>
+  }
+
+  @if (showSelectionValue() && !open() && currentSelection().trim()) {
+  <p class="ui-dropdown__selection">{{ currentSelection() }}</p>
+  }
+</div>

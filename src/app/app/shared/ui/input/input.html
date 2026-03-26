@@ -1,14 +1,19 @@
 <div class="ui-input">
+    @if (label().trim()) {
     <label class="ui-input__label" [for]="fieldId()">
         {{ label() }}
         @if (required()) {
         <span class="ui-input__required">*</span>
         }
     </label>
+    }
 
-    <input class="ui-input__field" [class.ui-input__field--error]="!!error()" [id]="fieldId()"
-        [placeholder]="placeholder()" [required]="required()" [type]="type()" [value]="value()"
-        [attr.aria-invalid]="error() ? 'true' : 'false'" (input)="onInput($event)" (blur)="onBlur()" />
+    <input class="ui-input__field" [class.ui-input__field--error]="!!error()"
+        [class.ui-input__field--active]="isActive()"
+        [class.ui-input__field--filled]="visualState() === 'filled'" [id]="fieldId()" [placeholder]="placeholder()"
+        [required]="required()" [readonly]="readonly()" [type]="type()" [value]="value()"
+        [attr.aria-invalid]="error() ? 'true' : 'false'" (input)="onInput($event)" (focus)="onFocus()"
+        (blur)="onBlur()" />
 
     @if (error()) {
     <p class="ui-input__message ui-input__message--error">{{ error() }}</p>

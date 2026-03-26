@@ -1,12 +1,19 @@
+:host {
+	display: block;
+	width: 100%;
+}
+
 .ui-input {
 	display: grid;
-	gap: 0.4rem;
+	gap: 6px;
 }
 
 .ui-input__label {
-	font-size: 0.88rem;
-	font-weight: 600;
-	color: var(--color-text-strong);
+	font-family: 'Mulish', sans-serif;
+	font-size: 14px;
+	font-weight: 700;
+	line-height: 1;
+	color: #f1ecf8;
 }
 
 .ui-input__required {
@@ -16,32 +23,46 @@
 
 .ui-input__field {
 	width: 100%;
-	border: 1px solid var(--color-border);
-	border-radius: var(--radius-md);
-	padding: 0.72rem 0.82rem;
-	background: var(--color-surface);
-	color: var(--color-text-strong);
+	min-height: 36px;
+	border: 0;
+	border-radius: 10px;
+	border-top-right-radius: 20px;
+	padding: 8px 14px;
+	background: #efedf2;
+	font-family: 'Mulish', sans-serif;
+	font-size: 34px;
+	font-weight: 700;
+	line-height: 1;
+	letter-spacing: 0;
+	color: #3a3345;
 	transition: border-color 160ms ease, box-shadow 160ms ease;
 }
 
 .ui-input__field::placeholder {
-	color: var(--color-text-muted);
+	color: #595264;
 }
 
 .ui-input__field:focus-visible {
 	outline: none;
-	border-color: var(--color-primary-strong);
-	box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 16%, transparent);
+	box-shadow: 0 0 0 2px #8e53ff;
 }
 
 .ui-input__field--error {
-	border-color: var(--color-danger);
+	box-shadow: 0 0 0 2px #d23a52;
+}
+
+.ui-input__field--active {
+	background: #f0dfc9;
+}
+
+.ui-input__field--filled {
+	background: #e2e0e4;
 }
 
 .ui-input__message {
 	margin: 0;
-	font-size: 0.8rem;
-	color: var(--color-text-muted);
+	font-size: 12px;
+	color: #b8b2c1;
 }
 
 .ui-input__message--error {

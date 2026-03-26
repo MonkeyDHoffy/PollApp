@@ -1,0 +1,80 @@
+<div class="home">
+  <!-- Hero section -->
+  <section class="hero">
+    <div class="hero__header">
+      <img src="/assets/logo/Property 1=Orange.png" alt="PollApp Logo" class="hero__logo" />
+    </div>
+
+    <div class="hero__container">
+      <div class="hero__content">
+        <h1 class="hero__title">Collect feedback, Unlock Ideas</h1>
+        <p class="hero__description">
+          Create and share surveys in minutes – from team events to workplace culture. Collect opinions, engage your
+          audience, and turn feedback into action.
+        </p>
+        <app-button label="New survey" variant="primary" primaryStyle="base" />
+      </div>
+
+      <div class="hero__visuals">
+        <img src="/assets/visual/position 03@2x 1.png" alt="Survey illustration" class="hero__phone" />
+        <img src="/assets/visual/Questin mark.png" alt="Question mark" class="hero__icon hero__icon--question" />
+        <img src="/assets/visual/typing bubble.png" alt="Typing bubble" class="hero__icon hero__icon--bubble" />
+        <img src="/assets/visual/star.png" alt="Star" class="hero__icon hero__icon--star" />
+        <img src="/assets/visual/check.png" alt="Check" class="hero__icon hero__icon--check" />
+      </div>
+    </div>
+  </section>
+
+  <!-- Your surveys section -->
+  <section class="surveys">
+    <h2 class="surveys__title">Your surveys</h2>
+
+    <!-- Ending soon surveys -->
+    <div class="surveys__ending-soon">
+      <h3 class="surveys__subtitle">Ending soon surveys</h3>
+      <div class="surveys__highlight-grid">
+        @for (survey of endingSoonSurveys(); track survey.id) {
+        <app-highlight-card
+          [category]="survey.category"
+          [title]="survey.title"
+          [badgeLabel]="survey.badgeLabel"
+          [tone]="survey.tone || 'base'"
+        />
+        }
+      </div>
+    </div>
+
+    <!-- Filters and sorting -->
+    <div class="surveys__controls">
+      <div class="surveys__filter-buttons">
+        <app-button
+          label="Active survey"
+          variant="filter"
+          [filterStyle]="selectedStatus() === 'active' ? 'active' : 'base'"
+          (pressed)="onFilterActive()"
+        />
+        <app-button
+          label="Past survey"
+          variant="filter"
+          [filterStyle]="selectedStatus() === 'past' ? 'active' : 'base'"
+          (pressed)="onFilterPast()"
+        />
+      </div>
+
+      <div class="surveys__sort">
+        <app-dropdown-menu
+          label="Sort by categories"
+          [options]="categories"
+          [selected]="selectedCategory() === 'all' ? '' : selectedCategory()"
+          (selectedChange)="onCategoryChange($event)"
+        />
+      </div>
+    </div>
+
+    <!-- Survey list -->
+    <app-survey-list-view
+      [items]="filteredSurveys()"
+      heading="Survey view in the list"
+    />
+  </section>
+</div>
