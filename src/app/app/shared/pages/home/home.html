@@ -1,33 +1,35 @@
 <div class="home">
-  <!-- Hero section -->
-  <section class="hero">
-    <div class="hero__header">
-      <img src="/assets/logo/Property 1=Orange.png" alt="PollApp Logo" class="hero__logo" />
-    </div>
+  <div class="home__content-wrapper">
+    <!-- Logo header -->
+    <header class="home__header">
+      <img src="/assets/logo/Property 1=Orange.png" alt="PollApp Logo" class="home__logo" />
+    </header>
 
-    <div class="hero__container">
-      <div class="hero__content">
-        <h1 class="hero__title">Collect feedback, Unlock Ideas</h1>
-        <p class="hero__description">
-          Create and share surveys in minutes – from team events to workplace culture. Collect opinions, engage your
-          audience, and turn feedback into action.
-        </p>
-        <app-button label="New survey" variant="primary" primaryStyle="base" />
+    <!-- Hero section -->
+    <section class="hero">
+      <div class="hero__container">
+        <div class="hero__content">
+          <h1 class="hero__title">Collect feedback, Unlock Ideas</h1>
+          <p class="hero__description">
+            Create and share surveys in minutes – from team events to workplace culture. Collect opinions, engage your
+            audience, and turn feedback into action.
+          </p>
+          <app-button label="New survey" variant="primary" primaryStyle="base" />
+        </div>
+
+        <div class="hero__visuals">
+          <img src="/assets/visual/position 03@2x 1.png" alt="Survey illustration" class="hero__phone" />
+          <img src="/assets/visual/Questin mark.png" alt="Question mark" class="hero__icon hero__icon--question" />
+          <img src="/assets/visual/typing bubble.png" alt="Typing bubble" class="hero__icon hero__icon--bubble" />
+          <img src="/assets/visual/star.png" alt="Star" class="hero__icon hero__icon--star" />
+          <img src="/assets/visual/check.png" alt="Check" class="hero__icon hero__icon--check" />
+        </div>
       </div>
+    </section>
 
-      <div class="hero__visuals">
-        <img src="/assets/visual/position 03@2x 1.png" alt="Survey illustration" class="hero__phone" />
-        <img src="/assets/visual/Questin mark.png" alt="Question mark" class="hero__icon hero__icon--question" />
-        <img src="/assets/visual/typing bubble.png" alt="Typing bubble" class="hero__icon hero__icon--bubble" />
-        <img src="/assets/visual/star.png" alt="Star" class="hero__icon hero__icon--star" />
-        <img src="/assets/visual/check.png" alt="Check" class="hero__icon hero__icon--check" />
-      </div>
-    </div>
-  </section>
-
-  <!-- Your surveys section -->
-  <section class="surveys">
-    <h2 class="surveys__title">Your surveys</h2>
+    <!-- Your surveys section -->
+    <section class="surveys">
+      <h2 class="surveys__title">Your surveys</h2>
 
     <!-- Ending soon surveys -->
     <div class="surveys__ending-soon">
@@ -76,5 +78,6 @@
       [items]="filteredSurveys()"
       heading="Survey view in the list"
     />
-  </section>
+    </section>
+  </div>
 </div>

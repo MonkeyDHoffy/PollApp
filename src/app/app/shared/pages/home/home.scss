@@ -6,22 +6,56 @@
   color: #f5f5f5;
 }
 
-// Hero section
-.hero {
-  padding: 40px 40px;
-  background: #35273a;
+// Content wrapper - main container
+.home__content-wrapper {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 40px;
 
   @media (max-width: 768px) {
     padding: 24px 20px;
   }
+
+  @media (max-width: 480px) {
+    padding: 16px;
+  }
 }
 
-.hero__logo {
-  height: 40px;
+// Header with logo
+.home__header {
   margin-bottom: 60px;
 
   @media (max-width: 768px) {
+    margin-bottom: 40px;
+  }
+
+  @media (max-width: 480px) {
+    margin-bottom: 32px;
+  }
+}
+
+.home__logo {
+  height: 40px;
+  width: auto;
+
+  @media (max-width: 768px) {
     height: 32px;
+  }
+
+  @media (max-width: 480px) {
+    height: 28px;
+  }
+}
+
+// Hero section
+.hero {
+  margin-bottom: 80px;
+
+  @media (max-width: 768px) {
+    margin-bottom: 60px;
+  }
+
+  @media (max-width: 480px) {
     margin-bottom: 40px;
   }
 }
@@ -31,12 +65,14 @@
   grid-template-columns: 1fr 1fr;
   gap: 80px;
   align-items: center;
-  max-width: 1200px;
-  margin: 0 auto;
 
   @media (max-width: 768px) {
     grid-template-columns: 1fr;
     gap: 40px;
+  }
+
+  @media (max-width: 480px) {
+    gap: 24px;
   }
 }
 
@@ -186,18 +222,7 @@
 
 // Surveys section
 .surveys {
-  padding: 80px 40px;
-  background: #35273a;
-  max-width: 1200px;
-  margin: 0 auto;
-
-  @media (max-width: 768px) {
-    padding: 60px 20px;
-  }
-
-  @media (max-width: 480px) {
-    padding: 40px 16px;
-  }
+  width: 100%;
 }
 
 .surveys__title {
