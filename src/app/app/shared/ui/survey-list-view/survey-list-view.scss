@@ -1,7 +1,7 @@
 .survey-list-view {
-  width: min(510px, 100%);
+  width: 100%;
   background: #35273a;
-  padding: 14px 12px 20px;
+  padding: 0;
   display: grid;
   gap: 14px;
 }
@@ -15,6 +15,7 @@
   line-height: 100%;
   letter-spacing: 0;
   color: #f1eef5;
+  display: none;
 }
 
 .survey-list-view__frame {
@@ -22,7 +23,38 @@
   border-radius: 8px;
   padding: 14px;
   display: grid;
+  grid-template-columns: repeat(2, 1fr);
   gap: 14px;
+  max-height: 600px;
+  overflow-y: auto;
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+    max-height: none;
+    overflow-y: visible;
+  }
+
+  /* Custom scrollbar styling */
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: #f0ad63;
+    border-radius: 4px;
+
+    &:hover {
+      background: #e89a4a;
+    }
+  }
+
+  /* Firefox scrollbar */
+  scrollbar-color: #f0ad63 transparent;
+  scrollbar-width: thin;
 }
 
 .survey-list-view__item {
