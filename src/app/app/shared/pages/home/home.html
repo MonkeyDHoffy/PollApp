@@ -91,7 +91,8 @@
 
                     <label class="create-survey-modal__field">
                         <span>Describing text (optional)</span>
-                        <textarea formControlName="description" rows="3" placeholder="Short survey description"></textarea>
+                        <textarea formControlName="description" rows="3"
+                            placeholder="Short survey description"></textarea>
                     </label>
 
                     <label class="create-survey-modal__field">
@@ -122,7 +123,8 @@
                             }
                         </div>
 
-                        <input type="text" formControlName="questionText" placeholder="Which date would work best for you?" />
+                        <input type="text" formControlName="questionText"
+                            placeholder="Which date would work best for you?" />
 
                         <div class="create-survey-modal__answers-head">
                             <p>Answers</p>
@@ -155,9 +157,18 @@
                 </div>
 
                 <div class="create-survey-modal__actions-row">
+                    @if (submitAttempted() && createSurveyForm.invalid) {
+                    <p class="create-survey-modal__error">Bitte Pflichtfelder ausfuellen (Titel, Kategorie, Fragen,
+                        Antworten).</p>
+                    }
+                    @if (createError()) {
+                    <p class="create-survey-modal__error">{{ createError() }}</p>
+                    }
                     <button type="button" class="create-survey-modal__secondary" (click)="addQuestion()">Add next
                         question</button>
-                    <button type="submit" class="create-survey-modal__publish">Publish</button>
+                    <button type="submit" class="create-survey-modal__publish" [disabled]="createLoading()">
+                        {{ createLoading() ? 'Publishing...' : 'Publish' }}
+                    </button>
                 </div>
             </form>
         </section>

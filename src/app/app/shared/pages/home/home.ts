@@ -11,6 +11,8 @@ import { ButtonComponent } from '../../ui/button/button';
 import { HighlightCardComponent } from '../../ui/highlight-card/highlight-card';
 import { SurveyListViewComponent } from '../../ui/survey-list-view/survey-list-view';
 import { DropdownMenuComponent } from '../../ui/dropdown-menu/dropdown-menu';
+import { SurveyService } from '../../../../shared/services/survey.service';
+import { CreateSurveyDTO } from '../../../../shared/models/survey.model';
 
 type SurveyStatus = 'active' | 'past' | 'all';
 type CategoryFilter = string | 'all';
@@ -39,11 +41,15 @@ type Survey = {
 })
 export class HomeComponent {
   private readonly fb = inject(FormBuilder);
+  private readonly surveyService = inject(SurveyService);
 
   // State signals
   protected readonly selectedStatus = signal<SurveyStatus>('all');
   protected readonly selectedCategory = signal<CategoryFilter>('all');
   protected readonly createSurveyOpen = signal(false);
+  protected readonly submitAttempted = signal(false);
+  protected readonly createError = computed(() => this.surveyService.error());
+  protected readonly createLoading = computed(() => this.surveyService.loading());
 
   protected readonly createSurveyForm = this.fb.group({
     title: this.fb.nonNullable.control('', [Validators.required, Validators.maxLength(120)]),
@@ -53,105 +59,9 @@ export class HomeComponent {
     questions: this.fb.array([this.buildQuestionGroup()]),
   });
 
-  // Mock survey data - später von API
-  protected readonly allSurveys = signal<Survey[]>([
-    {
-      id: '1',
-      category: 'Team activities',
-      title: "Let's Plan the Next Team Event Together",
-      badgeLabel: 'Ends in 1 Day',
-      status: 'active',
-      tone: 'base',
-    },
-    {
-      id: '2',
-      category: 'Health & Wellness',
-      title: 'Fit & wellness survey!',
-      badgeLabel: 'Ends in 2 Days',
-      status: 'active',
-      tone: 'base',
-    },
-    {
-      id: '3',
-      category: 'Gaming & Entertainment',
-      title: 'Gaming habits and favorite games!',
-      badgeLabel: 'Ends in 3 Days',
-      status: 'active',
-      tone: 'base',
-    },
-    {
-      id: '4',
-      category: 'Education & Learning',
-      title: 'Online Learning Preferences',
-      badgeLabel: 'Ends in 4 Days',
-      status: 'active',
-      tone: 'base',
-    },
-    {
-      id: '5',
-      category: 'Technology & Innovation',
-      title: 'Your views on AI and future tech',
-      badgeLabel: 'Ends in 5 Days',
-      status: 'active',
-      tone: 'base',
-    },
-    {
-      id: '6',
-      category: 'Lifestyle & Preferences',
-      title: 'Coffee or tea - which do you prefer?',
-      badgeLabel: 'Ends in 1 Day',
-      status: 'active',
-      tone: 'base',
-    },
-    {
-      id: '7',
-      category: 'Gaming & Entertainment',
-      title: 'Gaming habits and favorite games!',
-      badgeLabel: 'Ends in 3 Days',
-      status: 'past',
-      tone: 'muted',
-    },
-    {
-      id: '8',
-      category: 'Healthy Lifestyle',
-      title: 'Healthier future: Fit & wellness survey!',
-      badgeLabel: 'Ends in 2 Days',
-      status: 'past',
-      tone: 'muted',
-    },
-    {
-      id: '9',
-      category: 'Team activities',
-      title: "Let's Plan the Next Team Event Together",
-      badgeLabel: 'Ends in 1 Day',
-      status: 'past',
-      tone: 'muted',
-    },
-    {
-      id: '10',
-      category: 'Technology & Innovation',
-      title: 'Remote work tools and productivity',
-      badgeLabel: 'Ended 2 days ago',
-      status: 'past',
-      tone: 'muted',
-    },
-    {
-      id: '11',
-      category: 'Education & Learning',
-      title: 'Skills you want to learn in 2026',
-      badgeLabel: 'Ended 5 days ago',
-      status: 'past',
-      tone: 'muted',
-    },
-    {
-      id: '12',
-      category: 'Health & Wellness',
-      title: 'Workplace wellness program feedback',
-      badgeLabel: 'Ended 1 week ago',
-      status: 'past',
-      tone: 'muted',
-    },
-  ]);
+  protected readonly allSurveys = computed<Survey[]>(() =>
+    this.surveyService.allSurveys().map((survey) => this.mapSurveyToHomeSurvey(survey))
+  );
 
   // Categories for dropdown
   protected readonly categories = [
@@ -208,10 +118,14 @@ export class HomeComponent {
   }
 
   protected openCreateSurveyModal(): void {
+    this.surveyService.clearError();
+    this.submitAttempted.set(false);
     this.createSurveyOpen.set(true);
   }
 
   protected closeCreateSurveyModal(): void {
+    this.surveyService.clearError();
+    this.submitAttempted.set(false);
     this.createSurveyOpen.set(false);
     this.resetCreateSurveyForm();
   }
@@ -247,31 +161,46 @@ export class HomeComponent {
     answers.removeAt(answerIndex);
   }
 
-  protected publishSurvey(): void {
+  protected async publishSurvey(): Promise<void> {
+    this.submitAttempted.set(true);
+    this.surveyService.clearError();
+
     if (this.createSurveyForm.invalid) {
       this.createSurveyForm.markAllAsTouched();
       return;
     }
 
     const title = this.createSurveyForm.controls.title.value.trim();
+    const description = this.createSurveyForm.controls.description.value.trim();
     const category = this.createSurveyForm.controls.category.value.trim();
     const endDateRaw = this.createSurveyForm.controls.endDate.value.trim();
 
-    const endDate = endDateRaw ? new Date(endDateRaw) : null;
-    const now = new Date();
-    const isPast = !!endDate && endDate.getTime() < now.getTime();
+    const dto: CreateSurveyDTO = {
+      title,
+      description: description || undefined,
+      category: category || 'General',
+      endsAt: endDateRaw ? new Date(endDateRaw).toISOString() : undefined,
+      status: 'published',
+      questions: this.questionsArray.controls.map((questionControl) => {
+        const questionText = (questionControl.get('questionText')?.value as string).trim();
+        const allowMultiple = !!questionControl.get('allowMultiple')?.value;
+        const answersArray = questionControl.get('answers') as FormArray;
 
-    this.allSurveys.update((surveys) => [
-      {
-        id: `${Date.now()}`,
-        category: category || 'General',
-        title,
-        badgeLabel: this.toBadgeLabel(endDate),
-        status: isPast ? 'past' : 'active',
-        tone: isPast ? 'muted' : 'base',
-      },
-      ...surveys,
-    ]);
+        return {
+          text: questionText,
+          type: allowMultiple ? 'checkboxes' : 'multiple_choice',
+          allowMultiple,
+          answers: answersArray.controls
+            .map((answerControl) => ({ text: (answerControl.value as string).trim() }))
+            .filter((answer) => answer.text.length > 0),
+        };
+      }),
+    };
+
+    const surveyId = await this.surveyService.createSurvey(dto);
+    if (!surveyId) {
+      return;
+    }
 
     this.closeCreateSurveyModal();
   }
@@ -313,5 +242,26 @@ export class HomeComponent {
       return `Ended ${Math.abs(delta)} day${Math.abs(delta) === 1 ? '' : 's'} ago`;
     }
     return `Ends in ${delta} day${delta === 1 ? '' : 's'}`;
+  }
+
+  private mapSurveyToHomeSurvey(survey: {
+    id: string;
+    category: string;
+    title: string;
+    status: string;
+    endsAt: string;
+  }): Survey {
+    const now = new Date();
+    const endsAt = new Date(survey.endsAt);
+    const isPast = !Number.isNaN(endsAt.getTime()) && endsAt.getTime() < now.getTime();
+
+    return {
+      id: survey.id,
+      category: survey.category,
+      title: survey.title,
+      badgeLabel: this.toBadgeLabel(Number.isNaN(endsAt.getTime()) ? null : endsAt),
+      status: survey.status === 'published' && !isPast ? 'active' : 'past',
+      tone: survey.status === 'published' && !isPast ? 'base' : 'muted',
+    };
   }
 }

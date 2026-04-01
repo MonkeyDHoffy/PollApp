@@ -1,4 +1,4 @@
-import { Injectable, signal, computed } from '@angular/core';
+import { Injectable, computed, signal } from '@angular/core';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import {
   Survey,
@@ -7,14 +7,17 @@ import {
   UpdateSurveyDTO,
   SurveyResponse,
   SurveyResult,
-  SurveyStatus,
 } from '../models/survey.model';
+import { environment } from '../../../environments/environment';
 
 @Injectable({
   providedIn: 'root',
 })
 export class SurveyService {
-  private supabase: SupabaseClient;
+  private readonly supabase: SupabaseClient = createClient(
+    environment.supabaseUrl,
+    environment.supabasePublishableKey
+  );
 
   // Signals für State Management
   private allSurveysSignal = signal<Survey[]>([]);
@@ -29,6 +32,10 @@ export class SurveyService {
   readonly userResponses = this.userResponsesSignal.asReadonly();
   readonly loading = this.loadingSignal.asReadonly();
   readonly error = this.errorSignal.asReadonly();
+
+  clearError(): void {
+    this.errorSignal.set(null);
+  }
 
   // Gefilterte Listen (Computed)
   readonly activeSurveys = computed(() =>
@@ -48,62 +55,7 @@ export class SurveyService {
   );
 
   constructor() {
-    // TODO: Ersetze mit echten Supabase Credentials
-    const SUPABASE_URL = 'https://your-project.supabase.co';
-    const SUPABASE_KEY = 'your-anon-key';
-
-    this.supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
-
-    // Initialisiere mit Mock-Daten (später durch Supabase ersetzen)
-    this.initializeMockData();
-  }
-
-  /**
-   * ==================== MOCK DATA (Temporär) ====================
-   */
-  private initializeMockData(): void {
-    const mockSurveys: Survey[] = [
-      {
-        id: '1',
-        creatorId: 'user-1',
-        title: "Let's Plan the Next Team Event Together",
-        description: 'Help us plan the perfect team activities',
-        category: 'Team activities',
-        status: 'published',
-        questions: [
-          {
-            id: 'q1',
-            text: 'Which date would work best for you?',
-            type: 'multiple_choice',
-            answers: [
-              { id: 'a1', text: 'A. 19.09.2025, Friday', order: 0 },
-              { id: 'a2', text: 'B. 10.10.2025, Friday', order: 1 },
-              { id: 'a3', text: 'C. 11.10.2025, Saturday', order: 2 },
-              { id: 'a4', text: 'D. 31.10.2025, Friday', order: 3 },
-            ],
-            order: 0,
-          },
-        ],
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        endsAt: new Date(Date.now() + 86400000).toISOString(), // 1 Tage
-        totalResponses: 45,
-      },
-      {
-        id: '2',
-        creatorId: 'user-2',
-        title: 'Fit & wellness survey!',
-        category: 'Health & Wellness',
-        status: 'published',
-        questions: [],
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        endsAt: new Date(Date.now() + 2 * 86400000).toISOString(), // 2 Tage
-        totalResponses: 32,
-      },
-    ];
-
-    this.allSurveysSignal.set(mockSurveys);
+    void this.loadAllSurveys();
   }
 
   /**
@@ -118,13 +70,40 @@ export class SurveyService {
     this.errorSignal.set(null);
 
     try {
-      // TODO: Ersetze mit echtem Supabase Query
-      // const { data, error } = await this.supabase
-      //   .from('surveys')
-      //   .select('*')
-      //   .order('created_at', { ascending: false });
-      // if (error) throw error;
-      // this.allSurveysSignal.set(data);
+      const { data, error } = await this.supabase
+        .from('surveys')
+        .select(
+          `
+          id,
+          creator_id,
+          title,
+          description,
+          category,
+          status,
+          ends_at,
+          created_at,
+          updated_at,
+          survey_questions (
+            id,
+            question_text,
+            question_type,
+            allow_multiple,
+            sort_order,
+            survey_answers (
+              id,
+              answer_text,
+              sort_order
+            )
+          )
+        `
+        )
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        throw error;
+      }
+
+      this.allSurveysSignal.set((data ?? []).map((row) => this.mapSurveyRow(row)));
     } catch (err) {
       this.errorSignal.set(err instanceof Error ? err.message : 'Failed to load surveys');
     } finally {
@@ -140,14 +119,41 @@ export class SurveyService {
     this.errorSignal.set(null);
 
     try {
-      // TODO: Ersetze mit echtem Supabase Query
-      // const { data, error } = await this.supabase
-      //   .from('surveys')
-      //   .select('*')
-      //   .eq('id', surveyId)
-      //   .single();
-      // if (error) throw error;
-      // this.currentSurveySignal.set(data);
+      const { data, error } = await this.supabase
+        .from('surveys')
+        .select(
+          `
+          id,
+          creator_id,
+          title,
+          description,
+          category,
+          status,
+          ends_at,
+          created_at,
+          updated_at,
+          survey_questions (
+            id,
+            question_text,
+            question_type,
+            allow_multiple,
+            sort_order,
+            survey_answers (
+              id,
+              answer_text,
+              sort_order
+            )
+          )
+        `
+        )
+        .eq('id', surveyId)
+        .single();
+
+      if (error) {
+        throw error;
+      }
+
+      this.currentSurveySignal.set(this.mapSurveyRow(data));
     } catch (err) {
       this.errorSignal.set(err instanceof Error ? err.message : 'Failed to load survey');
     } finally {
@@ -163,16 +169,74 @@ export class SurveyService {
     this.errorSignal.set(null);
 
     try {
-      // TODO: Ersetze mit echtem Supabase Insert
-      // const { data, error } = await this.supabase
-      //   .from('surveys')
-      //   .insert([surveyData])
-      //   .select()
-      //   .single();
-      // if (error) throw error;
-      // this.allSurveysSignal.update((surveys) => [...surveys, data]);
-      // return data.id;
-      return null;
+      const {
+        data: { user },
+        error: userError,
+      } = await this.supabase.auth.getUser();
+
+      if (userError) {
+        throw userError;
+      }
+
+      if (!user) {
+        throw new Error('Please log in before creating a survey.');
+      }
+
+      const { data: createdSurvey, error: surveyInsertError } = await this.supabase
+        .from('surveys')
+        .insert({
+          creator_id: user.id,
+          title: surveyData.title,
+          description: surveyData.description ?? null,
+          category: surveyData.category,
+          status: surveyData.status ?? 'published',
+          ends_at: surveyData.endsAt ?? null,
+        })
+        .select('id')
+        .single();
+
+      if (surveyInsertError) {
+        throw surveyInsertError;
+      }
+
+      for (let questionIndex = 0; questionIndex < surveyData.questions.length; questionIndex++) {
+        const question = surveyData.questions[questionIndex];
+
+        const { data: createdQuestion, error: questionInsertError } = await this.supabase
+          .from('survey_questions')
+          .insert({
+            survey_id: createdSurvey.id,
+            question_text: question.text,
+            question_type: question.type,
+            allow_multiple: question.allowMultiple ?? false,
+            sort_order: questionIndex,
+          })
+          .select('id')
+          .single();
+
+        if (questionInsertError) {
+          throw questionInsertError;
+        }
+
+        if (question.answers.length > 0) {
+          const answerRows = question.answers.map((answer, answerIndex) => ({
+            question_id: createdQuestion.id,
+            answer_text: answer.text,
+            sort_order: answerIndex,
+          }));
+
+          const { error: answersInsertError } = await this.supabase
+            .from('survey_answers')
+            .insert(answerRows);
+
+          if (answersInsertError) {
+            throw answersInsertError;
+          }
+        }
+      }
+
+      await this.loadAllSurveys();
+      return createdSurvey.id;
     } catch (err) {
       this.errorSignal.set(err instanceof Error ? err.message : 'Failed to create survey');
       return null;
@@ -322,6 +386,42 @@ export class SurveyService {
       badgeLabel: `Ends in ${daysUntilEnd} day${daysUntilEnd !== 1 ? 's' : ''}`,
       status: survey.status,
       tone: survey.status === 'published' ? 'base' : 'muted',
+    };
+  }
+
+  private mapSurveyRow(row: any): Survey {
+    const questionRows = Array.isArray(row.survey_questions) ? row.survey_questions : [];
+
+    return {
+      id: row.id,
+      creatorId: row.creator_id,
+      title: row.title,
+      description: row.description ?? undefined,
+      category: row.category,
+      status: row.status,
+      questions: questionRows
+        .sort((a: any, b: any) => a.sort_order - b.sort_order)
+        .map((question: any) => {
+          const answerRows = Array.isArray(question.survey_answers) ? question.survey_answers : [];
+          return {
+            id: question.id,
+            text: question.question_text,
+            type: question.question_type,
+            allowMultiple: question.allow_multiple,
+            order: question.sort_order,
+            answers: answerRows
+              .sort((a: any, b: any) => a.sort_order - b.sort_order)
+              .map((answer: any) => ({
+                id: answer.id,
+                text: answer.answer_text,
+                order: answer.sort_order,
+              })),
+          };
+        }),
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+      endsAt: row.ends_at ?? row.created_at,
+      totalResponses: 0,
     };
   }
 }

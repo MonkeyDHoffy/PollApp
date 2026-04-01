@@ -60,7 +60,8 @@ export interface CreateSurveyDTO {
   title: string;
   description?: string;
   category: string;
-  endsAt: string;
+  endsAt?: string;
+  status?: SurveyStatus;
   questions: {
     text: string;
     type: 'multiple_choice' | 'checkboxes';
