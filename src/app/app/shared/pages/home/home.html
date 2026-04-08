@@ -87,7 +87,8 @@
             </div>
 
             <!-- Survey list -->
-            <app-survey-list-view [items]="filteredSurveys()" heading="Survey view in the list" />
+            <app-survey-list-view [items]="filteredSurveys()" heading="Survey view in the list"
+                (surveySelected)="openSurvey($event)" />
         </section>
     </div>
 

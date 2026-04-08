@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 
 type SurveyListTone = 'base' | 'muted';
 
@@ -41,6 +41,7 @@ export class SurveyListViewComponent {
       tone: 'muted',
     },
   ]);
+  readonly surveySelected = output<string>();
 
   protected readonly rows = computed<SurveyListRow[]>(() =>
     this.items().map((item, index) => ({
@@ -51,4 +52,12 @@ export class SurveyListViewComponent {
       tone: item.tone ?? 'base',
     }))
   );
+
+  protected onSelect(row: SurveyListRow): void {
+    if (row.tone === 'muted') {
+      return;
+    }
+
+    this.surveySelected.emit(row.id);
+  }
 }

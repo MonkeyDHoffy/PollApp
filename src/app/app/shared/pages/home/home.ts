@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { Router } from '@angular/router';
 import {
   FormArray,
   FormBuilder,
@@ -44,6 +45,7 @@ export class HomeComponent {
   private readonly fb = inject(FormBuilder);
   private readonly surveyService = inject(SurveyService);
   private readonly authService = inject(AuthService);
+  private readonly router = inject(Router);
 
   // State signals
   protected readonly selectedStatus = signal<SurveyStatus>('all');
@@ -232,6 +234,10 @@ export class HomeComponent {
 
   protected answerLabel(index: number): string {
     return String.fromCharCode(65 + index);
+  }
+
+  protected openSurvey(surveyId: string): void {
+    void this.router.navigate(['/survey', surveyId]);
   }
 
   private buildQuestionGroup(): FormGroup {

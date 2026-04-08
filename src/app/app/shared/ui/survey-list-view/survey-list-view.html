@@ -3,7 +3,8 @@
 
     <div class="survey-list-view__frame">
         @for (row of rows(); track row.id) {
-        <article class="survey-list-view__item" [class.survey-list-view__item--muted]="row.tone === 'muted'">
+        <article class="survey-list-view__item" [class.survey-list-view__item--muted]="row.tone === 'muted'"
+            [class.survey-list-view__item--clickable]="row.tone !== 'muted'" (click)="onSelect(row)">
             <p class="survey-list-view__category">{{ row.category }}</p>
             <h3 class="survey-list-view__title">{{ row.title }}</h3>
             <p class="survey-list-view__badge">{{ row.badgeLabel }}</p>

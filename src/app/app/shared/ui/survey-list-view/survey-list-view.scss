@@ -66,6 +66,15 @@
   gap: 9px;
 }
 
+.survey-list-view__item--clickable {
+  cursor: pointer;
+  transition: transform 0.18s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+  }
+}
+
 .survey-list-view__item--muted {
   background: #605468;
 }

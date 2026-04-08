@@ -1,0 +1,15 @@
+<section class="survey-detail">
+    <a routerLink="/" class="survey-detail__back">Back to Home</a>
+
+    @if (loading()) {
+    <p class="survey-detail__state">Loading survey...</p>
+    } @else if (error()) {
+    <p class="survey-detail__state survey-detail__state--error">{{ error() }}</p>
+    } @else if (survey()) {
+    <h1 class="survey-detail__title">{{ survey()?.title }}</h1>
+    <p class="survey-detail__meta">Category: {{ survey()?.category }}</p>
+    <p class="survey-detail__meta">Questions: {{ survey()?.questions?.length }}</p>
+    } @else {
+    <p class="survey-detail__state">Survey not found.</p>
+    }
+</section>
