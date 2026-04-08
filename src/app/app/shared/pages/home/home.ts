@@ -13,6 +13,7 @@ import { SurveyListViewComponent } from '../../ui/survey-list-view/survey-list-v
 import { DropdownMenuComponent } from '../../ui/dropdown-menu/dropdown-menu';
 import { SurveyService } from '../../../../shared/services/survey.service';
 import { CreateSurveyDTO } from '../../../../shared/models/survey.model';
+import { AuthService } from '../../../../shared/services/auth.service';
 
 type SurveyStatus = 'active' | 'past' | 'all';
 type CategoryFilter = string | 'all';
@@ -42,6 +43,7 @@ type Survey = {
 export class HomeComponent {
   private readonly fb = inject(FormBuilder);
   private readonly surveyService = inject(SurveyService);
+  private readonly authService = inject(AuthService);
 
   // State signals
   protected readonly selectedStatus = signal<SurveyStatus>('all');
@@ -50,6 +52,15 @@ export class HomeComponent {
   protected readonly submitAttempted = signal(false);
   protected readonly createError = computed(() => this.surveyService.error());
   protected readonly createLoading = computed(() => this.surveyService.loading());
+  protected readonly authUser = computed(() => this.authService.user());
+  protected readonly authLoading = computed(() => this.authService.loading());
+  protected readonly authError = computed(() => this.authService.error());
+  protected readonly authMessage = computed(() => this.authService.message());
+
+  protected readonly authEmailControl = this.fb.nonNullable.control('', [
+    Validators.required,
+    Validators.email,
+  ]);
 
   protected readonly createSurveyForm = this.fb.group({
     title: this.fb.nonNullable.control('', [Validators.required, Validators.maxLength(120)]),
@@ -121,6 +132,20 @@ export class HomeComponent {
     this.surveyService.clearError();
     this.submitAttempted.set(false);
     this.createSurveyOpen.set(true);
+  }
+
+  protected async sendMagicLink(): Promise<void> {
+    this.authEmailControl.markAsTouched();
+    if (this.authEmailControl.invalid) {
+      return;
+    }
+
+    const email = this.authEmailControl.value.trim();
+    await this.authService.sendMagicLink(email);
+  }
+
+  protected async signOut(): Promise<void> {
+    await this.authService.signOut();
   }
 
   protected closeCreateSurveyModal(): void {

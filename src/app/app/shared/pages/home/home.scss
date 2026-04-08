@@ -23,15 +23,79 @@
 
 // Header with logo
 .home__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 20px;
   margin-bottom: 60px;
 
   @media (max-width: 768px) {
+    flex-direction: column;
+    align-items: stretch;
     margin-bottom: 40px;
   }
 
   @media (max-width: 480px) {
     margin-bottom: 32px;
   }
+}
+
+.home__auth {
+  display: grid;
+  gap: 8px;
+  max-width: 360px;
+}
+
+.home__auth-login {
+  display: flex;
+  gap: 8px;
+
+  input {
+    flex: 1;
+    border: 0;
+    border-top-right-radius: 10px;
+    min-height: 36px;
+    padding: 8px 10px;
+    background: #efedf2;
+    color: #2f2437;
+    font: 600 13px/1.2 'Mulish', sans-serif;
+  }
+}
+
+.home__auth-btn {
+  border: 0;
+  background: #f4c183;
+  color: #2c1e28;
+  min-height: 36px;
+  padding: 0 12px;
+  border-top-right-radius: 10px;
+  cursor: pointer;
+  font: 700 13px/1 'Mulish', sans-serif;
+
+  &:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+  }
+}
+
+.home__auth-user {
+  margin: 0;
+  color: #f5f0fb;
+  font: 700 13px/1.2 'Mulish', sans-serif;
+}
+
+.home__auth-error,
+.home__auth-message {
+  margin: 0;
+  font: 700 12px/1.3 'Mulish', sans-serif;
+}
+
+.home__auth-error {
+  color: #ffd6d6;
+}
+
+.home__auth-message {
+  color: #f8d8ac;
 }
 
 .home__logo {

@@ -3,6 +3,29 @@
         <!-- Logo header -->
         <header class="home__header">
             <img src="/assets/logo/Property 1=Orange.png" alt="PollApp Logo" class="home__logo" />
+
+            <div class="home__auth">
+                @if (authUser()) {
+                <p class="home__auth-user">{{ authUser()?.email }}</p>
+                <button type="button" class="home__auth-btn" (click)="signOut()" [disabled]="authLoading()">
+                    {{ authLoading() ? '...' : 'Sign out' }}
+                </button>
+                } @else {
+                <div class="home__auth-login">
+                    <input type="email" [formControl]="authEmailControl" placeholder="your@email.com" />
+                    <button type="button" class="home__auth-btn" (click)="sendMagicLink()" [disabled]="authLoading()">
+                        {{ authLoading() ? 'Sending...' : 'Magic Link' }}
+                    </button>
+                </div>
+                }
+
+                @if (authError()) {
+                <p class="home__auth-error">{{ authError() }}</p>
+                }
+                @if (authMessage()) {
+                <p class="home__auth-message">{{ authMessage() }}</p>
+                }
+            </div>
         </header>
 
         <!-- Hero section -->
