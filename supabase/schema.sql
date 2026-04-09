@@ -101,7 +101,7 @@ create policy "surveys_select_published_or_own"
 on public.surveys
 for select
 using (
-  status = 'published'
+  (status = 'published' and visibility = 'public')
   or auth.uid() = creator_id
 );
 
@@ -141,7 +141,10 @@ using (
     select 1
     from public.surveys s
     where s.id = survey_id
-      and (s.status = 'published' or s.creator_id = auth.uid())
+      and (
+        (s.status = 'published' and s.visibility = 'public')
+        or s.creator_id = auth.uid()
+      )
   )
 );
 
@@ -202,7 +205,10 @@ using (
     from public.survey_questions q
     join public.surveys s on s.id = q.survey_id
     where q.id = question_id
-      and (s.status = 'published' or s.creator_id = auth.uid())
+      and (
+        (s.status = 'published' and s.visibility = 'public')
+        or s.creator_id = auth.uid()
+      )
   )
 );
 
@@ -281,6 +287,7 @@ with check (
     from public.surveys s
     where s.id = survey_id
       and s.status = 'published'
+      and s.visibility = 'public'
   )
 );
 
@@ -312,5 +319,6 @@ with check (
     join public.surveys s on s.id = r.survey_id
     where r.id = response_id
       and s.status = 'published'
+      and s.visibility = 'public'
   )
 );
