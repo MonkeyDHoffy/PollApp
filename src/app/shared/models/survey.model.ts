@@ -87,6 +87,11 @@ export interface UpdateSurveyDTO {
   accessCode?: string;
 }
 
+export interface CreateSurveyResult {
+  id: string;
+  shareToken?: string;
+}
+
 /**
  * UI-spezifische Modelle
  */

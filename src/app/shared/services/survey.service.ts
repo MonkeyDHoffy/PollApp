@@ -3,6 +3,7 @@ import {
   Survey,
   SurveyListItem,
   CreateSurveyDTO,
+  CreateSurveyResult,
   UpdateSurveyDTO,
   SurveyResponse,
   SurveyResult,
@@ -237,7 +238,7 @@ export class SurveyService {
   /**
    * Neue Umfrage erstellen
    */
-  async createSurvey(surveyData: CreateSurveyDTO): Promise<string | null> {
+  async createSurvey(surveyData: CreateSurveyDTO): Promise<CreateSurveyResult | null> {
     this.loadingSignal.set(true);
     this.errorSignal.set(null);
 
@@ -312,7 +313,10 @@ export class SurveyService {
       }
 
       await this.loadAllSurveys();
-      return createdSurvey.id;
+      return {
+        id: createdSurvey.id,
+        shareToken: createdSurvey.share_token ?? undefined,
+      };
     } catch (err) {
       this.errorSignal.set(err instanceof Error ? err.message : 'Failed to create survey');
       return null;

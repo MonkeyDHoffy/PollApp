@@ -167,6 +167,21 @@
                             }
                         </select>
                     </label>
+
+                    <label class="create-survey-modal__field">
+                        <span>Visibility</span>
+                        <select formControlName="visibility">
+                            <option value="public">Public</option>
+                            <option value="private">Private</option>
+                        </select>
+                    </label>
+
+                    @if (isPrivateSurvey()) {
+                    <label class="create-survey-modal__field">
+                        <span>Access code for private survey</span>
+                        <input type="text" formControlName="accessCode" placeholder="e.g. TEAM2026" />
+                    </label>
+                    }
                 </div>
 
                 <div class="create-survey-modal__questions" formArrayName="questions">
@@ -219,8 +234,20 @@
                     <p class="create-survey-modal__error">Bitte Pflichtfelder ausfuellen (Titel, Kategorie, Fragen,
                         Antworten).</p>
                     }
+                    @if (submitAttempted() && isPrivateSurvey() && !createSurveyForm.controls.accessCode.value.trim()) {
+                    <p class="create-survey-modal__error">Bitte Access code fuer private Umfragen setzen.</p>
+                    }
                     @if (createError()) {
                     <p class="create-survey-modal__error">{{ createError() }}</p>
+                    }
+                    @if (publishSuccessMessage()) {
+                    <p class="create-survey-modal__success">{{ publishSuccessMessage() }}</p>
+                    }
+                    @if (publishedShareLink()) {
+                    <div class="create-survey-modal__share-box">
+                        <input type="text" [value]="publishedShareLink()" readonly />
+                        <button type="button" class="create-survey-modal__secondary" (click)="copyPublishedShareLink()">Copy link</button>
+                    </div>
                     }
                     <button type="button" class="create-survey-modal__secondary" (click)="addQuestion()">Add next
                         question</button>

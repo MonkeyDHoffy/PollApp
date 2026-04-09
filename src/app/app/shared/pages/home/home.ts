@@ -57,6 +57,8 @@ export class HomeComponent {
   protected readonly isDemoMode = signal(this.route.snapshot.routeConfig?.path === 'demo');
   protected readonly canViewSurveys = computed(() => this.isDemoMode() || !!this.authUser());
   protected readonly canCreateSurvey = computed(() => !!this.authUser());
+  protected readonly publishedShareLink = signal<string | null>(null);
+  protected readonly publishSuccessMessage = signal<string | null>(null);
   protected readonly guestModeLabel = computed(() =>
     this.isDemoMode() ? 'Gastmodus beenden' : 'Gastmodus'
   );
@@ -77,6 +79,8 @@ export class HomeComponent {
     description: this.fb.nonNullable.control('', [Validators.maxLength(300)]),
     endDate: this.fb.nonNullable.control(''),
     category: this.fb.nonNullable.control('', [Validators.required]),
+    visibility: this.fb.nonNullable.control<'public' | 'private'>('public'),
+    accessCode: this.fb.nonNullable.control('', [Validators.maxLength(40)]),
     questions: this.fb.array([this.buildQuestionGroup()]),
   });
 
@@ -166,6 +170,8 @@ export class HomeComponent {
 
     this.surveyService.clearError();
     this.submitAttempted.set(false);
+    this.publishedShareLink.set(null);
+    this.publishSuccessMessage.set(null);
     this.createSurveyOpen.set(true);
   }
 
@@ -186,9 +192,15 @@ export class HomeComponent {
   protected closeCreateSurveyModal(): void {
     this.surveyService.clearError();
     this.submitAttempted.set(false);
+    this.publishedShareLink.set(null);
+    this.publishSuccessMessage.set(null);
     this.createSurveyOpen.set(false);
     this.resetCreateSurveyForm();
   }
+
+  protected readonly isPrivateSurvey = computed(
+    () => this.createSurveyForm.controls.visibility.value === 'private'
+  );
 
   protected get questionsArray(): FormArray {
     return this.createSurveyForm.controls.questions as FormArray;
@@ -234,6 +246,14 @@ export class HomeComponent {
     const description = this.createSurveyForm.controls.description.value.trim();
     const category = this.createSurveyForm.controls.category.value.trim();
     const endDateRaw = this.createSurveyForm.controls.endDate.value.trim();
+    const visibility = this.createSurveyForm.controls.visibility.value;
+    const accessCode = this.createSurveyForm.controls.accessCode.value.trim();
+
+    if (visibility === 'private' && !accessCode) {
+      this.surveyService.clearError();
+      this.submitAttempted.set(true);
+      return;
+    }
 
     const dto: CreateSurveyDTO = {
       title,
@@ -241,6 +261,8 @@ export class HomeComponent {
       category: category || 'General',
       endsAt: endDateRaw ? new Date(endDateRaw).toISOString() : undefined,
       status: 'published',
+      visibility,
+      accessCode: visibility === 'private' ? accessCode : undefined,
       questions: this.questionsArray.controls.map((questionControl) => {
         const questionText = (questionControl.get('questionText')?.value as string).trim();
         const allowMultiple = !!questionControl.get('allowMultiple')?.value;
@@ -257,12 +279,37 @@ export class HomeComponent {
       }),
     };
 
-    const surveyId = await this.surveyService.createSurvey(dto);
-    if (!surveyId) {
+    const created = await this.surveyService.createSurvey(dto);
+    if (!created) {
       return;
     }
 
-    this.closeCreateSurveyModal();
+    const shareToken = created.shareToken;
+    const shareLink =
+      shareToken && typeof window !== 'undefined'
+        ? `${window.location.origin}/join/${shareToken}`
+        : null;
+
+    this.publishedShareLink.set(shareLink);
+    this.publishSuccessMessage.set(
+      visibility === 'private'
+        ? 'Private survey published. Share this link with the access code.'
+        : 'Survey published. Share this link with participants.'
+    );
+  }
+
+  protected async copyPublishedShareLink(): Promise<void> {
+    const link = this.publishedShareLink();
+    if (!link || typeof navigator === 'undefined' || !navigator.clipboard) {
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(link);
+      this.publishSuccessMessage.set('Share link copied to clipboard.');
+    } catch {
+      this.publishSuccessMessage.set('Could not copy link automatically.');
+    }
   }
 
   protected answerLabel(index: number): string {
@@ -295,6 +342,8 @@ export class HomeComponent {
       description: '',
       endDate: '',
       category: '',
+      visibility: 'public',
+      accessCode: '',
     });
     this.createSurveyForm.setControl('questions', this.fb.array([this.buildQuestionGroup()]));
   }

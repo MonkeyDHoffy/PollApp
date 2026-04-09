@@ -654,6 +654,31 @@
   }
 }
 
+.create-survey-modal__success {
+  margin: 0;
+  color: #bfe2c8;
+  font: 700 13px/1.35 'Mulish', sans-serif;
+}
+
+.create-survey-modal__share-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: min(100%, 520px);
+
+  input {
+    flex: 1;
+    min-width: 0;
+    border: 0;
+    border-radius: 10px;
+    min-height: 36px;
+    padding: 8px 10px;
+    background: #efedf2;
+    color: #2f2437;
+    font: 600 13px/1.2 'Mulish', sans-serif;
+  }
+}
+
 .create-survey-modal__checkbox-row {
   display: inline-flex;
   align-items: center;
