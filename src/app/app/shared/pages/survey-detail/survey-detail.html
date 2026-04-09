@@ -7,6 +7,16 @@
 
         @if (loading()) {
         <p class="survey-detail__state">Loading survey...</p>
+        } @else if (accessCodeRequired()) {
+        <div class="survey-detail__access-panel">
+            <p class="survey-detail__state survey-detail__state--error">{{ error() }}</p>
+            <label>
+                Access code
+                <input type="text" [value]="accessCode()" (input)="updateAccessCode($any($event.target).value)"
+                    placeholder="Enter access code" />
+            </label>
+            <app-button label="Unlock survey" variant="primary" (pressed)="applyAccessCode()" />
+        </div>
         } @else if (error()) {
         <p class="survey-detail__state survey-detail__state--error">{{ error() }}</p>
         } @else if (survey()) {

@@ -29,6 +29,7 @@ export class SurveyDetailComponent {
   private readonly surveyService = inject(SurveyService);
   private readonly surveyId = this.route.snapshot.paramMap.get('id');
   private readonly joinToken = this.route.snapshot.paramMap.get('token');
+  private readonly joinCode = this.route.snapshot.queryParamMap.get('code');
 
   protected readonly survey = computed(() => this.surveyService.currentSurvey());
   protected readonly loading = computed(() => this.surveyService.loading());
@@ -37,6 +38,8 @@ export class SurveyDetailComponent {
   protected readonly submitted = signal(false);
   protected readonly submitting = signal(false);
   protected readonly submitMessage = signal<string | null>(null);
+  protected readonly accessCode = signal('');
+  protected readonly accessCodeRequired = signal(false);
   protected readonly selectedAnswers = signal<Record<string, string[]>>({});
   protected readonly liveResults = signal<SurveyResult[]>([]);
   protected readonly isDemoSurvey = computed(() => (this.survey()?.id ?? '').startsWith('demo-'));
@@ -111,7 +114,7 @@ export class SurveyDetailComponent {
     }
 
     if (this.joinToken) {
-      void this.loadSurveyByJoinToken(this.joinToken);
+      void this.loadSurveyByJoinToken(this.joinToken, this.joinCode ?? undefined);
     }
   }
 
@@ -202,6 +205,23 @@ export class SurveyDetailComponent {
     this.resultsOpen.update((value) => !value);
   }
 
+  protected updateAccessCode(value: string): void {
+    this.accessCode.set(value);
+  }
+
+  protected applyAccessCode(): void {
+    if (!this.joinToken) {
+      return;
+    }
+
+    const code = this.accessCode().trim();
+    if (!code) {
+      return;
+    }
+
+    void this.loadSurveyByJoinToken(this.joinToken, code);
+  }
+
   private optionLabel(index: number): string {
     return String.fromCharCode(65 + index);
   }
@@ -216,8 +236,14 @@ export class SurveyDetailComponent {
     this.liveResults.set(results);
   }
 
-  private async loadSurveyByJoinToken(joinToken: string): Promise<void> {
-    await this.surveyService.loadSurveyByShareToken(joinToken);
+  private async loadSurveyByJoinToken(joinToken: string, accessCode?: string): Promise<void> {
+    const loaded = await this.surveyService.loadSurveyByShareToken(joinToken, accessCode);
+    if (!loaded) {
+      this.accessCodeRequired.set(this.error() === 'Access code required.' || this.error() === 'Invalid access code.');
+      return;
+    }
+
+    this.accessCodeRequired.set(false);
     const surveyId = this.survey()?.id;
     if (!surveyId) {
       return;

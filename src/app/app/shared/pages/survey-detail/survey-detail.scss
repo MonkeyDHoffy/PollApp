@@ -237,6 +237,29 @@
   color: #a33a3a;
 }
 
+.survey-detail__access-panel {
+  display: grid;
+  gap: 10px;
+  max-width: 360px;
+
+  label {
+    display: grid;
+    gap: 6px;
+    color: #4d4157;
+    font: 700 13px/1.2 'Mulish', sans-serif;
+  }
+
+  input {
+    border: 0;
+    border-radius: 10px;
+    min-height: 36px;
+    padding: 8px 10px;
+    background: #efedf2;
+    color: #2f2437;
+    font: 600 14px/1.2 'Mulish', sans-serif;
+  }
+}
+
 @media (max-width: 980px) {
   .survey-detail {
     padding: 14px;

@@ -21,6 +21,8 @@ export class SurveyService {
   private currentSurveySignal = signal<Survey | null>(null);
   private userResponsesSignal = signal<SurveyResponse[]>([]);
   private demoResultsSignal = signal<Record<string, SurveyResult[]>>(this.buildDemoResultsState());
+  private sharedResultsSignal = signal<Record<string, SurveyResult[]>>({});
+  private shareAccessCodeSignal = signal<Record<string, string>>({});
   private loadingSignal = signal(false);
   private errorSignal = signal<string | null>(null);
 
@@ -186,52 +188,47 @@ export class SurveyService {
     }
   }
 
-  async loadSurveyByShareToken(shareToken: string): Promise<void> {
+  async loadSurveyByShareToken(shareToken: string, accessCode?: string): Promise<boolean> {
     this.loadingSignal.set(true);
     this.errorSignal.set(null);
 
     try {
-      const { data, error } = await this.supabase
-        .from('surveys')
-        .select(
-          `
-          id,
-          creator_id,
-          title,
-          description,
-          category,
-          status,
-          visibility,
-          share_token,
-          access_code,
-          ends_at,
-          created_at,
-          updated_at,
-          survey_questions (
-            id,
-            question_text,
-            question_type,
-            allow_multiple,
-            sort_order,
-            survey_answers (
-              id,
-              answer_text,
-              sort_order
-            )
-          )
-        `
-        )
-        .eq('share_token', shareToken)
-        .eq('status', 'published')
-        .single();
+      const participantToken = this.ensureParticipantToken(`share-${shareToken}`);
+      const { data, error } = await this.supabase.functions.invoke('survey-access', {
+        body: {
+          shareToken,
+          accessCode,
+          participantToken,
+        },
+      });
 
       if (error) {
-        throw error;
+        throw new Error(error.message || 'Failed to load survey');
       }
 
-      this.currentSurveySignal.set(this.mapSurveyRow(data));
+      if (!data?.survey) {
+        throw new Error('SURVEY_NOT_FOUND');
+      }
+
+      if (accessCode) {
+        this.shareAccessCodeSignal.update((state) => ({
+          ...state,
+          [shareToken]: accessCode,
+        }));
+      }
+
+      this.currentSurveySignal.set(this.mapSharedSurvey(data.survey));
+      const surveyId = data.survey.id as string;
+      this.sharedResultsSignal.update((state) => ({
+        ...state,
+        [surveyId]: Array.isArray(data.results) ? data.results : [],
+      }));
+
+      return true;
     } catch (err) {
-      this.errorSignal.set(err instanceof Error ? err.message : 'Failed to load survey');
+      const message = err instanceof Error ? err.message : 'Failed to load survey';
+      this.errorSignal.set(this.normalizeShareError(message));
+      return false;
     } finally {
       this.loadingSignal.set(false);
     }
@@ -391,6 +388,37 @@ export class SurveyService {
         return true;
       }
 
+      const currentSurvey = this.currentSurveySignal();
+      if (currentSurvey?.visibility === 'private' && currentSurvey.shareToken) {
+        const participantToken = this.ensureParticipantToken(`share-${currentSurvey.shareToken}`);
+        const accessCode = this.shareAccessCodeSignal()[currentSurvey.shareToken] ?? undefined;
+
+        const { error } = await this.supabase.functions.invoke('survey-submit', {
+          body: {
+            shareToken: currentSurvey.shareToken,
+            accessCode,
+            participantToken,
+            answers: response.answers,
+          },
+        });
+
+        if (error) {
+          throw new Error(error.message || 'Failed to submit response');
+        }
+
+        this.userResponsesSignal.update((responses) => [
+          ...responses,
+          {
+            ...response,
+            participantToken,
+            id: `shared-${Date.now()}`,
+            respondedAt: new Date().toISOString(),
+          },
+        ]);
+
+        return true;
+      }
+
       const {
         data: { user },
         error: userError,
@@ -444,12 +472,18 @@ export class SurveyService {
 
       return true;
     } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to submit response';
+      if (message.includes('ALREADY_SUBMITTED')) {
+        this.errorSignal.set('You already submitted this survey.');
+        return false;
+      }
+
       if (typeof err === 'object' && err && 'code' in err && err.code === '23505') {
         this.errorSignal.set('You already submitted this survey.');
         return false;
       }
 
-      this.errorSignal.set(err instanceof Error ? err.message : 'Failed to submit response');
+      this.errorSignal.set(message);
       return false;
     } finally {
       this.loadingSignal.set(false);
@@ -478,6 +512,11 @@ export class SurveyService {
   async loadSurveyResults(surveyId: string): Promise<SurveyResult[]> {
     if (this.isDemoSurveyId(surveyId)) {
       return this.cloneResults(this.demoResultsSignal()[surveyId] ?? []);
+    }
+
+    const sharedResults = this.sharedResultsSignal()[surveyId];
+    if (sharedResults) {
+      return this.cloneResults(sharedResults);
     }
 
     try {
@@ -757,5 +796,59 @@ export class SurveyService {
     }
 
     return token;
+  }
+
+  private mapSharedSurvey(survey: any): Survey {
+    return {
+      id: survey.id,
+      creatorId: survey.creatorId,
+      title: survey.title,
+      description: survey.description ?? undefined,
+      category: survey.category,
+      status: survey.status,
+      visibility: survey.visibility,
+      shareToken: survey.shareToken ?? undefined,
+      accessCode: undefined,
+      questions: Array.isArray(survey.questions)
+        ? survey.questions.map((question: any) => ({
+            id: question.id,
+            text: question.text,
+            type: question.type,
+            allowMultiple: !!question.allowMultiple,
+            order: question.order,
+            answers: Array.isArray(question.answers)
+              ? question.answers.map((answer: any) => ({
+                  id: answer.id,
+                  text: answer.text,
+                  order: answer.order,
+                }))
+              : [],
+          }))
+        : [],
+      createdAt: survey.createdAt,
+      updatedAt: survey.updatedAt,
+      endsAt: survey.endsAt,
+      totalResponses: survey.totalResponses ?? 0,
+    };
+  }
+
+  private normalizeShareError(message: string): string {
+    if (message.includes('ACCESS_CODE_REQUIRED')) {
+      return 'Access code required.';
+    }
+
+    if (message.includes('INVALID_ACCESS_CODE')) {
+      return 'Invalid access code.';
+    }
+
+    if (message.includes('SURVEY_CLOSED')) {
+      return 'This survey is already closed.';
+    }
+
+    if (message.includes('SURVEY_NOT_FOUND')) {
+      return 'Survey not found.';
+    }
+
+    return message;
   }
 }
