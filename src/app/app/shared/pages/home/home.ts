@@ -21,6 +21,7 @@ type CategoryFilter = string | 'all';
 
 type Survey = {
   id: string;
+  creatorId: string;
   category: string;
   title: string;
   badgeLabel: string;
@@ -86,6 +87,23 @@ export class HomeComponent {
     ).map((survey) => this.mapSurveyToHomeSurvey(survey))
   );
 
+  protected readonly mySurveys = computed(() => {
+    const userId = this.authUser()?.id;
+    if (!userId || this.isDemoMode()) {
+      return [] as Survey[];
+    }
+
+    return this.allSurveys().filter((survey) => survey.creatorId === userId);
+  });
+
+  protected readonly publicSurveys = computed(() => {
+    if (this.isDemoMode()) {
+      return this.allSurveys();
+    }
+
+    return this.allSurveys().filter((survey) => survey.tone === 'base');
+  });
+
   // Categories for dropdown
   protected readonly categories = [
     'Team Activities',
@@ -98,14 +116,14 @@ export class HomeComponent {
 
   // Computed: Ending soon surveys (erste 3 active)
   protected readonly endingSoonSurveys = computed(() =>
-    this.allSurveys()
+    this.publicSurveys()
       .filter((s) => s.status === 'active')
       .slice(0, 3)
   );
 
   // Computed: Filtered surveys based on selected status and category
   protected readonly filteredSurveys = computed(() => {
-    let filtered = this.allSurveys();
+    let filtered = this.publicSurveys();
 
     // Filter nach Status
     if (this.selectedStatus() !== 'all') {
@@ -296,6 +314,7 @@ export class HomeComponent {
 
   private mapSurveyToHomeSurvey(survey: {
     id: string;
+    creatorId: string;
     category: string;
     title: string;
     status: string;
@@ -307,6 +326,7 @@ export class HomeComponent {
 
     return {
       id: survey.id,
+      creatorId: survey.creatorId,
       category: survey.category,
       title: survey.title,
       badgeLabel: this.toBadgeLabel(Number.isNaN(endsAt.getTime()) ? null : endsAt),

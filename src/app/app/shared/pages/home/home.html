@@ -82,9 +82,17 @@
         <section class="surveys">
             <h2 class="surveys__title">Your surveys</h2>
 
+            @if (!isDemoMode()) {
+            <div class="surveys__my-block">
+                <h3 class="surveys__subtitle">My surveys</h3>
+                <app-survey-list-view [items]="mySurveys()" heading="My surveys"
+                    (surveySelected)="openSurvey($event)" />
+            </div>
+            }
+
             <!-- Ending soon surveys -->
             <div class="surveys__ending-soon">
-                <h3 class="surveys__subtitle">Ending soon surveys</h3>
+                <h3 class="surveys__subtitle">{{ isDemoMode() ? 'Ending soon surveys' : 'Public surveys (ending soon)' }}</h3>
                 <div class="surveys__highlight-grid">
                     @for (survey of endingSoonSurveys(); track survey.id) {
                     <app-highlight-card [category]="survey.category" [title]="survey.title"
@@ -111,7 +119,8 @@
             </div>
 
             <!-- Survey list -->
-            <app-survey-list-view [items]="filteredSurveys()" heading="Survey view in the list"
+            <app-survey-list-view [items]="filteredSurveys()"
+                [heading]="isDemoMode() ? 'Survey view in the list' : 'Public surveys'"
                 (surveySelected)="openSurvey($event)" />
         </section>
         }
