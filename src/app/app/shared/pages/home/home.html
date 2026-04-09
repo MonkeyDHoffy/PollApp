@@ -7,7 +7,7 @@
             <div class="home__auth">
                 <div class="home__auth-top-row">
                     <div class="home__demo-entry">
-                        <app-button label="Gastmodus" variant="secondary" (pressed)="openDemo()" />
+                        <app-button [label]="guestModeLabel()" variant="secondary" (pressed)="openDemo()" />
                         <p class="home__demo-tooltip">Vorgefertigte Umfragen direkt ansehen und beantworten.
                         </p>
                     </div>
@@ -51,8 +51,12 @@
                     </p>
                     <div class="hero__actions">
                         <app-button label="New survey" variant="primary" primaryStyle="base"
+                            [disabled]="!canCreateSurvey()"
                             (pressed)="openCreateSurveyModal()" />
                     </div>
+                    @if (!canCreateSurvey() && !isDemoMode()) {
+                    <p class="hero__login-hint">Log in oder aktiviere den Gastmodus, um Umfragen zu sehen oder zu erstellen.</p>
+                    }
                 </div>
 
                 <div class="hero__visuals">
@@ -68,6 +72,13 @@
         </section>
 
         <!-- Your surveys section -->
+        @if (!canViewSurveys()) {
+        <section class="surveys surveys--locked">
+            <h2 class="surveys__title">Your surveys</h2>
+            <p class="surveys__locked-text">Du bist aktuell ausgeloggt. Melde dich per Magic Link an oder nutze den
+                Gastmodus, um Beispielumfragen zu erkunden.</p>
+        </section>
+        } @else {
         <section class="surveys">
             <h2 class="surveys__title">Your surveys</h2>
 
@@ -103,6 +114,7 @@
             <app-survey-list-view [items]="filteredSurveys()" heading="Survey view in the list"
                 (surveySelected)="openSurvey($event)" />
         </section>
+        }
     </div>
 
     @if (createSurveyOpen()) {

@@ -254,6 +254,26 @@
   max-width: 400px;
 }
 
+.hero__login-hint {
+  margin: -8px 0 0;
+  color: #f8d8ac;
+  font: 700 13px/1.4 'Mulish', sans-serif;
+}
+
+.surveys--locked {
+  background: rgba(239, 237, 242, 0.08);
+  border: 1px solid rgba(248, 216, 172, 0.28);
+  border-top-right-radius: 28px;
+  padding: 22px;
+}
+
+.surveys__locked-text {
+  margin: 0;
+  color: #f5f0fb;
+  font: 600 15px/1.45 'Mulish', sans-serif;
+  max-width: 700px;
+}
+
 @media (max-width: 768px) {
   .home__auth {
     justify-items: start;

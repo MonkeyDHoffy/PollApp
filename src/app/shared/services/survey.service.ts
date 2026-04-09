@@ -54,6 +54,15 @@ export class SurveyService {
 
   constructor() {
     void this.loadAllSurveys();
+
+    this.supabase.auth.onAuthStateChange((event) => {
+      if (event === 'SIGNED_OUT') {
+        this.currentSurveySignal.set(null);
+        this.userResponsesSignal.set([]);
+      }
+
+      void this.loadAllSurveys();
+    });
   }
 
   /**

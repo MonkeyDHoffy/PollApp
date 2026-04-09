@@ -54,6 +54,11 @@ export class HomeComponent {
   protected readonly createSurveyOpen = signal(false);
   protected readonly submitAttempted = signal(false);
   protected readonly isDemoMode = signal(this.route.snapshot.routeConfig?.path === 'demo');
+  protected readonly canViewSurveys = computed(() => this.isDemoMode() || !!this.authUser());
+  protected readonly canCreateSurvey = computed(() => !!this.authUser());
+  protected readonly guestModeLabel = computed(() =>
+    this.isDemoMode() ? 'Gastmodus beenden' : 'Gastmodus'
+  );
   protected readonly createError = computed(() => this.surveyService.error());
   protected readonly createLoading = computed(() => this.surveyService.loading());
   protected readonly authUser = computed(() => this.authService.user());
@@ -75,9 +80,10 @@ export class HomeComponent {
   });
 
   protected readonly allSurveys = computed<Survey[]>(() =>
-    (this.isDemoMode() ? this.surveyService.getDemoSurveys() : this.surveyService.allSurveys()).map((survey) =>
-      this.mapSurveyToHomeSurvey(survey)
-    )
+    (this.canViewSurveys()
+      ? (this.isDemoMode() ? this.surveyService.getDemoSurveys() : this.surveyService.allSurveys())
+      : []
+    ).map((survey) => this.mapSurveyToHomeSurvey(survey))
   );
 
   // Categories for dropdown
@@ -135,6 +141,11 @@ export class HomeComponent {
   }
 
   protected openCreateSurveyModal(): void {
+    if (!this.canCreateSurvey()) {
+      this.authService.clearNotices();
+      return;
+    }
+
     this.surveyService.clearError();
     this.submitAttempted.set(false);
     this.createSurveyOpen.set(true);
@@ -245,7 +256,7 @@ export class HomeComponent {
   }
 
   protected openDemo(): void {
-    void this.router.navigate(['/demo']);
+    void this.router.navigate([this.isDemoMode() ? '/' : '/demo']);
   }
 
   private buildQuestionGroup(): FormGroup {
