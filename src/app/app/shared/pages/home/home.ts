@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import {
   FormArray,
   FormBuilder,
@@ -45,6 +45,7 @@ export class HomeComponent {
   private readonly fb = inject(FormBuilder);
   private readonly surveyService = inject(SurveyService);
   private readonly authService = inject(AuthService);
+  private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
 
   // State signals
@@ -52,6 +53,7 @@ export class HomeComponent {
   protected readonly selectedCategory = signal<CategoryFilter>('all');
   protected readonly createSurveyOpen = signal(false);
   protected readonly submitAttempted = signal(false);
+  protected readonly isDemoMode = signal(this.route.snapshot.routeConfig?.path === 'demo');
   protected readonly createError = computed(() => this.surveyService.error());
   protected readonly createLoading = computed(() => this.surveyService.loading());
   protected readonly authUser = computed(() => this.authService.user());
@@ -73,7 +75,9 @@ export class HomeComponent {
   });
 
   protected readonly allSurveys = computed<Survey[]>(() =>
-    this.surveyService.allSurveys().map((survey) => this.mapSurveyToHomeSurvey(survey))
+    (this.isDemoMode() ? this.surveyService.getDemoSurveys() : this.surveyService.allSurveys()).map((survey) =>
+      this.mapSurveyToHomeSurvey(survey)
+    )
   );
 
   // Categories for dropdown
@@ -238,6 +242,10 @@ export class HomeComponent {
 
   protected openSurvey(surveyId: string): void {
     void this.router.navigate(['/survey', surveyId]);
+  }
+
+  protected openDemo(): void {
+    void this.router.navigate(['/demo']);
   }
 
   private buildQuestionGroup(): FormGroup {

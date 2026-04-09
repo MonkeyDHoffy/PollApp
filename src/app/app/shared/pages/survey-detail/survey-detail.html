@@ -1,15 +1,119 @@
 <section class="survey-detail">
-    <a routerLink="/" class="survey-detail__back">Back to Home</a>
+    <div class="survey-detail__content-wrapper">
+        <header class="survey-detail__header">
+            <img src="/assets/logo/Property 1=Purple dark.png" alt="PollApp" class="survey-detail__logo" />
+            <app-button [label]="homeLabel()" variant="primary" (pressed)="goHome()" />
+        </header>
 
-    @if (loading()) {
-    <p class="survey-detail__state">Loading survey...</p>
-    } @else if (error()) {
-    <p class="survey-detail__state survey-detail__state--error">{{ error() }}</p>
-    } @else if (survey()) {
-    <h1 class="survey-detail__title">{{ survey()?.title }}</h1>
-    <p class="survey-detail__meta">Category: {{ survey()?.category }}</p>
-    <p class="survey-detail__meta">Questions: {{ survey()?.questions?.length }}</p>
-    } @else {
-    <p class="survey-detail__state">Survey not found.</p>
-    }
+        @if (loading()) {
+        <p class="survey-detail__state">Loading survey...</p>
+        } @else if (error()) {
+        <p class="survey-detail__state survey-detail__state--error">{{ error() }}</p>
+        } @else if (survey()) {
+        <div class="survey-detail__layout">
+            <article class="survey-detail__form-card">
+                <div class="survey-detail__top-row">
+                    <div class="survey-detail__meta-stack">
+                        <span class="survey-detail__status">Published</span>
+                        <p class="survey-detail__meta-line">Ends on {{ formattedEndsAt() }}</p>
+                    </div>
+                    <p class="survey-detail__meta-line survey-detail__meta-line--category">Category: {{
+                        survey()?.category }}</p>
+                </div>
+
+                <h1 class="survey-detail__title">{{ survey()?.title }}</h1>
+                <p class="survey-detail__description">
+                    {{ survey()?.description || 'Share your opinion and help shape the next decision with this survey.'
+                    }}
+                </p>
+
+                <div class="survey-detail__questions-grid">
+                    <div class="survey-detail__questions-col">
+                        @for (question of questionColumns().left; track question.id) {
+                        <section class="survey-detail__question-block">
+                            <h3>{{ question.index + 1 }}. {{ question.text }}</h3>
+                            <p>{{ question.allowMultiple ? 'More than one answer is possible.' : 'Only one answer can be
+                                selected.' }}</p>
+                            <div class="survey-detail__answers">
+                                @for (answer of question.answers; track answer.id) {
+                                <label class="survey-detail__answer-row">
+                                    <input type="checkbox" [checked]="isSelected(question.id, answer.id)"
+                                        (change)="toggleAnswer(question.id, answer.id, question.allowMultiple)" />
+                                    <span>{{ answer.optionLabel }}. {{ answer.text }}</span>
+                                </label>
+                                }
+                            </div>
+                        </section>
+                        }
+                    </div>
+
+                    <div class="survey-detail__questions-col">
+                        @for (question of questionColumns().right; track question.id) {
+                        <section class="survey-detail__question-block">
+                            <h3>{{ question.index + 1 }}. {{ question.text }}</h3>
+                            <p>{{ question.allowMultiple ? 'More than one answer is possible.' : 'Only one answer can be
+                                selected.' }}</p>
+                            <div class="survey-detail__answers">
+                                @for (answer of question.answers; track answer.id) {
+                                <label class="survey-detail__answer-row">
+                                    <input type="checkbox" [checked]="isSelected(question.id, answer.id)"
+                                        (change)="toggleAnswer(question.id, answer.id, question.allowMultiple)" />
+                                    <span>{{ answer.optionLabel }}. {{ answer.text }}</span>
+                                </label>
+                                }
+                            </div>
+                        </section>
+                        }
+                    </div>
+                </div>
+
+                <div class="survey-detail__form-actions">
+                    <app-button [label]="submitting() ? 'Saving...' : 'Complete survey'" variant="primary"
+                        [disabled]="submitting()" (pressed)="completeSurvey()" />
+                </div>
+
+                @if (submitMessage()) {
+                <p class="survey-detail__submit-message" [class.survey-detail__submit-message--success]="submitted()">
+                    {{ submitMessage() }}
+                </p>
+                }
+            </article>
+
+            <aside class="survey-detail__results" [class.survey-detail__results--closed]="!resultsOpen()">
+                <button type="button" class="survey-detail__results-toggle" (click)="toggleResults()">
+                    {{ resultsOpen() ? 'Close results' : 'Show results' }}
+                </button>
+
+                @if (resultsOpen()) {
+                <h2>Survey results <span>LIVE</span></h2>
+
+                @if (hasResults()) {
+                <div class="survey-detail__results-list">
+                    @for (row of resultsRows(); track row.questionId; let qIdx = $index) {
+                    <section class="survey-detail__result-block">
+                        <h3>{{ qIdx + 1 }}. {{ row.questionText }}</h3>
+                        @for (answer of row.answers; track answer.id) {
+                        <div class="survey-detail__result-row">
+                            <span>{{ answer.label }}</span>
+                            <div class="survey-detail__bar-track">
+                                <div class="survey-detail__bar-fill" [style.width.%]="answer.percentage"></div>
+                            </div>
+                            <span>{{ answer.percentage }}%</span>
+                        </div>
+                        }
+                    </section>
+                    }
+                </div>
+                } @else {
+                <p class="survey-detail__results-empty-text">Results will be shown here after participants complete the
+                    survey.</p>
+                <p class="survey-detail__results-empty-placeholder">There are no answers yet.</p>
+                }
+                }
+            </aside>
+        </div>
+        } @else {
+        <p class="survey-detail__state">Survey not found.</p>
+        }
+    </div>
 </section>

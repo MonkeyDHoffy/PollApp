@@ -43,7 +43,68 @@
 .home__auth {
   display: grid;
   gap: 8px;
-  max-width: 360px;
+  width: fit-content;
+  max-width: 100%;
+  justify-items: end;
+}
+
+.home__auth-top-row {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: nowrap;
+}
+
+.home__demo-entry {
+  position: relative;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.home__demo-tooltip {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 220px;
+  margin: 0;
+  padding: 10px 12px;
+  border-top-right-radius: 12px;
+  background: #f8d8ac;
+  color: #2f2437;
+  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.22);
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-4px);
+  transition:
+    opacity 140ms ease,
+    transform 140ms ease;
+  font: 700 12px/1.35 'Mulish', sans-serif;
+  z-index: 5;
+}
+
+.home__demo-entry:hover .home__demo-tooltip,
+.home__demo-entry:focus-within .home__demo-tooltip {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.home__auth-user-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: nowrap;
+  min-height: 44px;
+  padding: 4px 10px;
+  border: 1px solid rgba(248, 216, 172, 0.28);
+  border-radius: 14px;
+  background: rgba(239, 237, 242, 0.06);
+}
+
+.home__auth-user-row--login {
+  width: 360px;
 }
 
 .home__auth-login {
@@ -62,13 +123,25 @@
   }
 }
 
+.home__auth-user-row--login input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  border-radius: 10px;
+  min-height: 36px;
+  padding: 8px 10px;
+  background: #efedf2;
+  color: #2f2437;
+  font: 600 13px/1.2 'Mulish', sans-serif;
+}
+
 .home__auth-btn {
   border: 0;
   background: #f4c183;
   color: #2c1e28;
   min-height: 36px;
   padding: 0 12px;
-  border-top-right-radius: 10px;
+  border-radius: 10px;
   cursor: pointer;
   font: 700 13px/1 'Mulish', sans-serif;
 
@@ -146,6 +219,12 @@
   gap: 24px;
 }
 
+.hero__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
 .hero__title {
   font-family: 'Nerko One', cursive;
   font-size: 100px;
@@ -173,6 +252,36 @@
   color: #c4b3c8;
   margin: 0;
   max-width: 400px;
+}
+
+@media (max-width: 768px) {
+  .home__auth {
+    justify-items: start;
+    max-width: 100%;
+    width: 100%;
+  }
+
+  .home__auth-top-row,
+  .home__auth-user-row {
+    justify-content: flex-start;
+  }
+
+  .home__auth-top-row {
+    flex-wrap: wrap;
+  }
+
+  .home__demo-entry {
+    align-items: flex-start;
+  }
+
+  .home__demo-tooltip {
+    right: auto;
+    left: 0;
+  }
+
+  .home__auth-user-row--login {
+    width: 100%;
+  }
 }
 
 .hero__visuals {

@@ -1,15 +1,12 @@
 import { Injectable, computed, signal } from '@angular/core';
-import { createClient, Session, SupabaseClient, User } from '@supabase/supabase-js';
-import { environment } from '../../../environments/environment';
+import { Session, User } from '@supabase/supabase-js';
+import { supabaseClient } from './supabase-client';
 
 @Injectable({
   providedIn: 'root',
 })
 export class AuthService {
-  private readonly supabase: SupabaseClient = createClient(
-    environment.supabaseUrl,
-    environment.supabasePublishableKey
-  );
+  private readonly supabase = supabaseClient;
 
   private readonly sessionSignal = signal<Session | null>(null);
   private readonly loadingSignal = signal(false);
@@ -27,6 +24,11 @@ export class AuthService {
 
     this.supabase.auth.onAuthStateChange((_event, session) => {
       this.sessionSignal.set(session);
+
+      if (session?.user) {
+        this.errorSignal.set(null);
+        this.messageSignal.set(null);
+      }
     });
   }
 

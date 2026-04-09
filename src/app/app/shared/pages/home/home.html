@@ -5,19 +5,30 @@
             <img src="/assets/logo/Property 1=Orange.png" alt="PollApp Logo" class="home__logo" />
 
             <div class="home__auth">
-                @if (authUser()) {
-                <p class="home__auth-user">{{ authUser()?.email }}</p>
-                <button type="button" class="home__auth-btn" (click)="signOut()" [disabled]="authLoading()">
-                    {{ authLoading() ? '...' : 'Sign out' }}
-                </button>
-                } @else {
-                <div class="home__auth-login">
-                    <input type="email" [formControl]="authEmailControl" placeholder="your@email.com" />
-                    <button type="button" class="home__auth-btn" (click)="sendMagicLink()" [disabled]="authLoading()">
-                        {{ authLoading() ? 'Sending...' : 'Magic Link' }}
-                    </button>
+                <div class="home__auth-top-row">
+                    <div class="home__demo-entry">
+                        <app-button label="Gastmodus" variant="secondary" (pressed)="openDemo()" />
+                        <p class="home__demo-tooltip">Vorgefertigte Umfragen direkt ansehen und beantworten.
+                        </p>
+                    </div>
+
+                    @if (authUser()) {
+                    <div class="home__auth-user-row">
+                        <p class="home__auth-user">{{ authUser()?.email }}</p>
+                        <button type="button" class="home__auth-btn" (click)="signOut()" [disabled]="authLoading()">
+                            {{ authLoading() ? '...' : 'Sign out' }}
+                        </button>
+                    </div>
+                    } @else {
+                    <div class="home__auth-user-row home__auth-user-row--login">
+                        <input type="email" [formControl]="authEmailControl" placeholder="your@email.com" />
+                        <button type="button" class="home__auth-btn" (click)="sendMagicLink()"
+                            [disabled]="authLoading()">
+                            {{ authLoading() ? 'Sending...' : 'Magic Link' }}
+                        </button>
+                    </div>
+                    }
                 </div>
-                }
 
                 @if (authError()) {
                 <p class="home__auth-error">{{ authError() }}</p>
@@ -38,8 +49,10 @@
                         engage your
                         audience, and turn feedback into action.
                     </p>
-                    <app-button label="New survey" variant="primary" primaryStyle="base"
-                        (pressed)="openCreateSurveyModal()" />
+                    <div class="hero__actions">
+                        <app-button label="New survey" variant="primary" primaryStyle="base"
+                            (pressed)="openCreateSurveyModal()" />
+                    </div>
                 </div>
 
                 <div class="hero__visuals">

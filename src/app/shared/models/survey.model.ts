@@ -35,14 +35,14 @@ export interface Survey {
 }
 
 export interface SurveyResponse {
-  id: string;
+  id?: string;
   surveyId: string;
   respondentId?: string; // optional für anonyme Antworten
   answers: {
     questionId: string;
     selectedAnswerIds: string[]; // Array für multiple/checkboxes
   }[];
-  respondedAt: string;
+  respondedAt?: string;
 }
 
 export interface SurveyResult {

@@ -1,5 +1,4 @@
 import { Injectable, computed, signal } from '@angular/core';
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import {
   Survey,
   SurveyListItem,
@@ -8,21 +7,20 @@ import {
   SurveyResponse,
   SurveyResult,
 } from '../models/survey.model';
-import { environment } from '../../../environments/environment';
+import { DEMO_SURVEY_RESULTS, DEMO_SURVEYS } from '../demo/demo-surveys';
+import { supabaseClient } from './supabase-client';
 
 @Injectable({
   providedIn: 'root',
 })
 export class SurveyService {
-  private readonly supabase: SupabaseClient = createClient(
-    environment.supabaseUrl,
-    environment.supabasePublishableKey
-  );
+  private readonly supabase = supabaseClient;
 
   // Signals für State Management
   private allSurveysSignal = signal<Survey[]>([]);
   private currentSurveySignal = signal<Survey | null>(null);
   private userResponsesSignal = signal<SurveyResponse[]>([]);
+  private demoResultsSignal = signal<Record<string, SurveyResult[]>>(this.buildDemoResultsState());
   private loadingSignal = signal(false);
   private errorSignal = signal<string | null>(null);
 
@@ -115,6 +113,18 @@ export class SurveyService {
    * Einzelne Umfrage laden
    */
   async loadSurveyById(surveyId: string): Promise<void> {
+    if (this.isDemoSurveyId(surveyId)) {
+      this.loadingSignal.set(true);
+      this.errorSignal.set(null);
+      this.currentSurveySignal.set(this.cloneSurvey(this.getDemoSurveyById(surveyId) ?? null));
+      this.loadingSignal.set(false);
+
+      if (!this.currentSurveySignal()) {
+        this.errorSignal.set('Demo survey not found');
+      }
+      return;
+    }
+
     this.loadingSignal.set(true);
     this.errorSignal.set(null);
 
@@ -307,12 +317,61 @@ export class SurveyService {
     this.errorSignal.set(null);
 
     try {
-      // TODO: Ersetze mit echtem Supabase Insert
-      // const { error } = await this.supabase
-      //   .from('survey_responses')
-      //   .insert([response]);
-      // if (error) throw error;
-      // this.userResponsesSignal.update((responses) => [...responses, response]);
+      if (this.isDemoSurveyId(response.surveyId)) {
+        this.applyDemoResponse(response);
+        return true;
+      }
+
+      const {
+        data: { user },
+        error: userError,
+      } = await this.supabase.auth.getUser();
+
+      if (userError) {
+        throw userError;
+      }
+
+      const { data: createdResponse, error: responseInsertError } = await this.supabase
+        .from('survey_responses')
+        .insert({
+          survey_id: response.surveyId,
+          respondent_id: user?.id ?? null,
+        })
+        .select('id, created_at')
+        .single();
+
+      if (responseInsertError) {
+        throw responseInsertError;
+      }
+
+      const answerRows = response.answers.flatMap((answer) =>
+        answer.selectedAnswerIds.map((answerId) => ({
+          response_id: createdResponse.id,
+          question_id: answer.questionId,
+          answer_id: answerId,
+        }))
+      );
+
+      if (answerRows.length > 0) {
+        const { error: answersInsertError } = await this.supabase
+          .from('survey_response_answers')
+          .insert(answerRows);
+
+        if (answersInsertError) {
+          throw answersInsertError;
+        }
+      }
+
+      this.userResponsesSignal.update((responses) => [
+        ...responses,
+        {
+          ...response,
+          id: createdResponse.id,
+          respondentId: user?.id,
+          respondedAt: createdResponse.created_at,
+        },
+      ]);
+
       return true;
     } catch (err) {
       this.errorSignal.set(err instanceof Error ? err.message : 'Failed to submit response');
@@ -339,6 +398,85 @@ export class SurveyService {
         percentage: Math.floor(Math.random() * 100),
       })),
     }));
+  }
+
+  async loadSurveyResults(surveyId: string): Promise<SurveyResult[]> {
+    if (this.isDemoSurveyId(surveyId)) {
+      return this.cloneResults(this.demoResultsSignal()[surveyId] ?? []);
+    }
+
+    try {
+      const { data: surveyData, error: surveyError } = await this.supabase
+        .from('survey_questions')
+        .select(
+          `
+          id,
+          question_text,
+          sort_order,
+          survey_answers (
+            id,
+            answer_text,
+            sort_order
+          )
+        `
+        )
+        .eq('survey_id', surveyId)
+        .order('sort_order', { ascending: true });
+
+      if (surveyError) {
+        throw surveyError;
+      }
+
+      const { data: responseData, error: responseError } = await this.supabase
+        .from('survey_response_answers')
+        .select(
+          `
+          question_id,
+          answer_id,
+          survey_responses!inner (
+            survey_id
+          )
+        `
+        )
+        .eq('survey_responses.survey_id', surveyId);
+
+      if (responseError) {
+        throw responseError;
+      }
+
+      const answerCountMap = new Map<string, number>();
+      for (const row of responseData ?? []) {
+        const answerId = row.answer_id as string;
+        answerCountMap.set(answerId, (answerCountMap.get(answerId) ?? 0) + 1);
+      }
+
+      return (surveyData ?? []).map((questionRow) => {
+        const answerRows = Array.isArray(questionRow.survey_answers) ? questionRow.survey_answers : [];
+        const totalCount = answerRows.reduce(
+          (sum, answerRow) => sum + (answerCountMap.get(answerRow.id) ?? 0),
+          0
+        );
+
+        return {
+          questionId: questionRow.id,
+          questionText: questionRow.question_text,
+          answers: answerRows
+            .sort((a, b) => a.sort_order - b.sort_order)
+            .map((answerRow) => {
+              const count = answerCountMap.get(answerRow.id) ?? 0;
+              return {
+                id: answerRow.id,
+                text: answerRow.answer_text,
+                count,
+                percentage: totalCount === 0 ? 0 : Math.round((count / totalCount) * 100),
+              };
+            }),
+        };
+      });
+    } catch (err) {
+      this.errorSignal.set(err instanceof Error ? err.message : 'Failed to load survey results');
+      return [];
+    }
   }
 
   /**
@@ -369,6 +507,16 @@ export class SurveyService {
    */
   setCurrentSurvey(survey: Survey | null): void {
     this.currentSurveySignal.set(survey);
+  }
+
+  getDemoSurveys(): Survey[] {
+    return DEMO_SURVEYS.map((survey) => ({
+      ...survey,
+      questions: survey.questions.map((question) => ({
+        ...question,
+        answers: question.answers.map((answer) => ({ ...answer })),
+      })),
+    }));
   }
 
   /**
@@ -423,5 +571,86 @@ export class SurveyService {
       endsAt: row.ends_at ?? row.created_at,
       totalResponses: 0,
     };
+  }
+
+  private isDemoSurveyId(surveyId: string): boolean {
+    return surveyId.startsWith('demo-');
+  }
+
+  private getDemoSurveyById(surveyId: string): Survey | undefined {
+    return DEMO_SURVEYS.find((survey) => survey.id === surveyId);
+  }
+
+  private buildDemoResultsState(): Record<string, SurveyResult[]> {
+    return Object.fromEntries(
+      Object.entries(DEMO_SURVEY_RESULTS).map(([surveyId, results]) => [surveyId, this.cloneResults(results)])
+    );
+  }
+
+  private applyDemoResponse(response: SurveyResponse): void {
+    const currentResults = this.cloneResults(this.demoResultsSignal()[response.surveyId] ?? []);
+
+    for (const answerGroup of response.answers) {
+      const resultRow = currentResults.find((result) => result.questionId === answerGroup.questionId);
+      if (!resultRow) {
+        continue;
+      }
+
+      for (const answerId of answerGroup.selectedAnswerIds) {
+        const resultAnswer = resultRow.answers.find((answer) => answer.id === answerId);
+        if (resultAnswer) {
+          resultAnswer.count += 1;
+        }
+      }
+
+      const total = resultRow.answers.reduce((sum, answer) => sum + answer.count, 0);
+      resultRow.answers = resultRow.answers.map((answer) => ({
+        ...answer,
+        percentage: total === 0 ? 0 : Math.round((answer.count / total) * 100),
+      }));
+    }
+
+    this.demoResultsSignal.update((state) => ({
+      ...state,
+      [response.surveyId]: currentResults,
+    }));
+
+    this.userResponsesSignal.update((responses) => [
+      ...responses,
+      {
+        ...response,
+        id: `demo-response-${responses.length + 1}`,
+        respondedAt: new Date().toISOString(),
+      },
+    ]);
+
+    const currentSurvey = this.currentSurveySignal();
+    if (currentSurvey?.id === response.surveyId) {
+      this.currentSurveySignal.set({
+        ...currentSurvey,
+        totalResponses: currentSurvey.totalResponses + 1,
+      });
+    }
+  }
+
+  private cloneSurvey(survey: Survey | null): Survey | null {
+    if (!survey) {
+      return null;
+    }
+
+    return {
+      ...survey,
+      questions: survey.questions.map((question) => ({
+        ...question,
+        answers: question.answers.map((answer) => ({ ...answer })),
+      })),
+    };
+  }
+
+  private cloneResults(results: SurveyResult[]): SurveyResult[] {
+    return results.map((result) => ({
+      ...result,
+      answers: result.answers.map((answer) => ({ ...answer })),
+    }));
   }
 }

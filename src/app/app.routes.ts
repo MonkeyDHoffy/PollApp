@@ -8,6 +8,10 @@ export const routes: Routes = [
     component: HomeComponent,
   },
   {
+    path: 'demo',
+    component: HomeComponent,
+  },
+  {
     path: 'survey/:id',
     component: SurveyDetailComponent,
   },
