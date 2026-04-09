@@ -62,8 +62,12 @@ create table if not exists public.survey_responses (
   id uuid primary key default gen_random_uuid(),
   survey_id uuid not null references public.surveys(id) on delete cascade,
   respondent_id uuid references auth.users(id) on delete set null,
+  participant_token text,
   created_at timestamptz not null default now()
 );
+
+alter table public.survey_responses
+  add column if not exists participant_token text;
 
 create table if not exists public.survey_response_answers (
   id uuid primary key default gen_random_uuid(),
@@ -82,6 +86,10 @@ create index if not exists idx_surveys_created_at on public.surveys(created_at d
 create index if not exists idx_survey_questions_survey_id on public.survey_questions(survey_id);
 create index if not exists idx_survey_answers_question_id on public.survey_answers(question_id);
 create index if not exists idx_survey_responses_survey_id on public.survey_responses(survey_id);
+create index if not exists idx_survey_responses_participant_token on public.survey_responses(participant_token);
+create unique index if not exists idx_survey_responses_unique_participant
+  on public.survey_responses(survey_id, participant_token)
+  where participant_token is not null;
 create index if not exists idx_survey_response_answers_response_id on public.survey_response_answers(response_id);
 
 drop trigger if exists set_surveys_updated_at on public.surveys;

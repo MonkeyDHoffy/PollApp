@@ -15,4 +15,8 @@ export const routes: Routes = [
     path: 'survey/:id',
     component: SurveyDetailComponent,
   },
+  {
+    path: 'join/:token',
+    component: SurveyDetailComponent,
+  },
 ];

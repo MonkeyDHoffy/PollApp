@@ -42,6 +42,7 @@ export interface SurveyResponse {
   id?: string;
   surveyId: string;
   respondentId?: string; // optional für anonyme Antworten
+  participantToken?: string;
   answers: {
     questionId: string;
     selectedAnswerIds: string[]; // Array für multiple/checkboxes

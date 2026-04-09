@@ -186,6 +186,57 @@ export class SurveyService {
     }
   }
 
+  async loadSurveyByShareToken(shareToken: string): Promise<void> {
+    this.loadingSignal.set(true);
+    this.errorSignal.set(null);
+
+    try {
+      const { data, error } = await this.supabase
+        .from('surveys')
+        .select(
+          `
+          id,
+          creator_id,
+          title,
+          description,
+          category,
+          status,
+          visibility,
+          share_token,
+          access_code,
+          ends_at,
+          created_at,
+          updated_at,
+          survey_questions (
+            id,
+            question_text,
+            question_type,
+            allow_multiple,
+            sort_order,
+            survey_answers (
+              id,
+              answer_text,
+              sort_order
+            )
+          )
+        `
+        )
+        .eq('share_token', shareToken)
+        .eq('status', 'published')
+        .single();
+
+      if (error) {
+        throw error;
+      }
+
+      this.currentSurveySignal.set(this.mapSurveyRow(data));
+    } catch (err) {
+      this.errorSignal.set(err instanceof Error ? err.message : 'Failed to load survey');
+    } finally {
+      this.loadingSignal.set(false);
+    }
+  }
+
   /**
    * Neue Umfrage erstellen
    */
@@ -354,6 +405,7 @@ export class SurveyService {
         .insert({
           survey_id: response.surveyId,
           respondent_id: user?.id ?? null,
+          participant_token: response.participantToken ?? this.ensureParticipantToken(response.surveyId),
         })
         .select('id, created_at')
         .single();
@@ -392,6 +444,11 @@ export class SurveyService {
 
       return true;
     } catch (err) {
+      if (typeof err === 'object' && err && 'code' in err && err.code === '23505') {
+        this.errorSignal.set('You already submitted this survey.');
+        return false;
+      }
+
       this.errorSignal.set(err instanceof Error ? err.message : 'Failed to submit response');
       return false;
     } finally {
@@ -681,5 +738,24 @@ export class SurveyService {
       ...result,
       answers: result.answers.map((answer) => ({ ...answer })),
     }));
+  }
+
+  private ensureParticipantToken(surveyId: string): string {
+    const storageKey = `pollapp.participant.${surveyId}`;
+    const storedToken = typeof localStorage !== 'undefined' ? localStorage.getItem(storageKey) : null;
+    if (storedToken) {
+      return storedToken;
+    }
+
+    const tokenSource = typeof crypto !== 'undefined' && 'randomUUID' in crypto
+      ? crypto.randomUUID().replace(/-/g, '')
+      : `${Date.now()}${Math.random().toString(36).slice(2)}`;
+    const token = tokenSource.slice(0, 24);
+
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem(storageKey, token);
+    }
+
+    return token;
   }
 }

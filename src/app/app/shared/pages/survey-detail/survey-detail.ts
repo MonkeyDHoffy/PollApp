@@ -28,6 +28,7 @@ export class SurveyDetailComponent {
   private readonly router = inject(Router);
   private readonly surveyService = inject(SurveyService);
   private readonly surveyId = this.route.snapshot.paramMap.get('id');
+  private readonly joinToken = this.route.snapshot.paramMap.get('token');
 
   protected readonly survey = computed(() => this.surveyService.currentSurvey());
   protected readonly loading = computed(() => this.surveyService.loading());
@@ -106,6 +107,11 @@ export class SurveyDetailComponent {
   constructor() {
     if (this.surveyId) {
       void this.loadSurveyContext(this.surveyId);
+      return;
+    }
+
+    if (this.joinToken) {
+      void this.loadSurveyByJoinToken(this.joinToken);
     }
   }
 
@@ -208,5 +214,15 @@ export class SurveyDetailComponent {
   private async refreshResults(surveyId: string): Promise<void> {
     const results = await this.surveyService.loadSurveyResults(surveyId);
     this.liveResults.set(results);
+  }
+
+  private async loadSurveyByJoinToken(joinToken: string): Promise<void> {
+    await this.surveyService.loadSurveyByShareToken(joinToken);
+    const surveyId = this.survey()?.id;
+    if (!surveyId) {
+      return;
+    }
+
+    await this.refreshResults(surveyId);
   }
 }
