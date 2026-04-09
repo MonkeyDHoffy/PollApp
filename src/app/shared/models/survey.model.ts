@@ -4,6 +4,7 @@
  */
 
 export type SurveyStatus = 'draft' | 'published' | 'closed';
+export type SurveyVisibility = 'public' | 'private';
 
 export interface SurveyAnswer {
   id: string;
@@ -27,6 +28,9 @@ export interface Survey {
   description?: string;
   category: string;
   status: SurveyStatus;
+  visibility: SurveyVisibility;
+  shareToken?: string;
+  accessCode?: string;
   questions: SurveyQuestion[];
   createdAt: string;
   updatedAt: string;
@@ -62,6 +66,8 @@ export interface CreateSurveyDTO {
   category: string;
   endsAt?: string;
   status?: SurveyStatus;
+  visibility?: SurveyVisibility;
+  accessCode?: string;
   questions: {
     text: string;
     type: 'multiple_choice' | 'checkboxes';
@@ -76,6 +82,8 @@ export interface UpdateSurveyDTO {
   category?: string;
   status?: SurveyStatus;
   endsAt?: string;
+  visibility?: SurveyVisibility;
+  accessCode?: string;
 }
 
 /**

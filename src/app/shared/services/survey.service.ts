@@ -87,6 +87,9 @@ export class SurveyService {
           description,
           category,
           status,
+          visibility,
+          share_token,
+          access_code,
           ends_at,
           created_at,
           updated_at,
@@ -148,6 +151,9 @@ export class SurveyService {
           description,
           category,
           status,
+          visibility,
+          share_token,
+          access_code,
           ends_at,
           created_at,
           updated_at,
@@ -209,9 +215,12 @@ export class SurveyService {
           description: surveyData.description ?? null,
           category: surveyData.category,
           status: surveyData.status ?? 'published',
+          visibility: surveyData.visibility ?? 'public',
+          share_token: this.generateShareToken(),
+          access_code: surveyData.accessCode ?? null,
           ends_at: surveyData.endsAt ?? null,
         })
-        .select('id')
+        .select('id, share_token')
         .single();
 
       if (surveyInsertError) {
@@ -556,6 +565,9 @@ export class SurveyService {
       description: row.description ?? undefined,
       category: row.category,
       status: row.status,
+      visibility: row.visibility ?? 'public',
+      shareToken: row.share_token ?? undefined,
+      accessCode: row.access_code ?? undefined,
       questions: questionRows
         .sort((a: any, b: any) => a.sort_order - b.sort_order)
         .map((question: any) => {
@@ -580,6 +592,14 @@ export class SurveyService {
       endsAt: row.ends_at ?? row.created_at,
       totalResponses: 0,
     };
+  }
+
+  private generateShareToken(): string {
+    const randomSource = typeof crypto !== 'undefined' && 'randomUUID' in crypto
+      ? crypto.randomUUID().replace(/-/g, '')
+      : `${Date.now()}${Math.random().toString(36).slice(2)}`;
+
+    return randomSource.slice(0, 12);
   }
 
   private isDemoSurveyId(surveyId: string): boolean {

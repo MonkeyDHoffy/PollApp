@@ -23,10 +23,22 @@ create table if not exists public.surveys (
   description text,
   category text not null,
   status text not null default 'draft' check (status in ('draft', 'published', 'closed')),
+  visibility text not null default 'public' check (visibility in ('public', 'private')),
+  share_token text not null default substr(replace(gen_random_uuid()::text, '-', ''), 1, 12),
+  access_code text,
   ends_at timestamptz,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+alter table public.surveys
+  add column if not exists visibility text not null default 'public' check (visibility in ('public', 'private'));
+
+alter table public.surveys
+  add column if not exists share_token text not null default substr(replace(gen_random_uuid()::text, '-', ''), 1, 12);
+
+alter table public.surveys
+  add column if not exists access_code text;
 
 create table if not exists public.survey_questions (
   id uuid primary key default gen_random_uuid(),
@@ -64,6 +76,8 @@ create table if not exists public.survey_response_answers (
 
 create index if not exists idx_surveys_creator_id on public.surveys(creator_id);
 create index if not exists idx_surveys_status on public.surveys(status);
+create unique index if not exists idx_surveys_share_token on public.surveys(share_token);
+create index if not exists idx_surveys_visibility on public.surveys(visibility);
 create index if not exists idx_surveys_created_at on public.surveys(created_at desc);
 create index if not exists idx_survey_questions_survey_id on public.survey_questions(survey_id);
 create index if not exists idx_survey_answers_question_id on public.survey_answers(question_id);
