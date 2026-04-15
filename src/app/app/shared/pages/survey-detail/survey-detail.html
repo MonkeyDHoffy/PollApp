@@ -19,9 +19,8 @@
                         <button type="button" (click)="exportResultsCsv()" [disabled]="exportingCsv()">
                             {{ exportingCsv() ? 'Exporting...' : 'Export CSV' }}
                         </button>
-                        <button type="button" (click)="deleteCurrentSurvey()" [disabled]="deletingSurvey()">
-                            {{ deletingSurvey() ? 'Deleting...' : 'Delete' }}
-                        </button>
+                        <button type="button" class="survey-detail__creator-menu-delete"
+                            (click)="openDeleteConfirm()">Delete</button>
                     </div>
                     }
                 </div>
@@ -120,10 +119,20 @@
                     </div>
                 </div>
 
+                @if (alreadyVoted()) {
+                <div class="survey-detail__already-voted">
+                    <span class="survey-detail__already-voted-icon">✓</span>
+                    <div>
+                        <p class="survey-detail__already-voted-title">Du hast bereits teilgenommen</p>
+                        <p class="survey-detail__already-voted-sub">Deine Antwort wurde gespeichert.</p>
+                    </div>
+                </div>
+                } @else {
                 <div class="survey-detail__form-actions">
                     <app-button [label]="submitting() ? 'Saving...' : 'Complete survey'" variant="primary"
                         [disabled]="submitting()" (pressed)="completeSurvey()" />
                 </div>
+                }
 
                 @if (submitMessage()) {
                 <p class="survey-detail__submit-message" [class.survey-detail__submit-message--success]="submitted()">
@@ -170,3 +179,16 @@
         }
     </div>
 </section>
+
+@if (showDeleteConfirm()) {
+<div class="survey-detail__confirm-backdrop" (click)="cancelDelete()"></div>
+<div class="survey-detail__confirm-dialog" role="alertdialog" aria-modal="true">
+    <h3 class="survey-detail__confirm-title">Umfrage löschen?</h3>
+    <p class="survey-detail__confirm-text">Diese Aktion kann nicht rückgängig gemacht werden. Alle Antworten werden ebenfalls gelöscht.</p>
+    <div class="survey-detail__confirm-actions">
+        <app-button label="Abbrechen" variant="secondary" (pressed)="cancelDelete()" />
+        <app-button [label]="deletingSurvey() ? 'Deleting...' : 'Ja, löschen'" variant="primary"
+            [disabled]="deletingSurvey()" (pressed)="deleteCurrentSurvey()" />
+    </div>
+</div>
+}

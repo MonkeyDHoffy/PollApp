@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, signa
 import { ActivatedRoute, Router } from '@angular/router';
 import { SurveyResult } from '../../../../shared/models/survey.model';
 import { SurveyService } from '../../../../shared/services/survey.service';
+import { ToastService } from '../../../../shared/services/toast.service';
 import { ButtonComponent } from '../../ui/button/button';
 import { AuthService } from '../../../../shared/services/auth.service';
 
@@ -30,6 +31,7 @@ export class SurveyDetailComponent {
   private readonly router = inject(Router);
   private readonly surveyService = inject(SurveyService);
   private readonly authService = inject(AuthService);
+  private readonly toastService = inject(ToastService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly surveyId = this.route.snapshot.paramMap.get('id');
   private readonly joinToken = this.route.snapshot.paramMap.get('token');
@@ -43,7 +45,9 @@ export class SurveyDetailComponent {
   protected readonly creatorMenuOpen = signal(false);
   protected readonly creatorActionMessage = signal<string | null>(null);
   protected readonly deletingSurvey = signal(false);
+  protected readonly showDeleteConfirm = signal(false);
   protected readonly exportingCsv = signal(false);
+  protected readonly alreadyVoted = signal(false);
   protected readonly resultsOpen = signal(true);
   protected readonly submitted = signal(false);
   protected readonly submitting = signal(false);
@@ -159,9 +163,9 @@ export class SurveyDetailComponent {
 
     try {
       await navigator.clipboard.writeText(link);
-      this.creatorActionMessage.set('Share link copied.');
+      this.toastService.success('Share link copied to clipboard.');
     } catch {
-      this.creatorActionMessage.set('Could not copy link automatically.');
+      this.toastService.error('Could not copy link automatically.');
     }
 
     this.creatorMenuOpen.set(false);
@@ -202,28 +206,30 @@ export class SurveyDetailComponent {
     }
   }
 
+  protected openDeleteConfirm(): void {
+    this.creatorMenuOpen.set(false);
+    this.showDeleteConfirm.set(true);
+  }
+
+  protected cancelDelete(): void {
+    this.showDeleteConfirm.set(false);
+  }
+
   protected async deleteCurrentSurvey(): Promise<void> {
     const survey = this.survey();
-    if (!survey || this.deletingSurvey()) {
-      return;
-    }
-
-    if (typeof window !== 'undefined' && !window.confirm(`Delete survey "${survey.title}"?`)) {
-      this.creatorMenuOpen.set(false);
-      return;
-    }
+    if (!survey || this.deletingSurvey()) return;
 
     this.deletingSurvey.set(true);
     const deleted = await this.surveyService.deleteSurvey(survey.id);
     this.deletingSurvey.set(false);
-    this.creatorMenuOpen.set(false);
+    this.showDeleteConfirm.set(false);
 
     if (!deleted) {
-      this.creatorActionMessage.set(this.error() ?? 'Could not delete survey.');
+      this.toastService.error(this.error() ?? 'Could not delete survey.');
       return;
     }
 
-    this.creatorActionMessage.set('Survey deleted.');
+    this.toastService.success('Survey deleted.');
     void this.router.navigate(['/']);
   }
 
@@ -301,8 +307,10 @@ export class SurveyDetailComponent {
 
     await this.refreshResults(survey.id);
     this.submitted.set(true);
+    this.alreadyVoted.set(true);
     this.resultsOpen.set(true);
     this.submitMessage.set('Thanks! Your response has been saved.');
+    this.toastService.success('Your response has been saved!');
     this.submitting.set(false);
   }
 
@@ -334,6 +342,7 @@ export class SurveyDetailComponent {
   private async loadSurveyContext(surveyId: string): Promise<void> {
     await this.surveyService.loadSurveyById(surveyId);
     await this.refreshResults(surveyId);
+    this.alreadyVoted.set(this.surveyService.hasAlreadyVoted(surveyId));
     this.startLiveSubscription(surveyId);
   }
 

@@ -452,6 +452,7 @@ export class SurveyService {
           },
         ]);
 
+        this.markAsVoted(response.surveyId);
         return true;
       }
 
@@ -506,6 +507,7 @@ export class SurveyService {
         },
       ]);
 
+      this.markAsVoted(response.surveyId);
       return true;
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to submit response';
@@ -953,6 +955,17 @@ export class SurveyService {
       ...result,
       answers: result.answers.map((answer) => ({ ...answer })),
     }));
+  }
+
+  hasAlreadyVoted(surveyId: string): boolean {
+    if (typeof localStorage === 'undefined') return false;
+    return localStorage.getItem(`pollapp.voted.${surveyId}`) === '1';
+  }
+
+  private markAsVoted(surveyId: string): void {
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem(`pollapp.voted.${surveyId}`, '1');
+    }
   }
 
   private ensureParticipantToken(surveyId: string): string {

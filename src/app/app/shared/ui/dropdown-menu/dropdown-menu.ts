@@ -34,11 +34,11 @@ export class DropdownMenuComponent {
   constructor() {
     effect(() => {
       this.open.set(this.startOpen());
-    }, { allowSignalWrites: true });
+    });
 
     effect(() => {
       this.currentSelection.set(this.selected());
-    }, { allowSignalWrites: true });
+    });
   }
 
   protected onToggle(): void {
