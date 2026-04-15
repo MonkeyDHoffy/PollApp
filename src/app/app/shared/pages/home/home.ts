@@ -67,7 +67,9 @@ export class HomeComponent {
   protected readonly createSurveyOpen = signal(false);
   protected readonly editSurveyId = signal<string | null>(null);
   protected readonly pendingEditFromQuery = signal<string | null>(this.route.snapshot.queryParamMap.get('edit'));
+  protected readonly pendingDuplicateFromQuery = signal<string | null>(this.route.snapshot.queryParamMap.get('duplicate'));
   protected readonly editOpenedFromQuery = signal(false);
+  protected readonly duplicateOpenedFromQuery = signal(false);
   protected readonly submitAttempted = signal(false);
   protected readonly isDemoMode = signal(this.route.snapshot.routeConfig?.path === 'demo');
   protected readonly canViewSurveys = computed(() => this.isDemoMode() || !!this.authUser());
@@ -199,6 +201,31 @@ export class HomeComponent {
       void this.router.navigate([], {
         relativeTo: this.route,
         queryParams: { edit: null },
+        queryParamsHandling: 'merge',
+      });
+    });
+
+    effect(() => {
+      if (this.duplicateOpenedFromQuery()) {
+        return;
+      }
+
+      const targetId = this.pendingDuplicateFromQuery();
+      if (!targetId) {
+        return;
+      }
+
+      const survey = this.allSurveys().find((entry) => entry.id === targetId);
+      if (!survey) {
+        return;
+      }
+
+      this.openDuplicateSurveyModal(survey.id);
+      this.duplicateOpenedFromQuery.set(true);
+      this.pendingDuplicateFromQuery.set(null);
+      void this.router.navigate([], {
+        relativeTo: this.route,
+        queryParams: { duplicate: null },
         queryParamsHandling: 'merge',
       });
     });
@@ -411,6 +438,24 @@ export class HomeComponent {
     this.publishSuccessMessage.set(null);
     this.publishedShareLink.set(this.buildShareLink(survey.shareToken));
     this.fillCreateSurveyForm(survey);
+    this.createSurveyOpen.set(true);
+  }
+
+  protected openDuplicateSurveyModal(surveyId: string): void {
+    const survey = this.allSurveys().find((entry) => entry.id === surveyId);
+    if (!survey) {
+      return;
+    }
+
+    this.surveyService.clearError();
+    this.editSurveyId.set(null);
+    this.submitAttempted.set(false);
+    this.publishedShareLink.set(null);
+    this.publishSuccessMessage.set(null);
+    this.fillCreateSurveyForm({
+      ...this.mapSurveyToHomeSurvey(survey),
+      title: `${survey.title} (Copy)`,
+    });
     this.createSurveyOpen.set(true);
   }
 

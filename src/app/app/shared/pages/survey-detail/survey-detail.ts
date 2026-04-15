@@ -181,6 +181,16 @@ export class SurveyDetailComponent {
     void this.router.navigate(['/'], { queryParams: { edit: surveyId } });
   }
 
+  protected duplicateCurrentSurvey(): void {
+    const surveyId = this.survey()?.id;
+    if (!surveyId) {
+      return;
+    }
+
+    this.creatorMenuOpen.set(false);
+    void this.router.navigate(['/'], { queryParams: { duplicate: surveyId } });
+  }
+
   protected async exportResultsCsv(): Promise<void> {
     const survey = this.survey();
     if (!survey || this.exportingCsv()) {
