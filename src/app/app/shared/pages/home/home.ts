@@ -270,6 +270,7 @@ export class HomeComponent {
     this.submitAttempted.set(false);
     this.publishedShareLink.set(null);
     this.publishSuccessMessage.set(null);
+    this.previewMode.set(false);
     this.resetCreateSurveyForm();
     this.createSurveyOpen.set(true);
   }
@@ -294,9 +295,33 @@ export class HomeComponent {
     this.publishedShareLink.set(null);
     this.publishSuccessMessage.set(null);
     this.editSurveyId.set(null);
+    this.previewMode.set(false);
     this.createSurveyOpen.set(false);
     this.resetCreateSurveyForm();
   }
+
+  protected readonly previewMode = signal(false);
+
+  protected readonly previewData = computed(() => {
+    const form = this.createSurveyForm.value;
+    return {
+      title: form.title?.trim() || 'Untitled survey',
+      description: form.description?.trim() || '',
+      category: form.category?.trim() || '',
+      questions: (form.questions ?? []).map((q: any, qIdx: number) => ({
+        index: qIdx,
+        text: (q.questionText ?? '').trim() || `Question ${qIdx + 1}`,
+        description: (q.questionDescription ?? '').trim(),
+        allowMultiple: !!q.allowMultiple,
+        answers: (q.answers ?? [])
+          .map((a: string, aIdx: number) => ({
+            label: String.fromCharCode(65 + aIdx),
+            text: (a ?? '').trim(),
+          }))
+          .filter((a: { label: string; text: string }) => a.text.length > 0),
+      })),
+    };
+  });
 
   protected readonly isPrivateSurvey = computed(
     () => this.createSurveyForm.controls.visibility.value === 'private'

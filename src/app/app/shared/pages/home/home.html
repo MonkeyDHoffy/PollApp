@@ -197,12 +197,61 @@
                     <h2 class="create-survey-modal__title">{{ isEditingSurvey() ? 'Edit survey' : 'Create new survey' }}
                     </h2>
                 </div>
-                <button type="button" class="create-survey-modal__cancel" (click)="closeCreateSurveyModal()">
-                    Cancel
-                </button>
+                <div class="create-survey-modal__header-actions">
+                    <button type="button" class="create-survey-modal__preview-toggle"
+                        [class.create-survey-modal__preview-toggle--active]="previewMode()"
+                        (click)="previewMode.update(v => !v)">
+                        {{ previewMode() ? 'Edit' : 'Preview' }}
+                    </button>
+                    <button type="button" class="create-survey-modal__cancel" (click)="closeCreateSurveyModal()">
+                        Cancel
+                    </button>
+                </div>
             </header>
 
-            <form class="create-survey-modal__form" [formGroup]="createSurveyForm" (ngSubmit)="publishSurvey()">
+            @if (previewMode()) {
+            <div class="create-survey-modal__preview">
+                <div class="create-survey-modal__preview-header">
+                    @if (previewData().category) {
+                    <span class="create-survey-modal__preview-category">{{ previewData().category }}</span>
+                    }
+                    <h3 class="create-survey-modal__preview-title">{{ previewData().title }}</h3>
+                    @if (previewData().description) {
+                    <p class="create-survey-modal__preview-desc">{{ previewData().description }}</p>
+                    }
+                </div>
+                <div class="create-survey-modal__preview-questions">
+                    @for (question of previewData().questions; track question.index) {
+                    <div class="create-survey-modal__preview-question">
+                        <h4>{{ question.index + 1 }}. {{ question.text }}</h4>
+                        @if (question.description) {
+                        <p class="create-survey-modal__preview-question-desc">{{ question.description }}</p>
+                        }
+                        <p class="create-survey-modal__preview-hint">{{ question.allowMultiple ? 'Multiple answers
+                            allowed' : 'Single answer only' }}</p>
+                        <div class="create-survey-modal__preview-answers">
+                            @for (answer of question.answers; track answer.label) {
+                            <label class="create-survey-modal__preview-answer">
+                                <input [type]="question.allowMultiple ? 'checkbox' : 'radio'"
+                                    [name]="'preview-q-' + question.index" disabled />
+                                <span>{{ answer.label }}. {{ answer.text }}</span>
+                            </label>
+                            }
+                            @if (question.answers.length === 0) {
+                            <p class="create-survey-modal__preview-empty">No answers added yet.</p>
+                            }
+                        </div>
+                    </div>
+                    }
+                    @if (previewData().questions.length === 0) {
+                    <p class="create-survey-modal__preview-empty">No questions added yet.</p>
+                    }
+                </div>
+            </div>
+            }
+
+            <form class="create-survey-modal__form" [formGroup]="createSurveyForm" (ngSubmit)="publishSurvey()"
+                [style.display]="previewMode() ? 'none' : ''">
                 <div class="create-survey-modal__meta-grid">
                     <label class="create-survey-modal__field">
                         <span>Survey name</span>
