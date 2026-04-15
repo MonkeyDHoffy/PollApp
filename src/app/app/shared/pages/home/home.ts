@@ -321,11 +321,13 @@ export class HomeComponent {
       accessCode: visibility === 'private' ? accessCode : undefined,
       questions: this.questionsArray.controls.map((questionControl) => {
         const questionText = (questionControl.get('questionText')?.value as string).trim();
+        const questionDescription = (questionControl.get('questionDescription')?.value as string).trim();
         const allowMultiple = !!questionControl.get('allowMultiple')?.value;
         const answersArray = questionControl.get('answers') as FormArray;
 
         return {
           text: questionText,
+          description: questionDescription || undefined,
           type: allowMultiple ? 'checkboxes' : 'multiple_choice',
           allowMultiple,
           answers: answersArray.controls
@@ -416,6 +418,7 @@ export class HomeComponent {
   private buildQuestionGroup(): FormGroup {
     return this.fb.group({
       questionText: this.fb.nonNullable.control('', [Validators.required, Validators.maxLength(160)]),
+      questionDescription: this.fb.nonNullable.control('', [Validators.maxLength(200)]),
       allowMultiple: this.fb.nonNullable.control(false),
       answers: this.fb.array([this.buildAnswerControl(), this.buildAnswerControl()]),
     });
@@ -450,6 +453,7 @@ export class HomeComponent {
     const questionGroups = survey.questions.length > 0
       ? survey.questions.map((question) => this.fb.group({
           questionText: this.fb.nonNullable.control(question.text, [Validators.required, Validators.maxLength(160)]),
+          questionDescription: this.fb.nonNullable.control(question.description ?? '', [Validators.maxLength(200)]),
           allowMultiple: this.fb.nonNullable.control(!!question.allowMultiple),
           answers: this.fb.array(
             question.answers.map((answer) =>

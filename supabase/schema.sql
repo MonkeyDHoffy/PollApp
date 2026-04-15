@@ -44,11 +44,15 @@ create table if not exists public.survey_questions (
   id uuid primary key default gen_random_uuid(),
   survey_id uuid not null references public.surveys(id) on delete cascade,
   question_text text not null check (char_length(question_text) >= 1),
+  question_description text,
   question_type text not null default 'multiple_choice' check (question_type in ('multiple_choice', 'checkboxes')),
   allow_multiple boolean not null default false,
   sort_order integer not null default 0,
   created_at timestamptz not null default now()
 );
+
+alter table public.survey_questions
+  add column if not exists question_description text;
 
 create table if not exists public.survey_answers (
   id uuid primary key default gen_random_uuid(),

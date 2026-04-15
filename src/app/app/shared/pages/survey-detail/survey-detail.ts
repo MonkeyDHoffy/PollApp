@@ -9,6 +9,7 @@ type QuestionView = {
   id: string;
   index: number;
   text: string;
+  description?: string;
   allowMultiple: boolean;
   answers: Array<{
     id: string;
@@ -73,6 +74,7 @@ export class SurveyDetailComponent {
       id: question.id,
       index,
       text: question.text,
+      description: question.description,
       allowMultiple: !!question.allowMultiple,
       answers: question.answers.map((answer, answerIndex) => ({
         id: answer.id,

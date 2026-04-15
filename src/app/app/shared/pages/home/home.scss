@@ -656,6 +656,21 @@
   }
 }
 
+.create-survey-modal__question-desc {
+  width: 100%;
+  border: 0;
+  border-top-right-radius: 12px;
+  padding: 7px 11px;
+  background: #efedf2;
+  color: #35273a;
+  font: 600 13px/1.4 'Mulish', sans-serif;
+  resize: vertical;
+
+  &::placeholder {
+    color: #9e8fad;
+  }
+}
+
 .create-survey-modal__question-header,
 .create-survey-modal__answers-head,
 .create-survey-modal__actions-row {

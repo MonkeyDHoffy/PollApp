@@ -73,6 +73,9 @@
                         @for (question of questionColumns().left; track question.id) {
                         <section class="survey-detail__question-block">
                             <h3>{{ question.index + 1 }}. {{ question.text }}</h3>
+                            @if (question.description) {
+                            <p class="survey-detail__question-desc">{{ question.description }}</p>
+                            }
                             <p>{{ question.allowMultiple ? 'More than one answer is possible.' : 'Only one answer can be
                                 selected.' }}</p>
                             <div class="survey-detail__answers">
@@ -92,6 +95,9 @@
                         @for (question of questionColumns().right; track question.id) {
                         <section class="survey-detail__question-block">
                             <h3>{{ question.index + 1 }}. {{ question.text }}</h3>
+                            @if (question.description) {
+                            <p class="survey-detail__question-desc">{{ question.description }}</p>
+                            }
                             <p>{{ question.allowMultiple ? 'More than one answer is possible.' : 'Only one answer can be
                                 selected.' }}</p>
                             <div class="survey-detail__answers">

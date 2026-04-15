@@ -15,6 +15,7 @@ export interface SurveyAnswer {
 export interface SurveyQuestion {
   id: string;
   text: string;
+  description?: string;
   type: 'multiple_choice' | 'checkboxes';
   answers: SurveyAnswer[];
   order: number;
@@ -71,6 +72,7 @@ export interface CreateSurveyDTO {
   accessCode?: string;
   questions: {
     text: string;
+    description?: string;
     type: 'multiple_choice' | 'checkboxes';
     answers: { text: string }[];
     allowMultiple?: boolean;

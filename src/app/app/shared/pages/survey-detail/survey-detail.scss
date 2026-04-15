@@ -178,6 +178,12 @@
   }
 }
 
+.survey-detail__question-desc {
+  margin: 0 0 10px;
+  color: #4d4157;
+  font: 600 13px/1.4 'Mulish', sans-serif;
+}
+
 .survey-detail__answers {
   display: grid;
   gap: 10px;

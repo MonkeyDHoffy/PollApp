@@ -274,6 +274,7 @@ export class SurveyService {
           .insert({
             survey_id: createdSurvey.id,
             question_text: question.text,
+            question_description: question.description ?? null,
             question_type: question.type,
             allow_multiple: question.allowMultiple ?? false,
             sort_order: questionIndex,
@@ -713,6 +714,7 @@ export class SurveyService {
           return {
             id: question.id,
             text: question.question_text,
+            description: question.question_description ?? undefined,
             type: question.question_type,
             allowMultiple: question.allow_multiple,
             order: question.sort_order,
@@ -785,6 +787,7 @@ export class SurveyService {
       survey_questions (
         id,
         question_text,
+        question_description,
         question_type,
         allow_multiple,
         sort_order,
@@ -801,7 +804,7 @@ export class SurveyService {
     const text = this.errorToText(err).toLowerCase();
     return (
       text.includes('column')
-      && (text.includes('visibility') || text.includes('share_token') || text.includes('access_code'))
+      && (text.includes('visibility') || text.includes('share_token') || text.includes('access_code') || text.includes('question_description'))
     );
   }
 
@@ -949,6 +952,7 @@ export class SurveyService {
         ? survey.questions.map((question: any) => ({
             id: question.id,
             text: question.text,
+            description: question.description ?? undefined,
             type: question.type,
             allowMultiple: !!question.allowMultiple,
             order: question.order,
