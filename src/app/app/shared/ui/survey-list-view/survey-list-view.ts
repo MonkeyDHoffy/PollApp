@@ -2,12 +2,15 @@ import { ChangeDetectionStrategy, Component, computed, input, output } from '@an
 
 type SurveyListTone = 'base' | 'muted';
 
+type BadgeTone = 'active' | 'expiring' | 'ended' | 'none';
+
 type SurveyListItem = {
   id?: string;
   category: string;
   title: string;
   badgeLabel: string;
   tone?: SurveyListTone;
+  badgeTone?: BadgeTone;
   creatorEmail?: string;
 };
 
@@ -17,6 +20,7 @@ type SurveyListRow = {
   title: string;
   badgeLabel: string;
   tone: SurveyListTone;
+  badgeTone: BadgeTone;
   creatorEmail?: string;
 };
 
@@ -52,6 +56,7 @@ export class SurveyListViewComponent {
       title: item.title,
       badgeLabel: item.badgeLabel,
       tone: item.tone ?? 'base',
+      badgeTone: item.badgeTone ?? 'none',
       creatorEmail: item.creatorEmail,
     }))
   );

@@ -129,4 +129,19 @@
   letter-spacing: 0;
   color: #2b1a16;
   background: #f8b871;
+
+  &--active {
+    background: #7ec98a;
+    color: #0f3018;
+  }
+
+  &--expiring {
+    background: #f5c84a;
+    color: #3a2800;
+  }
+
+  &--ended {
+    background: #c97e7e;
+    color: #2e0c0c;
+  }
 }

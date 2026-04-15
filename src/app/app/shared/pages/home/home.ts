@@ -19,6 +19,8 @@ import { AuthService } from '../../../../shared/services/auth.service';
 type SurveyStatus = 'active' | 'past' | 'all';
 type CategoryFilter = string | 'all';
 
+type BadgeTone = 'active' | 'expiring' | 'ended' | 'none';
+
 type Survey = {
   id: string;
   creatorId: string;
@@ -26,6 +28,7 @@ type Survey = {
   category: string;
   title: string;
   badgeLabel: string;
+  badgeTone: BadgeTone;
   status: SurveyStatus;
   tone?: 'base' | 'muted';
   description?: string;
@@ -557,7 +560,20 @@ export class HomeComponent {
   private mapSurveyToHomeSurvey(survey: AppSurvey): Survey {
     const now = new Date();
     const endsAt = new Date(survey.endsAt);
-    const isPast = !Number.isNaN(endsAt.getTime()) && endsAt.getTime() < now.getTime();
+    const validDate = !Number.isNaN(endsAt.getTime());
+    const isPast = validDate && endsAt.getTime() < now.getTime();
+    const daysLeft = validDate ? Math.ceil((endsAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)) : null;
+
+    let badgeTone: BadgeTone = 'none';
+    if (!validDate) {
+      badgeTone = 'none';
+    } else if (isPast) {
+      badgeTone = 'ended';
+    } else if (daysLeft !== null && daysLeft <= 3) {
+      badgeTone = 'expiring';
+    } else {
+      badgeTone = 'active';
+    }
 
     return {
       id: survey.id,
@@ -566,7 +582,8 @@ export class HomeComponent {
       category: survey.category,
       title: survey.title,
       description: survey.description,
-      badgeLabel: this.toBadgeLabel(Number.isNaN(endsAt.getTime()) ? null : endsAt),
+      badgeLabel: this.toBadgeLabel(validDate ? endsAt : null),
+      badgeTone,
       status: survey.status === 'published' && !isPast ? 'active' : 'past',
       tone: survey.status === 'published' && !isPast ? 'base' : 'muted',
       visibility: survey.visibility,
