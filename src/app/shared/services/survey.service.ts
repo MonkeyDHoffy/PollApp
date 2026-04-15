@@ -16,6 +16,7 @@ import { supabaseClient } from './supabase-client';
 })
 export class SurveyService {
   private readonly supabase = supabaseClient;
+  private useLegacySurveyColumns = false;
 
   // Signals für State Management
   private allSurveysSignal = signal<Survey[]>([]);
@@ -26,6 +27,7 @@ export class SurveyService {
   private shareAccessCodeSignal = signal<Record<string, string>>({});
   private loadingSignal = signal(false);
   private errorSignal = signal<string | null>(null);
+  private schemaNoticeSignal = signal<string | null>(null);
 
   // Public Computed Signals
   readonly allSurveys = this.allSurveysSignal.asReadonly();
@@ -33,6 +35,7 @@ export class SurveyService {
   readonly userResponses = this.userResponsesSignal.asReadonly();
   readonly loading = this.loadingSignal.asReadonly();
   readonly error = this.errorSignal.asReadonly();
+  readonly schemaNotice = this.schemaNoticeSignal.asReadonly();
 
   clearError(): void {
     this.errorSignal.set(null);
@@ -82,37 +85,16 @@ export class SurveyService {
     try {
       const { data, error } = await this.supabase
         .from('surveys')
-        .select(
-          `
-          id,
-          creator_id,
-          title,
-          description,
-          category,
-          status,
-          visibility,
-          share_token,
-          access_code,
-          ends_at,
-          created_at,
-          updated_at,
-          survey_questions (
-            id,
-            question_text,
-            question_type,
-            allow_multiple,
-            sort_order,
-            survey_answers (
-              id,
-              answer_text,
-              sort_order
-            )
-          )
-        `
-        )
+        .select(this.getSurveySelectQuery())
         .order('created_at', { ascending: false });
 
       if (error) {
+        if (!this.useLegacySurveyColumns && this.isLegacySchemaError(error)) {
+          this.useLegacySurveyColumns = true;
+          this.setSchemaNotice();
+          await this.loadAllSurveys();
+          return;
+        }
         throw error;
       }
 
@@ -146,38 +128,17 @@ export class SurveyService {
     try {
       const { data, error } = await this.supabase
         .from('surveys')
-        .select(
-          `
-          id,
-          creator_id,
-          title,
-          description,
-          category,
-          status,
-          visibility,
-          share_token,
-          access_code,
-          ends_at,
-          created_at,
-          updated_at,
-          survey_questions (
-            id,
-            question_text,
-            question_type,
-            allow_multiple,
-            sort_order,
-            survey_answers (
-              id,
-              answer_text,
-              sort_order
-            )
-          )
-        `
-        )
+        .select(this.getSurveySelectQuery())
         .eq('id', surveyId)
         .single();
 
       if (error) {
+        if (!this.useLegacySurveyColumns && this.isLegacySchemaError(error)) {
+          this.useLegacySurveyColumns = true;
+          this.setSchemaNotice();
+          await this.loadSurveyById(surveyId);
+          return;
+        }
         throw error;
       }
 
@@ -256,24 +217,53 @@ export class SurveyService {
         throw new Error('Please log in before creating a survey.');
       }
 
-      const { data: createdSurvey, error: surveyInsertError } = await this.supabase
-        .from('surveys')
-        .insert({
-          creator_id: user.id,
-          title: surveyData.title,
-          description: surveyData.description ?? null,
-          category: surveyData.category,
-          status: surveyData.status ?? 'published',
-          visibility: surveyData.visibility ?? 'public',
-          share_token: this.generateShareToken(),
-          access_code: surveyData.accessCode ?? null,
-          ends_at: surveyData.endsAt ?? null,
-        })
-        .select('id, share_token')
-        .single();
+      const insertPayload: Record<string, unknown> = {
+        creator_id: user.id,
+        title: surveyData.title,
+        description: surveyData.description ?? null,
+        category: surveyData.category,
+        status: surveyData.status ?? 'published',
+        ends_at: surveyData.endsAt ?? null,
+      };
+
+      if (!this.useLegacySurveyColumns) {
+        insertPayload['visibility'] = surveyData.visibility ?? 'public';
+        insertPayload['share_token'] = this.generateShareToken();
+        insertPayload['access_code'] = surveyData.accessCode ?? null;
+      }
+
+      let createdSurvey: { id: string; share_token?: string | null } | null = null;
+      let surveyInsertError: unknown = null;
+
+      if (this.useLegacySurveyColumns) {
+        const { data, error } = await this.supabase
+          .from('surveys')
+          .insert(insertPayload)
+          .select('id')
+          .single();
+        createdSurvey = data;
+        surveyInsertError = error;
+      } else {
+        const { data, error } = await this.supabase
+          .from('surveys')
+          .insert(insertPayload)
+          .select('id, share_token')
+          .single();
+        createdSurvey = data;
+        surveyInsertError = error;
+      }
 
       if (surveyInsertError) {
+        if (!this.useLegacySurveyColumns && this.isLegacySchemaError(surveyInsertError)) {
+          this.useLegacySurveyColumns = true;
+          this.setSchemaNotice();
+          return this.createSurvey(surveyData);
+        }
         throw surveyInsertError;
+      }
+
+      if (!createdSurvey) {
+        throw new Error('Failed to create survey');
       }
 
       for (let questionIndex = 0; questionIndex < surveyData.questions.length; questionIndex++) {
@@ -333,15 +323,47 @@ export class SurveyService {
     this.errorSignal.set(null);
 
     try {
-      // TODO: Ersetze mit echtem Supabase Update
-      // const { error } = await this.supabase
-      //   .from('surveys')
-      //   .update(updates)
-      //   .eq('id', surveyId);
-      // if (error) throw error;
-      // this.allSurveysSignal.update((surveys) =>
-      //   surveys.map((s) => (s.id === surveyId ? { ...s, ...updates } : s))
-      // );
+      const updatePayload: Record<string, unknown> = {};
+
+      if (updates.title !== undefined) {
+        updatePayload['title'] = updates.title;
+      }
+      if (updates.description !== undefined) {
+        updatePayload['description'] = updates.description ?? null;
+      }
+      if (updates.category !== undefined) {
+        updatePayload['category'] = updates.category;
+      }
+      if (updates.status !== undefined) {
+        updatePayload['status'] = updates.status;
+      }
+      if (updates.endsAt !== undefined) {
+        updatePayload['ends_at'] = updates.endsAt ?? null;
+      }
+      if (!this.useLegacySurveyColumns) {
+        if (updates.visibility !== undefined) {
+          updatePayload['visibility'] = updates.visibility;
+        }
+        if (updates.accessCode !== undefined) {
+          updatePayload['access_code'] = updates.accessCode || null;
+        }
+      }
+
+      const { error } = await this.supabase
+        .from('surveys')
+        .update(updatePayload)
+        .eq('id', surveyId);
+
+      if (error) {
+        throw error;
+      }
+
+      await this.loadAllSurveys();
+
+      if (this.currentSurveySignal()?.id === surveyId) {
+        await this.loadSurveyById(surveyId);
+      }
+
       return true;
     } catch (err) {
       this.errorSignal.set(err instanceof Error ? err.message : 'Failed to update survey');
@@ -359,13 +381,21 @@ export class SurveyService {
     this.errorSignal.set(null);
 
     try {
-      // TODO: Ersetze mit echtem Supabase Delete
-      // const { error } = await this.supabase
-      //   .from('surveys')
-      //   .delete()
-      //   .eq('id', surveyId);
-      // if (error) throw error;
-      // this.allSurveysSignal.update((surveys) => surveys.filter((s) => s.id !== surveyId));
+      const { error } = await this.supabase
+        .from('surveys')
+        .delete()
+        .eq('id', surveyId);
+
+      if (error) {
+        throw error;
+      }
+
+      this.allSurveysSignal.update((surveys) => surveys.filter((survey) => survey.id !== surveyId));
+
+      if (this.currentSurveySignal()?.id === surveyId) {
+        this.currentSurveySignal.set(null);
+      }
+
       return true;
     } catch (err) {
       this.errorSignal.set(err instanceof Error ? err.message : 'Failed to delete survey');
@@ -602,18 +632,26 @@ export class SurveyService {
    */
 
   /**
-   * Subscribe zu Live-Updates (später für Realtime Results)
+   * Subscribe zu Live-Updates für eine Umfrage.
+   * Gibt eine Cleanup-Funktion zurück, die beim Verlassen der Seite aufgerufen werden soll.
    */
-  subscribeToSurveyUpdates(surveyId: string, callback: (data: any) => void): void {
-    // TODO: Supabase Realtime Subscribe
-    // this.supabase
-    //   .channel(`surveys:${surveyId}`)
-    //   .on(
-    //     'postgres_changes',
-    //     { event: '*', schema: 'public', table: 'survey_responses', filter: `survey_id=eq.${surveyId}` },
-    //     callback
-    //   )
-    //   .subscribe();
+  subscribeToSurveyUpdates(
+    surveyId: string,
+    onUpdate: () => void,
+    onStatusChange?: (status: 'SUBSCRIBED' | 'TIMED_OUT' | 'CLOSED' | 'CHANNEL_ERROR') => void,
+  ): () => void {
+    const channel = this.supabase
+      .channel(`survey-responses:${surveyId}`)
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'survey_responses', filter: `survey_id=eq.${surveyId}` },
+        () => onUpdate(),
+      )
+      .subscribe((status) => onStatusChange?.(status as 'SUBSCRIBED' | 'TIMED_OUT' | 'CLOSED' | 'CHANNEL_ERROR'));
+
+    return () => {
+      void this.supabase.removeChannel(channel);
+    };
   }
 
   /**
@@ -700,6 +738,100 @@ export class SurveyService {
       : `${Date.now()}${Math.random().toString(36).slice(2)}`;
 
     return randomSource.slice(0, 12);
+  }
+
+  private getSurveySelectQuery(): string {
+    const base = `
+      id,
+      creator_id,
+      title,
+      description,
+      category,
+      status,
+      ends_at,
+      created_at,
+      updated_at,
+      survey_questions (
+        id,
+        question_text,
+        question_type,
+        allow_multiple,
+        sort_order,
+        survey_answers (
+          id,
+          answer_text,
+          sort_order
+        )
+      )
+    `;
+
+    if (this.useLegacySurveyColumns) {
+      return base;
+    }
+
+    return `
+      id,
+      creator_id,
+      title,
+      description,
+      category,
+      status,
+      visibility,
+      share_token,
+      access_code,
+      ends_at,
+      created_at,
+      updated_at,
+      survey_questions (
+        id,
+        question_text,
+        question_type,
+        allow_multiple,
+        sort_order,
+        survey_answers (
+          id,
+          answer_text,
+          sort_order
+        )
+      )
+    `;
+  }
+
+  private isLegacySchemaError(err: unknown): boolean {
+    const text = this.errorToText(err).toLowerCase();
+    return (
+      text.includes('column')
+      && (text.includes('visibility') || text.includes('share_token') || text.includes('access_code'))
+    );
+  }
+
+  private errorToText(err: unknown): string {
+    if (!err) {
+      return '';
+    }
+
+    if (typeof err === 'string') {
+      return err;
+    }
+
+    if (err instanceof Error) {
+      return err.message;
+    }
+
+    if (typeof err === 'object') {
+      const maybeError = err as { message?: string; details?: string; hint?: string; code?: string };
+      return [maybeError.message, maybeError.details, maybeError.hint, maybeError.code]
+        .filter((part): part is string => !!part)
+        .join(' ');
+    }
+
+    return '';
+  }
+
+  private setSchemaNotice(): void {
+    this.schemaNoticeSignal.set(
+      'Supabase schema is outdated. Please run supabase/schema.sql in the Supabase SQL Editor and reload the app to enable private sharing features.'
+    );
   }
 
   private isDemoSurveyId(surveyId: string): boolean {

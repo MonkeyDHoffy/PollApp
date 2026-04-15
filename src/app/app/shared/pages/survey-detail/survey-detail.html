@@ -2,8 +2,39 @@
     <div class="survey-detail__content-wrapper">
         <header class="survey-detail__header">
             <img src="/assets/logo/Property 1=Purple dark.png" alt="PollApp" class="survey-detail__logo" />
-            <app-button [label]="homeLabel()" variant="primary" (pressed)="goHome()" />
+            <div class="survey-detail__header-actions">
+                @if (isCreatorSurvey()) {
+                <div class="survey-detail__creator-menu-wrap">
+                    <button type="button" class="survey-detail__creator-trigger" (click)="toggleCreatorMenu()"
+                        [attr.aria-expanded]="creatorMenuOpen()" aria-label="Survey actions">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </button>
+
+                    @if (creatorMenuOpen()) {
+                    <div class="survey-detail__creator-menu">
+                        <button type="button" (click)="copyCreatorLink()">Copy link</button>
+                        <button type="button" (click)="editCurrentSurvey()">Edit</button>
+                        <button type="button" (click)="deleteCurrentSurvey()" [disabled]="deletingSurvey()">
+                            {{ deletingSurvey() ? 'Deleting...' : 'Delete' }}
+                        </button>
+                    </div>
+                    }
+                </div>
+                }
+
+                <app-button [label]="homeLabel()" variant="primary" (pressed)="goHome()" />
+            </div>
         </header>
+
+        @if (creatorActionMessage()) {
+        <p class="survey-detail__state">{{ creatorActionMessage() }}</p>
+        }
+
+        @if (schemaNotice()) {
+        <p class="survey-detail__state">{{ schemaNotice() }}</p>
+        }
 
         @if (loading()) {
         <p class="survey-detail__state">Loading survey...</p>
@@ -95,7 +126,7 @@
                 </button>
 
                 @if (resultsOpen()) {
-                <h2>Survey results <span>LIVE</span></h2>
+                <h2>Survey results @if (isLive()) {<span class="survey-detail__live-badge"><span class="survey-detail__live-dot"></span>LIVE</span>}</h2>
 
                 @if (hasResults()) {
                 <div class="survey-detail__results-list">
