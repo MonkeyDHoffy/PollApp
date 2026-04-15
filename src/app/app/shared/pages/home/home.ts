@@ -60,6 +60,10 @@ export class HomeComponent {
   protected readonly selectedStatus = signal<SurveyStatus>('all');
   protected readonly selectedCategory = signal<CategoryFilter>('all');
   protected readonly selectedSort = signal('Newest first');
+  protected readonly searchQuery = signal('');
+  protected readonly surveysLoading = computed(
+    () => this.surveyService.loading() && this.allSurveys().length === 0
+  );
   protected readonly createSurveyOpen = signal(false);
   protected readonly editSurveyId = signal<string | null>(null);
   protected readonly pendingEditFromQuery = signal<string | null>(this.route.snapshot.queryParamMap.get('edit'));
@@ -154,6 +158,12 @@ export class HomeComponent {
       filtered = filtered.filter(
         (s) => s.category.toLowerCase() === (this.selectedCategory() as string).toLowerCase()
       );
+    }
+
+    // Suche
+    const query = this.searchQuery().toLowerCase().trim();
+    if (query) {
+      filtered = filtered.filter((s) => s.title.toLowerCase().includes(query));
     }
 
     // Sortierung

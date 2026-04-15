@@ -88,8 +88,28 @@
             @if (!isDemoMode()) {
             <div class="surveys__my-block">
                 <h3 class="surveys__subtitle">My surveys</h3>
+
+                @if (surveysLoading()) {
+                <div class="surveys__skeleton">
+                    @for (_ of [1,2,3,4]; track $index) {
+                    <div class="surveys__skeleton-card">
+                        <div class="surveys__skeleton-line surveys__skeleton-line--sm"></div>
+                        <div class="surveys__skeleton-line surveys__skeleton-line--lg"></div>
+                        <div class="surveys__skeleton-line surveys__skeleton-line--xs"></div>
+                    </div>
+                    }
+                </div>
+                } @else if (mySurveys().length === 0) {
+                <div class="surveys__empty">
+                    <p class="surveys__empty-heading">No surveys yet</p>
+                    <p class="surveys__empty-text">Create your first survey and collect responses from your team or
+                        audience.</p>
+                    <app-button label="Create survey" variant="primary" (pressed)="openCreateSurveyModal()" />
+                </div>
+                } @else {
                 <app-survey-list-view [items]="mySurveys()" heading="My surveys"
                     (surveySelected)="openSurvey($event)" />
+                }
             </div>
             }
 
@@ -103,6 +123,12 @@
                         [badgeLabel]="survey.badgeLabel" [tone]="survey.tone || 'base'" />
                     }
                 </div>
+            </div>
+
+            <!-- Search -->
+            <div class="surveys__search-wrap">
+                <input class="surveys__search" type="search" placeholder="Search surveys..."
+                    [value]="searchQuery()" (input)="searchQuery.set($any($event.target).value)" />
             </div>
 
             <!-- Filters and sorting -->
@@ -126,9 +152,35 @@
             </div>
 
             <!-- Survey list -->
+            @if (surveysLoading()) {
+            <div class="surveys__skeleton">
+                @for (_ of [1,2,3,4,5,6]; track $index) {
+                <div class="surveys__skeleton-card">
+                    <div class="surveys__skeleton-line surveys__skeleton-line--sm"></div>
+                    <div class="surveys__skeleton-line surveys__skeleton-line--lg"></div>
+                    <div class="surveys__skeleton-line surveys__skeleton-line--xs"></div>
+                </div>
+                }
+            </div>
+            } @else if (filteredSurveys().length === 0) {
+            <div class="surveys__empty">
+                @if (searchQuery().trim()) {
+                <p class="surveys__empty-heading">No results for "{{ searchQuery() }}"</p>
+                <p class="surveys__empty-text">Try a different search term or clear the filters.</p>
+                <app-button label="Clear search" variant="secondary" (pressed)="searchQuery.set('')" />
+                } @else {
+                <p class="surveys__empty-heading">No surveys here yet</p>
+                <p class="surveys__empty-text">Be the first to create a survey and start collecting responses.</p>
+                @if (canCreateSurvey()) {
+                <app-button label="Create survey" variant="primary" (pressed)="openCreateSurveyModal()" />
+                }
+                }
+            </div>
+            } @else {
             <app-survey-list-view [items]="filteredSurveys()"
                 [heading]="isDemoMode() ? 'Survey view in the list' : 'Public surveys'"
                 (surveySelected)="openSurvey($event)" />
+            }
         </section>
         }
     </div>
