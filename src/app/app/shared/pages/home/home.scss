@@ -171,6 +171,14 @@
   color: #f8d8ac;
 }
 
+.home__schema-notice {
+  margin: 0;
+  max-width: 560px;
+  color: #ffe4b8;
+  font: 700 12px/1.35 'Mulish', sans-serif;
+  text-align: right;
+}
+
 .home__logo {
   height: 40px;
   width: auto;
@@ -505,11 +513,20 @@
 }
 
 .surveys__sort {
-  min-width: 250px;
+  display: flex;
+  gap: 12px;
+
+  app-dropdown-menu {
+    min-width: 190px;
+  }
 
   @media (max-width: 768px) {
-    min-width: auto;
     width: 100%;
+
+    app-dropdown-menu {
+      flex: 1;
+      min-width: 0;
+    }
   }
 }
 

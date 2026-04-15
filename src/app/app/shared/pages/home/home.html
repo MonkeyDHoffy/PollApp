@@ -36,6 +36,9 @@
                 @if (authMessage()) {
                 <p class="home__auth-message">{{ authMessage() }}</p>
                 }
+                @if (schemaNotice()) {
+                <p class="home__schema-notice">{{ schemaNotice() }}</p>
+                }
             </div>
         </header>
 
@@ -51,11 +54,11 @@
                     </p>
                     <div class="hero__actions">
                         <app-button label="New survey" variant="primary" primaryStyle="base"
-                            [disabled]="!canCreateSurvey()"
-                            (pressed)="openCreateSurveyModal()" />
+                            [disabled]="!canCreateSurvey()" (pressed)="openCreateSurveyModal()" />
                     </div>
                     @if (!canCreateSurvey() && !isDemoMode()) {
-                    <p class="hero__login-hint">Log in oder aktiviere den Gastmodus, um Umfragen zu sehen oder zu erstellen.</p>
+                    <p class="hero__login-hint">Log in oder aktiviere den Gastmodus, um Umfragen zu sehen oder zu
+                        erstellen.</p>
                     }
                 </div>
 
@@ -92,7 +95,8 @@
 
             <!-- Ending soon surveys -->
             <div class="surveys__ending-soon">
-                <h3 class="surveys__subtitle">{{ isDemoMode() ? 'Ending soon surveys' : 'Public surveys (ending soon)' }}</h3>
+                <h3 class="surveys__subtitle">{{ isDemoMode() ? 'Ending soon surveys' : 'Public surveys (ending soon)'
+                    }}</h3>
                 <div class="surveys__highlight-grid">
                     @for (survey of endingSoonSurveys(); track survey.id) {
                     <app-highlight-card [category]="survey.category" [title]="survey.title"
@@ -115,6 +119,9 @@
                     <app-dropdown-menu label="Sort by categories" [options]="categories"
                         [selected]="selectedCategory() === 'all' ? '' : selectedCategory()"
                         (selectedChange)="onCategoryChange($event)" />
+                    <app-dropdown-menu label="Sort order" [options]="sortOptions"
+                        [selected]="selectedSort()" [showSelectionValue]="true"
+                        (selectedChange)="onSortChange($event)" />
                 </div>
             </div>
 
@@ -133,7 +140,8 @@
             <header class="create-survey-modal__header">
                 <div>
                     <span class="create-survey-modal__badge">Draft</span>
-                    <h2 class="create-survey-modal__title">Create new survey</h2>
+                    <h2 class="create-survey-modal__title">{{ isEditingSurvey() ? 'Edit survey' : 'Create new survey' }}
+                    </h2>
                 </div>
                 <button type="button" class="create-survey-modal__cancel" (click)="closeCreateSurveyModal()">
                     Cancel
@@ -185,11 +193,14 @@
                 </div>
 
                 <div class="create-survey-modal__questions" formArrayName="questions">
+                    @if (isEditingSurvey()) {
+                    <p class="create-survey-modal__success">Question structure is currently read-only in edit mode.</p>
+                    }
                     @for (question of questionsArray.controls; track $index; let qIdx = $index) {
                     <div class="create-survey-modal__question" [formGroupName]="qIdx">
                         <div class="create-survey-modal__question-header">
                             <p>{{ qIdx + 1 }}. Question</p>
-                            @if (questionsArray.length > 1) {
+                            @if (questionsArray.length > 1 && !isEditingSurvey()) {
                             <button type="button" class="create-survey-modal__remove" (click)="removeQuestion(qIdx)">
                                 Delete
                             </button>
@@ -197,12 +208,12 @@
                         </div>
 
                         <input type="text" formControlName="questionText"
-                            placeholder="Which date would work best for you?" />
+                            placeholder="Which date would work best for you?" [readonly]="isEditingSurvey()" />
 
                         <div class="create-survey-modal__answers-head">
                             <p>Answers</p>
                             <label class="create-survey-modal__checkbox-row">
-                                <input type="checkbox" formControlName="allowMultiple" />
+                                <input type="checkbox" formControlName="allowMultiple" [disabled]="isEditingSurvey()" />
                                 <span>Allow multiple answers</span>
                             </label>
                         </div>
@@ -211,8 +222,9 @@
                             @for (answer of questionAnswersArray(qIdx).controls; track $index; let aIdx = $index) {
                             <div class="create-survey-modal__answer-row">
                                 <span>{{ answerLabel(aIdx) }}.</span>
-                                <input [formControlName]="aIdx" type="text" placeholder="Answer option" />
-                                @if (questionAnswersArray(qIdx).length > 2) {
+                                <input [formControlName]="aIdx" type="text" placeholder="Answer option"
+                                    [readonly]="isEditingSurvey()" />
+                                @if (questionAnswersArray(qIdx).length > 2 && !isEditingSurvey()) {
                                 <button type="button" class="create-survey-modal__remove"
                                     (click)="removeAnswer(qIdx, aIdx)">
                                     Delete
@@ -222,9 +234,11 @@
                             }
                         </div>
 
+                        @if (!isEditingSurvey()) {
                         <button type="button" class="create-survey-modal__link-btn" (click)="addAnswer(qIdx)">
                             Add answer
                         </button>
+                        }
                     </div>
                     }
                 </div>
@@ -246,13 +260,16 @@
                     @if (publishedShareLink()) {
                     <div class="create-survey-modal__share-box">
                         <input type="text" [value]="publishedShareLink()" readonly />
-                        <button type="button" class="create-survey-modal__secondary" (click)="copyPublishedShareLink()">Copy link</button>
+                        <button type="button" class="create-survey-modal__secondary"
+                            (click)="copyPublishedShareLink()">Copy link</button>
                     </div>
                     }
-                    <button type="button" class="create-survey-modal__secondary" (click)="addQuestion()">Add next
+                    <button type="button" class="create-survey-modal__secondary" (click)="addQuestion()"
+                        [disabled]="isEditingSurvey()">Add next
                         question</button>
                     <button type="submit" class="create-survey-modal__publish" [disabled]="createLoading()">
-                        {{ createLoading() ? 'Publishing...' : 'Publish' }}
+                        {{ createLoading() ? (isEditingSurvey() ? 'Saving...' : 'Publishing...') : (isEditingSurvey() ?
+                        'Save changes' : 'Publish') }}
                     </button>
                 </div>
             </form>

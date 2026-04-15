@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import {
   FormArray,
@@ -13,7 +13,7 @@ import { HighlightCardComponent } from '../../ui/highlight-card/highlight-card';
 import { SurveyListViewComponent } from '../../ui/survey-list-view/survey-list-view';
 import { DropdownMenuComponent } from '../../ui/dropdown-menu/dropdown-menu';
 import { SurveyService } from '../../../../shared/services/survey.service';
-import { CreateSurveyDTO } from '../../../../shared/models/survey.model';
+import { CreateSurveyDTO, Survey as AppSurvey, UpdateSurveyDTO } from '../../../../shared/models/survey.model';
 import { AuthService } from '../../../../shared/services/auth.service';
 
 type SurveyStatus = 'active' | 'past' | 'all';
@@ -27,6 +27,12 @@ type Survey = {
   badgeLabel: string;
   status: SurveyStatus;
   tone?: 'base' | 'muted';
+  description?: string;
+  visibility?: 'public' | 'private';
+  shareToken?: string;
+  accessCode?: string;
+  endsAt?: string;
+  questions: AppSurvey['questions'];
 };
 
 @Component({
@@ -52,11 +58,16 @@ export class HomeComponent {
   // State signals
   protected readonly selectedStatus = signal<SurveyStatus>('all');
   protected readonly selectedCategory = signal<CategoryFilter>('all');
+  protected readonly selectedSort = signal('Newest first');
   protected readonly createSurveyOpen = signal(false);
+  protected readonly editSurveyId = signal<string | null>(null);
+  protected readonly pendingEditFromQuery = signal<string | null>(this.route.snapshot.queryParamMap.get('edit'));
+  protected readonly editOpenedFromQuery = signal(false);
   protected readonly submitAttempted = signal(false);
   protected readonly isDemoMode = signal(this.route.snapshot.routeConfig?.path === 'demo');
   protected readonly canViewSurveys = computed(() => this.isDemoMode() || !!this.authUser());
   protected readonly canCreateSurvey = computed(() => !!this.authUser());
+  protected readonly isEditingSurvey = computed(() => !!this.editSurveyId());
   protected readonly publishedShareLink = signal<string | null>(null);
   protected readonly publishSuccessMessage = signal<string | null>(null);
   protected readonly guestModeLabel = computed(() =>
@@ -64,6 +75,7 @@ export class HomeComponent {
   );
   protected readonly createError = computed(() => this.surveyService.error());
   protected readonly createLoading = computed(() => this.surveyService.loading());
+  protected readonly schemaNotice = computed(() => this.surveyService.schemaNotice());
   protected readonly authUser = computed(() => this.authService.user());
   protected readonly authLoading = computed(() => this.authService.loading());
   protected readonly authError = computed(() => this.authService.error());
@@ -118,6 +130,8 @@ export class HomeComponent {
     'Technology & Innovation',
   ];
 
+  protected readonly sortOptions = ['Newest first', 'Oldest first', 'A → Z', 'Z → A'];
+
   // Computed: Ending soon surveys (erste 3 active)
   protected readonly endingSoonSurveys = computed(() =>
     this.publicSurveys()
@@ -125,7 +139,7 @@ export class HomeComponent {
       .slice(0, 3)
   );
 
-  // Computed: Filtered surveys based on selected status and category
+  // Computed: Filtered and sorted surveys
   protected readonly filteredSurveys = computed(() => {
     let filtered = this.publicSurveys();
 
@@ -141,8 +155,43 @@ export class HomeComponent {
       );
     }
 
-    return filtered;
+    // Sortierung
+    const sort = this.selectedSort();
+    return [...filtered].sort((a, b) => {
+      if (sort === 'A → Z') return a.title.localeCompare(b.title);
+      if (sort === 'Z → A') return b.title.localeCompare(a.title);
+      if (sort === 'Oldest first') return new Date(a.endsAt ?? 0).getTime() - new Date(b.endsAt ?? 0).getTime();
+      // Default: Newest first
+      return new Date(b.endsAt ?? 0).getTime() - new Date(a.endsAt ?? 0).getTime();
+    });
   });
+
+  constructor() {
+    effect(() => {
+      if (this.editOpenedFromQuery()) {
+        return;
+      }
+
+      const targetId = this.pendingEditFromQuery();
+      if (!targetId) {
+        return;
+      }
+
+      const survey = this.mySurveys().find((entry) => entry.id === targetId);
+      if (!survey) {
+        return;
+      }
+
+      this.openEditSurveyModal(survey.id);
+      this.editOpenedFromQuery.set(true);
+      this.pendingEditFromQuery.set(null);
+      void this.router.navigate([], {
+        relativeTo: this.route,
+        queryParams: { edit: null },
+        queryParamsHandling: 'merge',
+      });
+    });
+  }
 
   // Methods for filter interaction
   protected onFilterActive(): void {
@@ -157,6 +206,10 @@ export class HomeComponent {
     this.selectedCategory.set(category === this.selectedCategory() ? 'all' : category);
   }
 
+  protected onSortChange(sort: string): void {
+    this.selectedSort.set(sort);
+  }
+
   protected toggleAllFilters(): void {
     this.selectedStatus.set('all');
     this.selectedCategory.set('all');
@@ -169,9 +222,11 @@ export class HomeComponent {
     }
 
     this.surveyService.clearError();
+    this.editSurveyId.set(null);
     this.submitAttempted.set(false);
     this.publishedShareLink.set(null);
     this.publishSuccessMessage.set(null);
+    this.resetCreateSurveyForm();
     this.createSurveyOpen.set(true);
   }
 
@@ -194,6 +249,7 @@ export class HomeComponent {
     this.submitAttempted.set(false);
     this.publishedShareLink.set(null);
     this.publishSuccessMessage.set(null);
+    this.editSurveyId.set(null);
     this.createSurveyOpen.set(false);
     this.resetCreateSurveyForm();
   }
@@ -279,16 +335,34 @@ export class HomeComponent {
       }),
     };
 
+    const editSurveyId = this.editSurveyId();
+    if (editSurveyId) {
+      const updated = await this.surveyService.updateSurvey(editSurveyId, {
+        title: dto.title,
+        description: dto.description,
+        category: dto.category,
+        endsAt: dto.endsAt,
+        visibility: dto.visibility,
+        accessCode: dto.visibility === 'private' ? dto.accessCode : '',
+        status: 'published',
+      } satisfies UpdateSurveyDTO);
+
+      if (!updated) {
+        return;
+      }
+
+      const editedSurvey = this.mySurveys().find((survey) => survey.id === editSurveyId);
+      this.publishedShareLink.set(this.buildShareLink(editedSurvey?.shareToken));
+      this.publishSuccessMessage.set('Survey updated. The share link remains active.');
+      return;
+    }
+
     const created = await this.surveyService.createSurvey(dto);
     if (!created) {
       return;
     }
 
-    const shareToken = created.shareToken;
-    const shareLink =
-      shareToken && typeof window !== 'undefined'
-        ? `${window.location.origin}/join/${shareToken}`
-        : null;
+    const shareLink = this.buildShareLink(created.shareToken);
 
     this.publishedShareLink.set(shareLink);
     this.publishSuccessMessage.set(
@@ -310,6 +384,21 @@ export class HomeComponent {
     } catch {
       this.publishSuccessMessage.set('Could not copy link automatically.');
     }
+  }
+
+  protected openEditSurveyModal(surveyId: string): void {
+    const survey = this.mySurveys().find((entry) => entry.id === surveyId);
+    if (!survey) {
+      return;
+    }
+
+    this.surveyService.clearError();
+    this.editSurveyId.set(surveyId);
+    this.submitAttempted.set(false);
+    this.publishSuccessMessage.set(null);
+    this.publishedShareLink.set(this.buildShareLink(survey.shareToken));
+    this.fillCreateSurveyForm(survey);
+    this.createSurveyOpen.set(true);
   }
 
   protected answerLabel(index: number): string {
@@ -348,6 +437,50 @@ export class HomeComponent {
     this.createSurveyForm.setControl('questions', this.fb.array([this.buildQuestionGroup()]));
   }
 
+  private fillCreateSurveyForm(survey: Survey): void {
+    this.createSurveyForm.reset({
+      title: survey.title,
+      description: survey.description ?? '',
+      endDate: this.toDateInputValue(survey.endsAt),
+      category: survey.category,
+      visibility: survey.visibility ?? 'public',
+      accessCode: survey.accessCode ?? '',
+    });
+
+    const questionGroups = survey.questions.length > 0
+      ? survey.questions.map((question) => this.fb.group({
+          questionText: this.fb.nonNullable.control(question.text, [Validators.required, Validators.maxLength(160)]),
+          allowMultiple: this.fb.nonNullable.control(!!question.allowMultiple),
+          answers: this.fb.array(
+            question.answers.map((answer) =>
+              this.fb.nonNullable.control(answer.text, [Validators.required, Validators.maxLength(120)])
+            )
+          ),
+        }))
+      : [this.buildQuestionGroup()];
+
+    this.createSurveyForm.setControl('questions', this.fb.array(questionGroups));
+  }
+
+  private buildShareLink(shareToken?: string): string | null {
+    return shareToken && typeof window !== 'undefined'
+      ? `${window.location.origin}/join/${shareToken}`
+      : null;
+  }
+
+  private toDateInputValue(isoDate?: string): string {
+    if (!isoDate) {
+      return '';
+    }
+
+    const date = new Date(isoDate);
+    if (Number.isNaN(date.getTime())) {
+      return '';
+    }
+
+    return date.toISOString().slice(0, 10);
+  }
+
   private toBadgeLabel(endDate: Date | null): string {
     if (!endDate) {
       return 'No end date';
@@ -361,14 +494,7 @@ export class HomeComponent {
     return `Ends in ${delta} day${delta === 1 ? '' : 's'}`;
   }
 
-  private mapSurveyToHomeSurvey(survey: {
-    id: string;
-    creatorId: string;
-    category: string;
-    title: string;
-    status: string;
-    endsAt: string;
-  }): Survey {
+  private mapSurveyToHomeSurvey(survey: AppSurvey): Survey {
     const now = new Date();
     const endsAt = new Date(survey.endsAt);
     const isPast = !Number.isNaN(endsAt.getTime()) && endsAt.getTime() < now.getTime();
@@ -378,9 +504,15 @@ export class HomeComponent {
       creatorId: survey.creatorId,
       category: survey.category,
       title: survey.title,
+      description: survey.description,
       badgeLabel: this.toBadgeLabel(Number.isNaN(endsAt.getTime()) ? null : endsAt),
       status: survey.status === 'published' && !isPast ? 'active' : 'past',
       tone: survey.status === 'published' && !isPast ? 'base' : 'muted',
+      visibility: survey.visibility,
+      shareToken: survey.shareToken,
+      accessCode: survey.accessCode,
+      endsAt: survey.endsAt,
+      questions: survey.questions,
     };
   }
 }
