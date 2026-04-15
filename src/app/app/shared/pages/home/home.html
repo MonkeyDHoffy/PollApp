@@ -108,7 +108,8 @@
                 </div>
                 } @else {
                 <app-survey-list-view [items]="mySurveys()" heading="My surveys"
-                    (surveySelected)="openSurvey($event)" />
+                    (surveySelected)="openSurvey($event)"
+                    (shareLinkClicked)="onShareLinkClicked($event)" />
                 }
             </div>
             }
@@ -179,7 +180,8 @@
             } @else {
             <app-survey-list-view [items]="filteredSurveys()"
                 [heading]="isDemoMode() ? 'Survey view in the list' : 'Public surveys'"
-                (surveySelected)="openSurvey($event)" />
+                (surveySelected)="openSurvey($event)"
+                (shareLinkClicked)="onShareLinkClicked($event)" />
             }
         </section>
         }

@@ -12,6 +12,8 @@ type SurveyListItem = {
   tone?: SurveyListTone;
   badgeTone?: BadgeTone;
   creatorEmail?: string;
+  responseCount?: number;
+  shareToken?: string;
 };
 
 type SurveyListRow = {
@@ -22,6 +24,8 @@ type SurveyListRow = {
   tone: SurveyListTone;
   badgeTone: BadgeTone;
   creatorEmail?: string;
+  responseCount: number;
+  shareToken?: string;
 };
 
 @Component({
@@ -48,6 +52,7 @@ export class SurveyListViewComponent {
     },
   ]);
   readonly surveySelected = output<string>();
+  readonly shareLinkClicked = output<string>();
 
   protected readonly rows = computed<SurveyListRow[]>(() =>
     this.items().map((item, index) => ({
@@ -58,6 +63,8 @@ export class SurveyListViewComponent {
       tone: item.tone ?? 'base',
       badgeTone: item.badgeTone ?? 'none',
       creatorEmail: item.creatorEmail,
+      responseCount: item.responseCount ?? 0,
+      shareToken: item.shareToken,
     }))
   );
 
@@ -67,5 +74,12 @@ export class SurveyListViewComponent {
     }
 
     this.surveySelected.emit(row.id);
+  }
+
+  protected onShare(row: SurveyListRow, event: MouseEvent): void {
+    event.stopPropagation();
+    if (row.shareToken) {
+      this.shareLinkClicked.emit(row.shareToken);
+    }
   }
 }

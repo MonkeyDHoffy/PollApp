@@ -15,6 +15,7 @@ import { DropdownMenuComponent } from '../../ui/dropdown-menu/dropdown-menu';
 import { SurveyService } from '../../../../shared/services/survey.service';
 import { CreateSurveyDTO, Survey as AppSurvey, UpdateSurveyDTO } from '../../../../shared/models/survey.model';
 import { AuthService } from '../../../../shared/services/auth.service';
+import { ToastService } from '../../../../shared/services/toast.service';
 
 type SurveyStatus = 'active' | 'past' | 'all';
 type CategoryFilter = string | 'all';
@@ -37,6 +38,7 @@ type Survey = {
   accessCode?: string;
   endsAt?: string;
   questions: AppSurvey['questions'];
+  responseCount: number;
 };
 
 @Component({
@@ -56,6 +58,7 @@ export class HomeComponent {
   private readonly fb = inject(FormBuilder);
   private readonly surveyService = inject(SurveyService);
   private readonly authService = inject(AuthService);
+  private readonly toastService = inject(ToastService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
 
@@ -470,6 +473,18 @@ export class HomeComponent {
     void this.router.navigate(['/survey', surveyId]);
   }
 
+  protected async onShareLinkClicked(shareToken: string): Promise<void> {
+    const link = `${window.location.origin}/join/${shareToken}`;
+    if (typeof navigator !== 'undefined' && navigator.clipboard) {
+      try {
+        await navigator.clipboard.writeText(link);
+        this.toastService.success('Share link copied to clipboard.');
+      } catch {
+        this.toastService.error('Could not copy link automatically.');
+      }
+    }
+  }
+
   protected openDemo(): void {
     void this.router.navigate([this.isDemoMode() ? '/' : '/demo']);
   }
@@ -591,6 +606,7 @@ export class HomeComponent {
       accessCode: survey.accessCode,
       endsAt: survey.endsAt,
       questions: survey.questions,
+      responseCount: survey.totalResponses,
     };
   }
 }

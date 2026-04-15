@@ -768,7 +768,9 @@ export class SurveyService {
       createdAt: row.created_at,
       updatedAt: row.updated_at,
       endsAt: row.ends_at ?? row.created_at,
-      totalResponses: 0,
+      totalResponses: Array.isArray(row.survey_responses) && row.survey_responses.length > 0
+        ? (row.survey_responses[0]?.count ?? 0)
+        : 0,
     };
   }
 
@@ -823,6 +825,7 @@ export class SurveyService {
       ends_at,
       created_at,
       updated_at,
+      survey_responses(count),
       survey_questions (
         id,
         question_text,
