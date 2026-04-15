@@ -16,6 +16,9 @@
                     <div class="survey-detail__creator-menu">
                         <button type="button" (click)="copyCreatorLink()">Copy link</button>
                         <button type="button" (click)="editCurrentSurvey()">Edit</button>
+                        <button type="button" (click)="exportResultsCsv()" [disabled]="exportingCsv()">
+                            {{ exportingCsv() ? 'Exporting...' : 'Export CSV' }}
+                        </button>
                         <button type="button" (click)="deleteCurrentSurvey()" [disabled]="deletingSurvey()">
                             {{ deletingSurvey() ? 'Deleting...' : 'Delete' }}
                         </button>

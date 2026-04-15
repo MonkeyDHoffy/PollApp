@@ -629,6 +629,40 @@ export class SurveyService {
   }
 
   /**
+   * ==================== CSV EXPORT ====================
+   */
+
+  /**
+   * Lädt alle Rohantworten für eine Umfrage und gibt sie als CSV-String zurück.
+   * Spalten: Frage, Antwort, Anzahl Stimmen, Prozent
+   */
+  async buildResultsCsv(surveyId: string): Promise<string> {
+    const results = await this.loadSurveyResults(surveyId);
+    const survey = this.allSurveys().find((s) => s.id === surveyId) ?? this.currentSurveySignal();
+
+    const rows: string[][] = [['Survey', 'Question', 'Answer', 'Votes', 'Percentage']];
+
+    for (const result of results) {
+      for (const answer of result.answers) {
+        rows.push([
+          this.csvEscape(survey?.title ?? surveyId),
+          this.csvEscape(result.questionText),
+          this.csvEscape(answer.text),
+          String(answer.count),
+          `${answer.percentage}%`,
+        ]);
+      }
+    }
+
+    return rows.map((row) => row.join(',')).join('\n');
+  }
+
+  private csvEscape(value: string): string {
+    const escaped = value.replace(/"/g, '""');
+    return `"${escaped}"`;
+  }
+
+  /**
    * ==================== REALTIME SUBSCRIPTION ====================
    */
 

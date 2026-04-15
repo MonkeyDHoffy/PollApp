@@ -43,6 +43,7 @@ export class SurveyDetailComponent {
   protected readonly creatorMenuOpen = signal(false);
   protected readonly creatorActionMessage = signal<string | null>(null);
   protected readonly deletingSurvey = signal(false);
+  protected readonly exportingCsv = signal(false);
   protected readonly resultsOpen = signal(true);
   protected readonly submitted = signal(false);
   protected readonly submitting = signal(false);
@@ -174,6 +175,31 @@ export class SurveyDetailComponent {
 
     this.creatorMenuOpen.set(false);
     void this.router.navigate(['/'], { queryParams: { edit: surveyId } });
+  }
+
+  protected async exportResultsCsv(): Promise<void> {
+    const survey = this.survey();
+    if (!survey || this.exportingCsv()) {
+      return;
+    }
+
+    this.exportingCsv.set(true);
+    this.creatorMenuOpen.set(false);
+
+    try {
+      const csv = await this.surveyService.buildResultsCsv(survey.id);
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${survey.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_results.csv`;
+      link.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      this.creatorActionMessage.set('Export failed. Please try again.');
+    } finally {
+      this.exportingCsv.set(false);
+    }
   }
 
   protected async deleteCurrentSurvey(): Promise<void> {
