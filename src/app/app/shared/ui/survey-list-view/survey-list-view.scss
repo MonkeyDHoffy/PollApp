@@ -103,6 +103,15 @@
   overflow-wrap: anywhere;
 }
 
+.survey-list-view__creator {
+  margin: 4px 0 0;
+  color: #a897b4;
+  font: 600 11px/1.2 'Mulish', sans-serif;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .survey-list-view__badge {
   margin: auto 0 0;
   justify-self: end;

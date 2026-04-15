@@ -25,6 +25,7 @@ export interface SurveyQuestion {
 export interface Survey {
   id: string;
   creatorId: string;
+  creatorEmail?: string;
   title: string;
   description?: string;
   category: string;
@@ -104,4 +105,5 @@ export interface SurveyListItem {
   badgeLabel: string;
   status: SurveyStatus;
   tone: 'base' | 'muted';
+  creatorEmail?: string;
 }

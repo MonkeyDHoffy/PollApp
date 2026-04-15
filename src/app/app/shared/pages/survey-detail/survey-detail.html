@@ -65,6 +65,9 @@
                         survey()?.category }}</p>
                 </div>
 
+                @if (survey()?.creatorEmail) {
+                <p class="survey-detail__creator">Erstellt von: {{ survey()?.creatorEmail }}</p>
+                }
                 <h1 class="survey-detail__title">{{ survey()?.title }}</h1>
                 <p class="survey-detail__description">
                     {{ survey()?.description || 'Share your opinion and help shape the next decision with this survey.'

@@ -219,6 +219,7 @@ export class SurveyService {
 
       const insertPayload: Record<string, unknown> = {
         creator_id: user.id,
+        creator_email: user.email ?? null,
         title: surveyData.title,
         description: surveyData.description ?? null,
         category: surveyData.category,
@@ -734,6 +735,7 @@ export class SurveyService {
     return {
       id: row.id,
       creatorId: row.creator_id,
+      creatorEmail: row.creator_email ?? undefined,
       title: row.title,
       description: row.description ?? undefined,
       category: row.category,
@@ -808,6 +810,7 @@ export class SurveyService {
     return `
       id,
       creator_id,
+      creator_email,
       title,
       description,
       category,
@@ -838,7 +841,7 @@ export class SurveyService {
     const text = this.errorToText(err).toLowerCase();
     return (
       text.includes('column')
-      && (text.includes('visibility') || text.includes('share_token') || text.includes('access_code') || text.includes('question_description'))
+      && (text.includes('visibility') || text.includes('share_token') || text.includes('access_code') || text.includes('question_description') || text.includes('creator_email'))
     );
   }
 
@@ -975,6 +978,7 @@ export class SurveyService {
     return {
       id: survey.id,
       creatorId: survey.creatorId,
+      creatorEmail: survey.creatorEmail ?? undefined,
       title: survey.title,
       description: survey.description ?? undefined,
       category: survey.category,

@@ -8,6 +8,7 @@ type SurveyListItem = {
   title: string;
   badgeLabel: string;
   tone?: SurveyListTone;
+  creatorEmail?: string;
 };
 
 type SurveyListRow = {
@@ -16,6 +17,7 @@ type SurveyListRow = {
   title: string;
   badgeLabel: string;
   tone: SurveyListTone;
+  creatorEmail?: string;
 };
 
 @Component({
@@ -50,6 +52,7 @@ export class SurveyListViewComponent {
       title: item.title,
       badgeLabel: item.badgeLabel,
       tone: item.tone ?? 'base',
+      creatorEmail: item.creatorEmail,
     }))
   );
 

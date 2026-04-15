@@ -22,6 +22,7 @@ type CategoryFilter = string | 'all';
 type Survey = {
   id: string;
   creatorId: string;
+  creatorEmail?: string;
   category: string;
   title: string;
   badgeLabel: string;
@@ -506,6 +507,7 @@ export class HomeComponent {
     return {
       id: survey.id,
       creatorId: survey.creatorId,
+      creatorEmail: survey.creatorEmail,
       category: survey.category,
       title: survey.title,
       description: survey.description,

@@ -40,6 +40,9 @@ alter table public.surveys
 alter table public.surveys
   add column if not exists access_code text;
 
+alter table public.surveys
+  add column if not exists creator_email text;
+
 create table if not exists public.survey_questions (
   id uuid primary key default gen_random_uuid(),
   survey_id uuid not null references public.surveys(id) on delete cascade,

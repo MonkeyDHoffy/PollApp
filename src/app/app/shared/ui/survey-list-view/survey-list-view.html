@@ -8,6 +8,9 @@
             <p class="survey-list-view__category">{{ row.category }}</p>
             <h3 class="survey-list-view__title">{{ row.title }}</h3>
             <p class="survey-list-view__badge">{{ row.badgeLabel }}</p>
+            @if (row.creatorEmail) {
+            <p class="survey-list-view__creator">von {{ row.creatorEmail }}</p>
+            }
         </article>
         }
     </div>
