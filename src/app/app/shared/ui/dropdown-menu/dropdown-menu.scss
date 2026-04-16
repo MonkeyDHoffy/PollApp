@@ -4,17 +4,17 @@
 }
 
 .ui-dropdown {
-  width: 280px;
+  width: 100%;
   display: grid;
   position: relative;
 }
 
 .ui-dropdown__trigger {
   width: 100%;
-  min-height: 36px;
-  border: 0;
+  min-height: 40px;
+  border: 1px solid transparent; // reserviert Platz → kein DOM-Shift beim Hover/Focus
   border-radius: 8px;
-  padding: 8px 12px;
+  padding: 0 12px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -22,6 +22,12 @@
   color: #f4f0f8;
   cursor: pointer;
   font-size: 14px;
+  transition: background 140ms ease, border-color 140ms ease;
+
+  &:hover {
+    background: #5d4e68;
+    border-color: rgba(240, 173, 99, 0.25);
+  }
 }
 
 .ui-dropdown__trigger--ghost {
@@ -81,6 +87,13 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
+.ui-dropdown--up .ui-dropdown__menu {
+  top: auto;
+  bottom: calc(100% + 4px);
+  margin: 0 0 4px;
+  box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.2);
+}
+
 .ui-dropdown__menu-item {
   margin: 0;
 }
@@ -109,7 +122,8 @@
 }
 
 .ui-dropdown__selection {
-  margin: 2px 0 0;
+  margin: 3px 0 0;
+  min-height: 16px; // reserviert immer Platz → kein DOM-Shift
   font-family: 'Mulish', sans-serif;
   font-size: 12px;
   font-style: normal;

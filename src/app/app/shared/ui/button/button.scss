@@ -161,10 +161,10 @@
 .ui-button--filter {
 	background: #e8d9ca;
 	color: #433028;
-	min-height: 38px;
-	padding: 8px 14px;
+	min-height: 40px;
+	padding: 0 16px;
 	font-size: 1.02rem;
-	border: 0;
+	// border bleibt 1px solid transparent vom base → kein DOM-Shift beim Hover
 }
 
 .ui-button--filter-active {

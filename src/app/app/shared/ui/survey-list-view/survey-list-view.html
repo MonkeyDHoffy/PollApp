@@ -24,14 +24,12 @@
             <p class="survey-list-view__creator">von {{ row.creatorEmail }}</p>
             }
             <div class="survey-list-view__footer">
+                <span class="survey-list-view__response-count">{{ row.responseCount }} {{ row.responseCount === 1 ?
+                    'response' : 'responses' }}</span>
                 <p class="survey-list-view__badge"
                     [class.survey-list-view__badge--active]="row.badgeTone === 'active'"
                     [class.survey-list-view__badge--expiring]="row.badgeTone === 'expiring'"
                     [class.survey-list-view__badge--ended]="row.badgeTone === 'ended'">{{ row.badgeLabel }}</p>
-                @if (row.responseCount > 0) {
-                <span class="survey-list-view__response-count">{{ row.responseCount }} {{ row.responseCount === 1 ?
-                    'response' : 'responses' }}</span>
-                }
             </div>
         </article>
         }

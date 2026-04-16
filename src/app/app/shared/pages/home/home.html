@@ -85,43 +85,32 @@
         <section class="surveys">
             <h2 class="surveys__title">Your surveys</h2>
 
-            @if (!isDemoMode()) {
-            <div class="surveys__my-block">
-                <h3 class="surveys__subtitle">My surveys</h3>
-
-                @if (surveysLoading()) {
-                <div class="surveys__skeleton">
-                    @for (_ of [1,2,3,4]; track $index) {
-                    <div class="surveys__skeleton-card">
-                        <div class="surveys__skeleton-line surveys__skeleton-line--sm"></div>
-                        <div class="surveys__skeleton-line surveys__skeleton-line--lg"></div>
-                        <div class="surveys__skeleton-line surveys__skeleton-line--xs"></div>
+            <!-- Ending soon surveys carousel -->
+            <div class="surveys__ending-soon">
+                <div class="surveys__carousel-header">
+                    <h3 class="surveys__subtitle">{{ isDemoMode() ? 'Ending soon surveys' : 'Public surveys (ending soon)' }}</h3>
+                    @if (endingSoonSurveys().length > 0) {
+                    <div class="surveys__carousel-nav">
+                        <button type="button" class="surveys__carousel-btn" (click)="carouselScroll(-1)" aria-label="Previous">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="15 18 9 12 15 6" />
+                            </svg>
+                        </button>
+                        <button type="button" class="surveys__carousel-btn" (click)="carouselScroll(1)" aria-label="Next">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="9 18 15 12 9 6" />
+                            </svg>
+                        </button>
                     </div>
                     }
                 </div>
-                } @else if (mySurveys().length === 0) {
-                <div class="surveys__empty">
-                    <p class="surveys__empty-heading">No surveys yet</p>
-                    <p class="surveys__empty-text">Create your first survey and collect responses from your team or
-                        audience.</p>
-                    <app-button label="Create survey" variant="primary" (pressed)="openCreateSurveyModal()" />
-                </div>
-                } @else {
-                <app-survey-list-view [items]="mySurveys()" heading="My surveys"
-                    (surveySelected)="openSurvey($event)"
-                    (shareLinkClicked)="onShareLinkClicked($event)" />
-                }
-            </div>
-            }
-
-            <!-- Ending soon surveys -->
-            <div class="surveys__ending-soon">
-                <h3 class="surveys__subtitle">{{ isDemoMode() ? 'Ending soon surveys' : 'Public surveys (ending soon)'
-                    }}</h3>
-                <div class="surveys__highlight-grid">
+                <div class="surveys__carousel-track" #carouselTrack>
                     @for (survey of endingSoonSurveys(); track survey.id) {
-                    <app-highlight-card [category]="survey.category" [title]="survey.title"
-                        [badgeLabel]="survey.badgeLabel" [tone]="survey.tone || 'base'" />
+                    <div class="surveys__carousel-item">
+                        <app-highlight-card [category]="survey.category" [title]="survey.title"
+                            [badgeLabel]="survey.badgeLabel" [tone]="survey.tone || 'base'"
+                            [surveyId]="survey.id" (clicked)="openSurvey($event)" />
+                    </div>
                     }
                 </div>
             </div>
@@ -143,11 +132,12 @@
                 </div>
 
                 <div class="surveys__sort">
-                    <app-dropdown-menu label="Sort by categories" [options]="categories"
-                        [selected]="selectedCategory() === 'all' ? '' : selectedCategory()"
+                    <app-dropdown-menu label="Sort by categories" [options]="filterCategories()"
+                        [selected]="selectedCategory() === 'all' ? 'All' : selectedCategory()"
+                        [showSelectionValue]="true" [openUpward]="true"
                         (selectedChange)="onCategoryChange($event)" />
                     <app-dropdown-menu label="Sort order" [options]="sortOptions"
-                        [selected]="selectedSort()" [showSelectionValue]="true"
+                        [selected]="selectedSort()" [showSelectionValue]="true" [openUpward]="true"
                         (selectedChange)="onSortChange($event)" />
                 </div>
             </div>
@@ -255,13 +245,13 @@
                 <div class="create-survey-modal__meta-grid">
                     <label class="create-survey-modal__field">
                         <span>Survey name</span>
-                        <input type="text" formControlName="title" placeholder="Team Event Survey" />
+                        <input type="text" formControlName="title" placeholder="Team Event Survey" maxlength="120" />
                     </label>
 
                     <label class="create-survey-modal__field">
                         <span>Describing text (optional)</span>
                         <textarea formControlName="description" rows="3"
-                            placeholder="Short survey description"></textarea>
+                            placeholder="Short survey description" maxlength="300"></textarea>
                     </label>
 
                     <label class="create-survey-modal__field">
@@ -290,7 +280,7 @@
                     @if (isPrivateSurvey()) {
                     <label class="create-survey-modal__field">
                         <span>Access code for private survey</span>
-                        <input type="text" formControlName="accessCode" placeholder="e.g. TEAM2026" />
+                        <input type="text" formControlName="accessCode" placeholder="e.g. TEAM2026" maxlength="40" />
                     </label>
                     }
                 </div>
@@ -311,17 +301,18 @@
                         </div>
 
                         <input type="text" formControlName="questionText"
-                            placeholder="Which date would work best for you?" [readonly]="isEditingSurvey()" />
+                            placeholder="Which date would work best for you?" [readonly]="isEditingSurvey()"
+                            maxlength="160" />
 
                         <textarea formControlName="questionDescription" rows="2"
                             placeholder="Short question description (optional)"
                             class="create-survey-modal__question-desc"
-                            [readonly]="isEditingSurvey()"></textarea>
+                            [readonly]="isEditingSurvey()" maxlength="200"></textarea>
 
                         <div class="create-survey-modal__answers-head">
                             <p>Answers</p>
                             <label class="create-survey-modal__checkbox-row">
-                                <input type="checkbox" formControlName="allowMultiple" [disabled]="isEditingSurvey()" />
+                                <input type="checkbox" formControlName="allowMultiple" />
                                 <span>Allow multiple answers</span>
                             </label>
                         </div>
@@ -331,7 +322,7 @@
                             <div class="create-survey-modal__answer-row">
                                 <span>{{ answerLabel(aIdx) }}.</span>
                                 <input [formControlName]="aIdx" type="text" placeholder="Answer option"
-                                    [readonly]="isEditingSurvey()" />
+                                    [readonly]="isEditingSurvey()" maxlength="120" />
                                 @if (questionAnswersArray(qIdx).length > 2 && !isEditingSurvey()) {
                                 <button type="button" class="create-survey-modal__remove"
                                     (click)="removeAnswer(qIdx, aIdx)">

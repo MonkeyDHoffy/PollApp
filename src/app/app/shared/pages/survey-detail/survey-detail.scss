@@ -82,6 +82,15 @@
   }
 }
 
+.survey-detail__logo-link {
+  display: inline-flex;
+  transition: opacity 140ms ease;
+
+  &:hover {
+    opacity: 0.75;
+  }
+}
+
 .survey-detail__logo {
   width: 86px;
   height: auto;

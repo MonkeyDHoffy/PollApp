@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 
 type HighlightCardTone = 'base' | 'muted';
 
@@ -14,6 +14,15 @@ export class HighlightCardComponent {
   readonly title = input("Let's Plan the Next Team Event Together");
   readonly badgeLabel = input('Ends in 1 Day');
   readonly tone = input<HighlightCardTone>('base');
+  readonly surveyId = input('');
+  readonly clicked = output<string>();
+
+  protected onClick(): void {
+    const id = this.surveyId();
+    if (id) {
+      this.clicked.emit(id);
+    }
+  }
 
   protected readonly titleSizeClass = computed(() => {
     const titleLength = this.title().trim().length;

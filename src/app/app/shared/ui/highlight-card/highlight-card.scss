@@ -1,39 +1,52 @@
 .highlight-card {
-  width: 321px;
-  height: 310px;
+  width: 100%;
+  min-height: 260px;
   gap: 10px;
-  opacity: 1;
-  padding: 40px 18px;
+  padding: 32px 20px;
   border-top-right-radius: 80px;
   background: #e7e3ea;
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0);
+  transition: transform 160ms ease, box-shadow 160ms ease;
 }
 
 .highlight-card--muted {
   background: #ddd4e4;
 }
 
+.highlight-card--clickable {
+  cursor: pointer;
+
+  &:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+  }
+
+  &:active {
+    transform: translateY(-1px);
+  }
+}
+
 .highlight-card__category {
   margin: 0;
   font-family: 'Mulish', sans-serif;
-  font-style: normal;
   font-weight: 700;
-  font-size: 18px;
-  line-height: 100%;
-  letter-spacing: 0;
-  color: #44384e;
+  font-size: 13px;
+  line-height: 1;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #7a6585;
 }
 
 .highlight-card__title {
   margin: 0;
   max-width: 100%;
   font-family: 'Mulish', sans-serif;
-  font-style: normal;
   font-weight: 700;
   font-size: 26px;
-  line-height: 100%;
+  line-height: 1.1;
   letter-spacing: 0;
   color: #382f43;
   word-break: break-word;
@@ -45,15 +58,14 @@
   display: inline-flex;
   align-self: flex-start;
   align-items: center;
-  min-height: 24px;
-  padding: 4px 10px;
+  min-height: 26px;
+  padding: 4px 12px;
   border-radius: 0;
   border-top-right-radius: 12px;
   font-family: 'Mulish', sans-serif;
-  font-style: normal;
   font-weight: 700;
-  font-size: 14px;
-  line-height: 100%;
+  font-size: 13px;
+  line-height: 1;
   letter-spacing: 0;
   color: #2b1a16;
   background: #f8b871;

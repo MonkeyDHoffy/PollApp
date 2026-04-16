@@ -25,6 +25,7 @@ export class DropdownMenuComponent {
   readonly startOpen = input(false);
   readonly accentArrow = input(false);
   readonly locked = input(false);
+  readonly openUpward = input(false);
 
   readonly selectedChange = output<string>();
 

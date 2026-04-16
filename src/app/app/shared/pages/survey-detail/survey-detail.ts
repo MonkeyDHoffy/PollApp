@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, signal } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { SurveyResult } from '../../../../shared/models/survey.model';
 import { SurveyService } from '../../../../shared/services/survey.service';
 import { ToastService } from '../../../../shared/services/toast.service';
@@ -21,7 +21,7 @@ type QuestionView = {
 
 @Component({
   selector: 'app-survey-detail',
-  imports: [ButtonComponent],
+  imports: [ButtonComponent, RouterLink],
   templateUrl: './survey-detail.html',
   styleUrl: './survey-detail.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

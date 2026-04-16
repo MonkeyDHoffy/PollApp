@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, ElementRef, inject, signal, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import {
   FormArray,
@@ -130,10 +130,13 @@ export class HomeComponent {
       return this.allSurveys();
     }
 
-    return this.allSurveys().filter((survey) => survey.tone === 'base');
+    const userId = this.authUser()?.id;
+    return this.allSurveys().filter(
+      (survey) => survey.tone === 'base' || (userId !== undefined && survey.creatorId === userId)
+    );
   });
 
-  // Categories for dropdown
+  // Categories for the create-form select
   protected readonly categories = [
     'Team Activities',
     'Health & Wellness',
@@ -143,28 +146,60 @@ export class HomeComponent {
     'Technology & Innovation',
   ];
 
+  // Categories for the filter dropdown (includes All + My surveys)
+  protected readonly filterCategories = computed<string[]>(() => {
+    const base: string[] = ['All', ...this.categories];
+    if (this.authUser() && !this.isDemoMode()) {
+      return [...base, 'My surveys'];
+    }
+    return base;
+  });
+
   protected readonly sortOptions = ['Newest first', 'Oldest first', 'A → Z', 'Z → A'];
 
-  // Computed: Ending soon surveys (erste 3 active)
+  @ViewChild('carouselTrack') carouselTrackRef?: ElementRef<HTMLDivElement>;
+
+  // Computed: Ending soon surveys — all active, sorted soonest-ending first
   protected readonly endingSoonSurveys = computed(() =>
     this.publicSurveys()
       .filter((s) => s.status === 'active')
-      .slice(0, 3)
+      .sort((a, b) => {
+        const aDate = a.endsAt ? new Date(a.endsAt).getTime() : Infinity;
+        const bDate = b.endsAt ? new Date(b.endsAt).getTime() : Infinity;
+        return aDate - bDate;
+      })
   );
+
+  protected carouselScroll(dir: -1 | 1): void {
+    const el = this.carouselTrackRef?.nativeElement;
+    if (!el) return;
+    const item = el.querySelector('.surveys__carousel-item') as HTMLElement | null;
+    const itemWidth = item ? item.offsetWidth + 24 : 340;
+    el.scrollBy({ left: dir * itemWidth * 2, behavior: 'smooth' });
+  }
 
   // Computed: Filtered and sorted surveys
   protected readonly filteredSurveys = computed(() => {
-    let filtered = this.publicSurveys();
+    const category = this.selectedCategory();
+    const isMySurveys = category === 'My surveys';
+    const userId = this.authUser()?.id;
+
+    // "My surveys" → alle eigenen Umfragen; sonst öffentliche
+    let filtered: Survey[] = isMySurveys
+      ? userId
+        ? this.allSurveys().filter((s) => s.creatorId === userId)
+        : []
+      : this.publicSurveys();
 
     // Filter nach Status
     if (this.selectedStatus() !== 'all') {
       filtered = filtered.filter((s) => s.status === this.selectedStatus());
     }
 
-    // Filter nach Kategorie
-    if (this.selectedCategory() !== 'all') {
+    // Filter nach Kategorie (nicht bei 'all' oder 'My surveys')
+    if (!isMySurveys && category !== 'all') {
       filtered = filtered.filter(
-        (s) => s.category.toLowerCase() === (this.selectedCategory() as string).toLowerCase()
+        (s) => s.category.toLowerCase() === (category as string).toLowerCase()
       );
     }
 
@@ -180,7 +215,6 @@ export class HomeComponent {
       if (sort === 'A → Z') return a.title.localeCompare(b.title);
       if (sort === 'Z → A') return b.title.localeCompare(a.title);
       if (sort === 'Oldest first') return new Date(a.endsAt ?? 0).getTime() - new Date(b.endsAt ?? 0).getTime();
-      // Default: Newest first
       return new Date(b.endsAt ?? 0).getTime() - new Date(a.endsAt ?? 0).getTime();
     });
   });
@@ -247,7 +281,11 @@ export class HomeComponent {
   }
 
   protected onCategoryChange(category: string): void {
-    this.selectedCategory.set(category === this.selectedCategory() ? 'all' : category);
+    if (category === 'All') {
+      this.selectedCategory.set('all');
+    } else {
+      this.selectedCategory.set(category === this.selectedCategory() ? 'all' : category);
+    }
   }
 
   protected onSortChange(sort: string): void {
@@ -484,7 +522,7 @@ export class HomeComponent {
     this.publishedShareLink.set(null);
     this.publishSuccessMessage.set(null);
     this.fillCreateSurveyForm({
-      ...this.mapSurveyToHomeSurvey(survey),
+      ...survey,
       title: `${survey.title} (Copy)`,
     });
     this.createSurveyOpen.set(true);
@@ -553,7 +591,7 @@ export class HomeComponent {
       ? survey.questions.map((question) => this.fb.group({
           questionText: this.fb.nonNullable.control(question.text, [Validators.required, Validators.maxLength(160)]),
           questionDescription: this.fb.nonNullable.control(question.description ?? '', [Validators.maxLength(200)]),
-          allowMultiple: this.fb.nonNullable.control(!!question.allowMultiple),
+          allowMultiple: this.fb.control({ value: !!question.allowMultiple, disabled: true }),
           answers: this.fb.array(
             question.answers.map((answer) =>
               this.fb.nonNullable.control(answer.text, [Validators.required, Validators.maxLength(120)])

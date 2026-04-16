@@ -767,7 +767,7 @@ export class SurveyService {
         }),
       createdAt: row.created_at,
       updatedAt: row.updated_at,
-      endsAt: row.ends_at ?? row.created_at,
+      endsAt: row.ends_at ?? '',
       totalResponses: Array.isArray(row.survey_responses) && row.survey_responses.length > 0
         ? (row.survey_responses[0]?.count ?? 0)
         : 0,
