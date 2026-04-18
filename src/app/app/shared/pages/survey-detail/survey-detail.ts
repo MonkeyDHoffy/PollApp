@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, computed, effect, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { SurveyResult } from '../../../../shared/models/survey.model';
 import { SurveyService } from '../../../../shared/services/survey.service';
@@ -57,6 +57,9 @@ export class SurveyDetailComponent {
   protected readonly selectedAnswers = signal<Record<string, string[]>>({});
   protected readonly liveResults = signal<SurveyResult[]>([]);
   protected readonly isLive = signal(false);
+  protected readonly resultsLoading = signal(false);
+  protected readonly resultsFlash = signal(false);
+  protected readonly mobileActiveTab = signal<'form' | 'results'>('form');
   protected readonly isDemoSurvey = computed(() => (this.survey()?.id ?? '').startsWith('demo-'));
   protected readonly isCreatorSurvey = computed(() => {
     const userId = this.authUser()?.id;
@@ -132,6 +135,18 @@ export class SurveyDetailComponent {
     this.resultsRows().some((row) => row.answers.some((answer) => answer.count > 0))
   );
 
+  protected readonly isSurveyEnded = computed(() => {
+    const endsAt = this.survey()?.endsAt;
+    if (!endsAt) return false;
+    return new Date(endsAt) < new Date();
+  });
+
+  protected readonly totalQuestionsCount = computed(() => this.survey()?.questions.length ?? 0);
+
+  protected readonly answeredQuestionsCount = computed(() =>
+    Object.values(this.selectedAnswers()).filter((answers) => answers.length > 0).length
+  );
+
   constructor() {
     if (this.surveyId) {
       void this.loadSurveyContext(this.surveyId);
@@ -141,6 +156,14 @@ export class SurveyDetailComponent {
     if (this.joinToken) {
       void this.loadSurveyByJoinToken(this.joinToken, this.joinCode ?? undefined);
     }
+
+    effect(() => {
+      const results = this.liveResults();
+      if (results.some((r) => r.answers.some((a) => a.count > 0))) {
+        this.resultsFlash.set(true);
+        setTimeout(() => this.resultsFlash.set(false), 700);
+      }
+    });
   }
 
   protected goHome(): void {
@@ -328,6 +351,25 @@ export class SurveyDetailComponent {
     this.resultsOpen.update((value) => !value);
   }
 
+  protected switchTab(tab: 'form' | 'results'): void {
+    this.mobileActiveTab.set(tab);
+  }
+
+  protected async copyShareLink(): Promise<void> {
+    const shareToken = this.survey()?.shareToken;
+    if (!shareToken || typeof navigator === 'undefined' || !navigator.clipboard) {
+      this.toastService.error('No share link available.');
+      return;
+    }
+    const link = `${window.location.origin}/join/${shareToken}`;
+    try {
+      await navigator.clipboard.writeText(link);
+      this.toastService.success('Share link copied to clipboard.');
+    } catch {
+      this.toastService.error('Could not copy link automatically.');
+    }
+  }
+
   protected updateAccessCode(value: string): void {
     this.accessCode.set(value);
   }
@@ -357,8 +399,10 @@ export class SurveyDetailComponent {
   }
 
   private async refreshResults(surveyId: string): Promise<void> {
+    this.resultsLoading.set(true);
     const results = await this.surveyService.loadSurveyResults(surveyId);
     this.liveResults.set(results);
+    this.resultsLoading.set(false);
   }
 
   private async loadSurveyByJoinToken(joinToken: string, accessCode?: string): Promise<void> {

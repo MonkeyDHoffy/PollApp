@@ -27,6 +27,16 @@
                     </div>
                     }
                 </div>
+                } @else if (survey()?.shareToken) {
+                <button type="button" class="survey-detail__share-btn" (click)="copyShareLink()" aria-label="Share survey">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+                        <polyline points="16 6 12 2 8 6" />
+                        <line x1="12" y1="2" x2="12" y2="15" />
+                    </svg>
+                    Share
+                </button>
                 }
 
                 <app-button [label]="homeLabel()" variant="primary" (pressed)="goHome()" />
@@ -56,8 +66,19 @@
         } @else if (error()) {
         <p class="survey-detail__state survey-detail__state--error">{{ error() }}</p>
         } @else if (survey()) {
+
+        <div class="survey-detail__mobile-tabs">
+            <button type="button" class="survey-detail__mobile-tab"
+                [class.survey-detail__mobile-tab--active]="mobileActiveTab() === 'form'"
+                (click)="switchTab('form')">Survey</button>
+            <button type="button" class="survey-detail__mobile-tab"
+                [class.survey-detail__mobile-tab--active]="mobileActiveTab() === 'results'"
+                (click)="switchTab('results')">Results</button>
+        </div>
+
         <div class="survey-detail__layout">
-            <article class="survey-detail__form-card">
+            <article class="survey-detail__form-card"
+                [class.survey-detail__form-card--mobile-hidden]="mobileActiveTab() === 'results'">
                 <div class="survey-detail__top-row">
                     <div class="survey-detail__meta-stack">
                         <span class="survey-detail__status">Published</span>
@@ -75,6 +96,34 @@
                     {{ survey()?.description || 'Share your opinion and help shape the next decision with this survey.'
                     }}
                 </p>
+
+                @if (isSurveyEnded()) {
+                <div class="survey-detail__ended-banner">
+                    <span class="survey-detail__ended-banner-icon" aria-hidden="true">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10" />
+                            <polyline points="12 6 12 12 16 14" />
+                        </svg>
+                    </span>
+                    <div>
+                        <p class="survey-detail__ended-banner-title">Survey has ended</p>
+                        <p class="survey-detail__ended-banner-sub">This survey is closed. Results are still visible on
+                            the right.</p>
+                    </div>
+                </div>
+                }
+
+                @if (!alreadyVoted() && !isSurveyEnded() && totalQuestionsCount() > 0) {
+                <div class="survey-detail__progress">
+                    <div class="survey-detail__progress-track">
+                        <div class="survey-detail__progress-fill"
+                            [style.width.%]="(answeredQuestionsCount() / totalQuestionsCount()) * 100"></div>
+                    </div>
+                    <span class="survey-detail__progress-label">{{ answeredQuestionsCount() }}/{{
+                        totalQuestionsCount() }} answered</span>
+                </div>
+                }
 
                 <div class="survey-detail__questions-grid">
                     <div class="survey-detail__questions-col">
@@ -124,13 +173,18 @@
 
                 @if (alreadyVoted()) {
                 <div class="survey-detail__already-voted">
-                    <span class="survey-detail__already-voted-icon">✓</span>
+                    <span class="survey-detail__already-voted-icon" aria-hidden="true">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                    </span>
                     <div>
                         <p class="survey-detail__already-voted-title">Du hast bereits teilgenommen</p>
                         <p class="survey-detail__already-voted-sub">Deine Antwort wurde gespeichert.</p>
                     </div>
                 </div>
-                } @else {
+                } @else if (!isSurveyEnded()) {
                 <div class="survey-detail__form-actions">
                     <app-button [label]="submitting() ? 'Saving...' : 'Complete survey'" variant="primary"
                         [disabled]="submitting()" (pressed)="completeSurvey()" />
@@ -144,15 +198,25 @@
                 }
             </article>
 
-            <aside class="survey-detail__results" [class.survey-detail__results--closed]="!resultsOpen()">
-                <button type="button" class="survey-detail__results-toggle" (click)="toggleResults()">
-                    {{ resultsOpen() ? 'Close results' : 'Show results' }}
-                </button>
+            <aside class="survey-detail__results"
+                [class.survey-detail__results--flash]="resultsFlash()"
+                [class.survey-detail__results--mobile-hidden]="mobileActiveTab() === 'form'">
 
-                @if (resultsOpen()) {
-                <h2>Survey results @if (isLive()) {<span class="survey-detail__live-badge"><span class="survey-detail__live-dot"></span>LIVE</span>}</h2>
+                <h2>Survey results @if (isLive()) {<span class="survey-detail__live-badge"><span
+                            class="survey-detail__live-dot"></span>LIVE</span>}</h2>
 
-                @if (hasResults()) {
+                @if (resultsLoading()) {
+                <div class="survey-detail__results-skeleton">
+                    @for (i of [1, 2, 3]; track i) {
+                    <div class="survey-detail__results-skeleton-block">
+                        <div class="survey-detail__skeleton-line survey-detail__skeleton-line--title"></div>
+                        @for (j of [1, 2, 3]; track j) {
+                        <div class="survey-detail__skeleton-line"></div>
+                        }
+                    </div>
+                    }
+                </div>
+                } @else if (hasResults()) {
                 <div class="survey-detail__results-list">
                     @for (row of resultsRows(); track row.questionId; let qIdx = $index) {
                     <section class="survey-detail__result-block">
@@ -174,7 +238,6 @@
                     survey.</p>
                 <p class="survey-detail__results-empty-placeholder">There are no answers yet.</p>
                 }
-                }
             </aside>
         </div>
         } @else {
@@ -187,7 +250,8 @@
 <div class="survey-detail__confirm-backdrop" (click)="cancelDelete()"></div>
 <div class="survey-detail__confirm-dialog" role="alertdialog" aria-modal="true">
     <h3 class="survey-detail__confirm-title">Umfrage löschen?</h3>
-    <p class="survey-detail__confirm-text">Diese Aktion kann nicht rückgängig gemacht werden. Alle Antworten werden ebenfalls gelöscht.</p>
+    <p class="survey-detail__confirm-text">Diese Aktion kann nicht rückgängig gemacht werden. Alle Antworten werden
+        ebenfalls gelöscht.</p>
     <div class="survey-detail__confirm-actions">
         <app-button label="Abbrechen" variant="secondary" (pressed)="cancelDelete()" />
         <app-button [label]="deletingSurvey() ? 'Deleting...' : 'Ja, löschen'" variant="primary"

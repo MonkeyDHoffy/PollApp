@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, effect, ElementRef, inject, signal, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, ElementRef, inject, OnDestroy, signal, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import {
   FormArray,
@@ -54,7 +54,7 @@ type Survey = {
   styleUrl: './home.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class HomeComponent {
+export class HomeComponent implements OnDestroy {
   private readonly fb = inject(FormBuilder);
   private readonly surveyService = inject(SurveyService);
   private readonly authService = inject(AuthService);
@@ -83,6 +83,19 @@ export class HomeComponent {
   protected readonly isEditingSurvey = computed(() => !!this.editSurveyId());
   protected readonly publishedShareLink = signal<string | null>(null);
   protected readonly publishSuccessMessage = signal<string | null>(null);
+  protected readonly confirmDiscardOpen = signal(false);
+
+  protected readonly hasUnsavedChanges = computed(() => {
+    if (!this.createSurveyOpen()) return false;
+    const form = this.createSurveyForm.value;
+    const title = (form.title ?? '').trim();
+    const description = (form.description ?? '').trim();
+    const category = (form.category ?? '').trim();
+    const hasQuestionContent = (form.questions ?? []).some(
+      (q: any) => ((q.questionText ?? '') as string).trim().length > 0
+    );
+    return title.length > 0 || description.length > 0 || category.length > 0 || hasQuestionContent;
+  });
   protected readonly guestModeLabel = computed(() =>
     this.isDemoMode() ? 'Gastmodus beenden' : 'Gastmodus'
   );
@@ -158,6 +171,14 @@ export class HomeComponent {
   protected readonly sortOptions = ['Newest first', 'Oldest first', 'A → Z', 'Z → A'];
 
   @ViewChild('carouselTrack') carouselTrackRef?: ElementRef<HTMLDivElement>;
+  @ViewChild('heroVisuals') heroVisualsRef?: ElementRef<HTMLElement>;
+
+  // Hero parallax — raw values, no signals (avoids CD on every mousemove)
+  private heroTargetX = 0;
+  private heroTargetY = 0;
+  private heroCurrX = 0;
+  private heroCurrY = 0;
+  private heroRafId?: number;
 
   // Computed: Ending soon surveys — all active, sorted soonest-ending first
   protected readonly endingSoonSurveys = computed(() =>
@@ -327,6 +348,23 @@ export class HomeComponent {
     await this.authService.signOut();
   }
 
+  protected requestCloseModal(): void {
+    if (this.hasUnsavedChanges() && !this.publishSuccessMessage()) {
+      this.confirmDiscardOpen.set(true);
+      return;
+    }
+    this.closeCreateSurveyModal();
+  }
+
+  protected confirmDiscard(): void {
+    this.confirmDiscardOpen.set(false);
+    this.closeCreateSurveyModal();
+  }
+
+  protected cancelDiscard(): void {
+    this.confirmDiscardOpen.set(false);
+  }
+
   protected closeCreateSurveyModal(): void {
     this.surveyService.clearError();
     this.submitAttempted.set(false);
@@ -335,6 +373,7 @@ export class HomeComponent {
     this.editSurveyId.set(null);
     this.previewMode.set(false);
     this.createSurveyOpen.set(false);
+    this.confirmDiscardOpen.set(false);
     this.resetCreateSurveyForm();
   }
 
@@ -607,6 +646,69 @@ export class HomeComponent {
     return shareToken && typeof window !== 'undefined'
       ? `${window.location.origin}/join/${shareToken}`
       : null;
+  }
+
+  // ── Hero parallax ────────────────────────────────────────────────────────
+
+  protected onHeroMouseMove(event: MouseEvent): void {
+    this.updateHeroTarget(event.clientX, event.clientY);
+  }
+
+  protected onHeroMouseLeave(): void {
+    this.heroTargetX = 0;
+    this.heroTargetY = 0;
+    this.scheduleHeroLerp();
+  }
+
+  protected onHeroTouchMove(event: TouchEvent): void {
+    const touch = event.touches[0];
+    if (touch) {
+      this.updateHeroTarget(touch.clientX, touch.clientY);
+    }
+  }
+
+  protected onHeroTouchEnd(): void {
+    this.heroTargetX = 0;
+    this.heroTargetY = 0;
+    this.scheduleHeroLerp();
+  }
+
+  private updateHeroTarget(clientX: number, clientY: number): void {
+    const el = this.heroVisualsRef?.nativeElement;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    this.heroTargetX = ((clientX - rect.left) / rect.width - 0.5) * 2;
+    this.heroTargetY = ((clientY - rect.top) / rect.height - 0.5) * 2;
+    this.scheduleHeroLerp();
+  }
+
+  private scheduleHeroLerp(): void {
+    if (this.heroRafId != null) return;
+    const tick = () => {
+      const ease = 0.072;
+      this.heroCurrX += (this.heroTargetX - this.heroCurrX) * ease;
+      this.heroCurrY += (this.heroTargetY - this.heroCurrY) * ease;
+      const el = this.heroVisualsRef?.nativeElement;
+      if (el) {
+        el.style.setProperty('--px', this.heroCurrX.toFixed(4));
+        el.style.setProperty('--py', this.heroCurrY.toFixed(4));
+      }
+      const stillMoving =
+        Math.abs(this.heroTargetX - this.heroCurrX) > 0.0008 ||
+        Math.abs(this.heroTargetY - this.heroCurrY) > 0.0008;
+      if (stillMoving) {
+        this.heroRafId = requestAnimationFrame(tick);
+      } else {
+        this.heroRafId = undefined;
+      }
+    };
+    this.heroRafId = requestAnimationFrame(tick);
+  }
+
+  ngOnDestroy(): void {
+    if (this.heroRafId != null) {
+      cancelAnimationFrame(this.heroRafId);
+    }
   }
 
   private toDateInputValue(isoDate?: string): string {

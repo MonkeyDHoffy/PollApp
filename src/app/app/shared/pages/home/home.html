@@ -62,7 +62,11 @@
                     }
                 </div>
 
-                <div class="hero__visuals">
+                <div class="hero__visuals" #heroVisuals
+                    (mousemove)="onHeroMouseMove($event)"
+                    (mouseleave)="onHeroMouseLeave()"
+                    (touchmove)="onHeroTouchMove($event)"
+                    (touchend)="onHeroTouchEnd()">
                     <img src="/assets/visual/position 03@2x 1.png" alt="Survey illustration" class="hero__phone" />
                     <img src="/assets/visual/Questin mark.png" alt="Question mark"
                         class="hero__icon hero__icon--question" />
@@ -89,7 +93,7 @@
             <div class="surveys__ending-soon">
                 <div class="surveys__carousel-header">
                     <h3 class="surveys__subtitle">{{ isDemoMode() ? 'Ending soon surveys' : 'Public surveys (ending soon)' }}</h3>
-                    @if (endingSoonSurveys().length > 0) {
+                    @if (!surveysLoading() && endingSoonSurveys().length > 0) {
                     <div class="surveys__carousel-nav">
                         <button type="button" class="surveys__carousel-btn" (click)="carouselScroll(-1)" aria-label="Previous">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -104,6 +108,25 @@
                     </div>
                     }
                 </div>
+
+                @if (surveysLoading()) {
+                <div class="surveys__carousel-skeleton">
+                    @for (_ of [1,2,3,4]; track $index) {
+                    <div class="surveys__carousel-skeleton-card">
+                        <div class="surveys__skeleton-line surveys__skeleton-line--sm"></div>
+                        <div class="surveys__skeleton-line surveys__skeleton-line--lg"></div>
+                        <div class="surveys__skeleton-line surveys__skeleton-line--lg"></div>
+                    </div>
+                    }
+                </div>
+                } @else if (endingSoonSurveys().length === 0) {
+                <div class="surveys__carousel-empty">
+                    <p class="surveys__carousel-empty-text">No active surveys right now — be the first to create one.</p>
+                    @if (canCreateSurvey()) {
+                    <app-button label="Create survey" variant="primary" (pressed)="openCreateSurveyModal()" />
+                    }
+                </div>
+                } @else {
                 <div class="surveys__carousel-track" #carouselTrack>
                     @for (survey of endingSoonSurveys(); track survey.id) {
                     <div class="surveys__carousel-item">
@@ -113,34 +136,63 @@
                     </div>
                     }
                 </div>
+                }
             </div>
 
-            <!-- Search -->
-            <div class="surveys__search-wrap">
-                <input class="surveys__search" type="search" placeholder="Search surveys..."
-                    [value]="searchQuery()" (input)="searchQuery.set($any($event.target).value)" />
-            </div>
+            <!-- Unified toolbar -->
+            <div class="surveys__toolbar">
+                <label class="surveys__search-wrap">
+                    <svg class="surveys__search-icon" width="15" height="15" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+                        aria-hidden="true">
+                        <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+                    </svg>
+                    <input class="surveys__search" type="search" placeholder="Search surveys..."
+                        [value]="searchQuery()" (input)="searchQuery.set($any($event.target).value)" />
+                </label>
 
-            <!-- Filters and sorting -->
-            <div class="surveys__controls">
+                <div class="surveys__toolbar-divider" aria-hidden="true"></div>
+
                 <div class="surveys__filter-buttons">
-                    <app-button label="Active survey" variant="filter"
+                    <app-button label="Active" variant="filter"
                         [filterStyle]="selectedStatus() === 'active' ? 'active' : 'base'"
                         (pressed)="onFilterActive()" />
-                    <app-button label="Past survey" variant="filter"
-                        [filterStyle]="selectedStatus() === 'past' ? 'active' : 'base'" (pressed)="onFilterPast()" />
+                    <app-button label="Past" variant="filter"
+                        [filterStyle]="selectedStatus() === 'past' ? 'active' : 'base'"
+                        (pressed)="onFilterPast()" />
                 </div>
 
+                <div class="surveys__toolbar-divider" aria-hidden="true"></div>
+
                 <div class="surveys__sort">
-                    <app-dropdown-menu label="Sort by categories" [options]="filterCategories()"
+                    <app-dropdown-menu label="Category" [options]="filterCategories()"
                         [selected]="selectedCategory() === 'all' ? 'All' : selectedCategory()"
                         [showSelectionValue]="true" [openUpward]="true"
                         (selectedChange)="onCategoryChange($event)" />
-                    <app-dropdown-menu label="Sort order" [options]="sortOptions"
+                    <app-dropdown-menu label="Sort" [options]="sortOptions"
                         [selected]="selectedSort()" [showSelectionValue]="true" [openUpward]="true"
                         (selectedChange)="onSortChange($event)" />
                 </div>
             </div>
+
+            <!-- Result bar: bridges toolbar to list -->
+            @if (!surveysLoading()) {
+            <div class="surveys__result-bar">
+                <span class="surveys__result-count">
+                    <span class="surveys__result-count-num">{{ filteredSurveys().length }}</span>
+                    {{ filteredSurveys().length === 1 ? 'survey' : 'surveys' }}
+                    @if (searchQuery().trim()) { for "<strong>{{ searchQuery() }}</strong>" }
+                </span>
+                <div class="surveys__result-tags">
+                    @if (selectedStatus() !== 'all') {
+                    <span class="surveys__result-tag">{{ selectedStatus() }}</span>
+                    }
+                    @if (selectedCategory() !== 'all') {
+                    <span class="surveys__result-tag">{{ selectedCategory() }}</span>
+                    }
+                </div>
+            </div>
+            }
 
             <!-- Survey list -->
             @if (surveysLoading()) {
@@ -179,7 +231,7 @@
 
     @if (createSurveyOpen()) {
     <div class="create-survey-modal" role="dialog" aria-modal="true" aria-label="Create new survey">
-        <div class="create-survey-modal__backdrop" (click)="closeCreateSurveyModal()"></div>
+        <div class="create-survey-modal__backdrop" (click)="requestCloseModal()"></div>
         <section class="create-survey-modal__panel">
             <header class="create-survey-modal__header">
                 <div>
@@ -193,11 +245,22 @@
                         (click)="previewMode.update(v => !v)">
                         {{ previewMode() ? 'Edit' : 'Preview' }}
                     </button>
-                    <button type="button" class="create-survey-modal__cancel" (click)="closeCreateSurveyModal()">
+                    <button type="button" class="create-survey-modal__cancel" (click)="requestCloseModal()">
                         Cancel
                     </button>
                 </div>
             </header>
+
+            @if (confirmDiscardOpen()) {
+            <div class="create-survey-modal__discard-overlay">
+                <p class="create-survey-modal__discard-title">Discard changes?</p>
+                <p class="create-survey-modal__discard-text">All unsaved inputs will be lost.</p>
+                <div class="create-survey-modal__discard-actions">
+                    <button type="button" class="create-survey-modal__secondary" (click)="cancelDiscard()">Keep editing</button>
+                    <button type="button" class="create-survey-modal__cancel" (click)="confirmDiscard()">Discard</button>
+                </div>
+            </div>
+            }
 
             @if (previewMode()) {
             <div class="create-survey-modal__preview">
@@ -246,6 +309,9 @@
                     <label class="create-survey-modal__field">
                         <span>Survey name</span>
                         <input type="text" formControlName="title" placeholder="Team Event Survey" maxlength="120" />
+                        @if (createSurveyForm.controls.title.touched && createSurveyForm.controls.title.hasError('required')) {
+                        <span class="create-survey-modal__field-error">Survey name is required.</span>
+                        }
                     </label>
 
                     <label class="create-survey-modal__field">
@@ -267,6 +333,9 @@
                             <option [value]="category">{{ category }}</option>
                             }
                         </select>
+                        @if (createSurveyForm.controls.category.touched && createSurveyForm.controls.category.hasError('required')) {
+                        <span class="create-survey-modal__field-error">Please select a category.</span>
+                        }
                     </label>
 
                     <label class="create-survey-modal__field">
@@ -303,6 +372,9 @@
                         <input type="text" formControlName="questionText"
                             placeholder="Which date would work best for you?" [readonly]="isEditingSurvey()"
                             maxlength="160" />
+                        @if ($any(question).get('questionText').touched && $any(question).get('questionText').hasError('required')) {
+                        <span class="create-survey-modal__field-error">Question text is required.</span>
+                        }
 
                         <textarea formControlName="questionDescription" rows="2"
                             placeholder="Short question description (optional)"
@@ -323,6 +395,9 @@
                                 <span>{{ answerLabel(aIdx) }}.</span>
                                 <input [formControlName]="aIdx" type="text" placeholder="Answer option"
                                     [readonly]="isEditingSurvey()" maxlength="120" />
+                                @if ($any(questionAnswersArray(qIdx).at(aIdx)).touched && $any(questionAnswersArray(qIdx).at(aIdx)).hasError('required')) {
+                                <span class="create-survey-modal__field-error">Answer is required.</span>
+                                }
                                 @if (questionAnswersArray(qIdx).length > 2 && !isEditingSurvey()) {
                                 <button type="button" class="create-survey-modal__remove"
                                     (click)="removeAnswer(qIdx, aIdx)">
@@ -344,8 +419,7 @@
 
                 <div class="create-survey-modal__actions-row">
                     @if (submitAttempted() && createSurveyForm.invalid) {
-                    <p class="create-survey-modal__error">Bitte Pflichtfelder ausfuellen (Titel, Kategorie, Fragen,
-                        Antworten).</p>
+                    <p class="create-survey-modal__error">Please fill in all required fields above.</p>
                     }
                     @if (submitAttempted() && isPrivateSurvey() && !createSurveyForm.controls.accessCode.value.trim()) {
                     <p class="create-survey-modal__error">Bitte Access code fuer private Umfragen setzen.</p>

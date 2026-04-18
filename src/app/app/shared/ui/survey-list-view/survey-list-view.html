@@ -3,15 +3,22 @@
 
     <div class="survey-list-view__frame">
         @for (row of rows(); track row.id) {
-        <article class="survey-list-view__item" [class.survey-list-view__item--muted]="row.tone === 'muted'"
-            [class.survey-list-view__item--clickable]="row.tone !== 'muted'" (click)="onSelect(row)">
+        <article class="survey-list-view__item"
+            [class.survey-list-view__item--muted]="row.tone === 'muted'"
+            [class.survey-list-view__item--clickable]="row.tone !== 'muted'"
+            [class.survey-list-view__item--tone-active]="row.badgeTone === 'active'"
+            [class.survey-list-view__item--tone-expiring]="row.badgeTone === 'expiring'"
+            [class.survey-list-view__item--tone-ended]="row.badgeTone === 'ended'"
+            (click)="onSelect(row)">
+
             <div class="survey-list-view__top-row">
                 <p class="survey-list-view__category">{{ row.category }}</p>
                 @if (row.shareToken) {
-                <button type="button" class="survey-list-view__share-btn" (click)="onShare(row, $event)"
+                <button type="button" class="survey-list-view__share-btn"
+                    (click)="onShare(row, $event)"
                     title="Copy share link" aria-label="Copy share link">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-                        stroke-linecap="round" stroke-linejoin="round">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                         <circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" />
                         <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
                         <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
@@ -19,17 +26,23 @@
                 </button>
                 }
             </div>
+
             <h3 class="survey-list-view__title">{{ row.title }}</h3>
+
             @if (row.creatorEmail) {
-            <p class="survey-list-view__creator">von {{ row.creatorEmail }}</p>
+            <p class="survey-list-view__creator">{{ row.creatorEmail }}</p>
             }
+
             <div class="survey-list-view__footer">
-                <span class="survey-list-view__response-count">{{ row.responseCount }} {{ row.responseCount === 1 ?
-                    'response' : 'responses' }}</span>
-                <p class="survey-list-view__badge"
+                <span class="survey-list-view__response-count">
+                    {{ row.responseCount }} {{ row.responseCount === 1 ? 'response' : 'responses' }}
+                </span>
+                <span class="survey-list-view__badge"
                     [class.survey-list-view__badge--active]="row.badgeTone === 'active'"
                     [class.survey-list-view__badge--expiring]="row.badgeTone === 'expiring'"
-                    [class.survey-list-view__badge--ended]="row.badgeTone === 'ended'">{{ row.badgeLabel }}</p>
+                    [class.survey-list-view__badge--ended]="row.badgeTone === 'ended'">
+                    {{ row.badgeLabel }}
+                </span>
             </div>
         </article>
         }
