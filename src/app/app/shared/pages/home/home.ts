@@ -157,6 +157,7 @@ export class HomeComponent implements OnDestroy {
     'Education & Learning',
     'Lifestyle & Preferences',
     'Technology & Innovation',
+    'Other',
   ];
 
   // Categories for the filter dropdown (includes All + My surveys)

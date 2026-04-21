@@ -5,6 +5,14 @@
                 <img src="/assets/logo/Property 1=Purple dark.png" alt="PollApp" class="survey-detail__logo" />
             </a>
             <div class="survey-detail__header-actions">
+                <button type="button" class="survey-detail__back-btn" (click)="goHome()" aria-label="Back to home">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M19 12H5M12 5l-7 7 7 7"/>
+                    </svg>
+                    Back
+                </button>
+
                 @if (isCreatorSurvey()) {
                 <div class="survey-detail__creator-menu-wrap">
                     <button type="button" class="survey-detail__creator-trigger" (click)="toggleCreatorMenu()"
@@ -38,8 +46,6 @@
                     Share
                 </button>
                 }
-
-                <app-button [label]="homeLabel()" variant="primary" (pressed)="goHome()" />
             </div>
         </header>
 
@@ -139,6 +145,7 @@
                                 @for (answer of question.answers; track answer.id) {
                                 <label class="survey-detail__answer-row">
                                     <input type="checkbox" [checked]="isSelected(question.id, answer.id)"
+                                        [disabled]="alreadyVoted() || isSurveyEnded()"
                                         (change)="toggleAnswer(question.id, answer.id, question.allowMultiple)" />
                                     <span>{{ answer.optionLabel }}. {{ answer.text }}</span>
                                 </label>
@@ -161,6 +168,7 @@
                                 @for (answer of question.answers; track answer.id) {
                                 <label class="survey-detail__answer-row">
                                     <input type="checkbox" [checked]="isSelected(question.id, answer.id)"
+                                        [disabled]="alreadyVoted() || isSurveyEnded()"
                                         (change)="toggleAnswer(question.id, answer.id, question.allowMultiple)" />
                                     <span>{{ answer.optionLabel }}. {{ answer.text }}</span>
                                 </label>

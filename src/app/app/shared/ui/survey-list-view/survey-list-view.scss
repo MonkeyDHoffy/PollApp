@@ -14,24 +14,10 @@
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 12px;
-  max-height: 620px;
-  overflow-y: auto;
   padding: 2px; // space for hover shadow
-
-  &::-webkit-scrollbar { width: 4px; }
-  &::-webkit-scrollbar-track { background: transparent; }
-  &::-webkit-scrollbar-thumb {
-    background: rgba(240, 173, 99, 0.3);
-    border-radius: 4px;
-    &:hover { background: rgba(240, 173, 99, 0.55); }
-  }
-  scrollbar-color: rgba(240, 173, 99, 0.3) transparent;
-  scrollbar-width: thin;
 
   @media (max-width: 900px) {
     grid-template-columns: 1fr;
-    max-height: none;
-    overflow-y: visible;
   }
 }
 
@@ -48,7 +34,21 @@
   gap: 5px;
   min-width: 0;
   // No overflow:hidden — it causes height-collapse with flex children
-  animation: card-enter 280ms ease-out both;
+
+  // ── Scroll-driven animations ──────────────────────────────────────────
+  // Supported in Chrome 115+, Edge 115+, Firefox 132+
+  // Falls back to static (always visible) in older browsers — no broken states
+  @supports (animation-timeline: view()) {
+    animation-name: card-scroll-exit, card-scroll-enter;
+    animation-fill-mode: both, both;
+    // exit: ease-in — card stays, then snaps away quickly (raster feel)
+    // enter: ease-out — card arrives fast, settles smoothly
+    animation-timing-function: cubic-bezier(0.4, 0, 1, 1), cubic-bezier(0, 0, 0.2, 1);
+    animation-timeline: view(block 110px 0px), view(block 110px 0px);
+    animation-range:
+      exit   0%  exit  22%,
+      entry  0%  entry 28%;
+  }
 }
 
 .survey-list-view__item--tone-active   { border-left-color: rgba(126, 201, 138, 0.65); }
@@ -58,28 +58,28 @@
 .survey-list-view__item--muted {
   background: #3e3147;
   border-left-color: rgba(160, 145, 175, 0.22);
-  opacity: 0.72;
 }
 
 .survey-list-view__item--clickable {
   cursor: pointer;
-  transition: transform 0.16s ease, box-shadow 0.16s ease;
+  transition: box-shadow 0.16s ease;
 
   &:hover {
-    transform: translateY(-2px);
     box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
   }
-
-  &:active { transform: translateY(0); }
 }
 
-.survey-list-view__item:nth-child(1)   { animation-delay: 0ms; }
-.survey-list-view__item:nth-child(2)   { animation-delay: 45ms; }
-.survey-list-view__item:nth-child(3)   { animation-delay: 90ms; }
-.survey-list-view__item:nth-child(4)   { animation-delay: 135ms; }
-.survey-list-view__item:nth-child(5)   { animation-delay: 180ms; }
-.survey-list-view__item:nth-child(6)   { animation-delay: 225ms; }
-.survey-list-view__item:nth-child(n+7) { animation-delay: 270ms; }
+// ─── Scroll animation keyframes ───────────────────────────────────────────────
+
+@keyframes card-scroll-exit {
+  0%   { opacity: 1; transform: translateY(0)    scale(1);    }
+  100% { opacity: 0; transform: translateY(-28px) scale(0.97); }
+}
+
+@keyframes card-scroll-enter {
+  0%   { opacity: 0; transform: translateY(32px) scale(0.97); }
+  100% { opacity: 1; transform: translateY(0)   scale(1);    }
+}
 
 // ─── Category + share row ─────────────────────────────────────────────────────
 

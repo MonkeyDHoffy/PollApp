@@ -338,6 +338,7 @@ export class SurveyDetailComponent {
       return;
     }
 
+    this.surveyService.savePreviousAnswers(survey.id, this.selectedAnswers());
     await this.refreshResults(survey.id);
     this.submitted.set(true);
     this.alreadyVoted.set(true);
@@ -394,7 +395,11 @@ export class SurveyDetailComponent {
   private async loadSurveyContext(surveyId: string): Promise<void> {
     await this.surveyService.loadSurveyById(surveyId);
     await this.refreshResults(surveyId);
-    this.alreadyVoted.set(this.surveyService.hasAlreadyVoted(surveyId));
+    const voted = this.surveyService.hasAlreadyVoted(surveyId);
+    this.alreadyVoted.set(voted);
+    if (voted) {
+      this.selectedAnswers.set(this.surveyService.getPreviousAnswers(surveyId));
+    }
     this.startLiveSubscription(surveyId);
   }
 

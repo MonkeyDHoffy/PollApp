@@ -965,6 +965,21 @@ export class SurveyService {
     return localStorage.getItem(`pollapp.voted.${surveyId}`) === '1';
   }
 
+  savePreviousAnswers(surveyId: string, answers: Record<string, string[]>): void {
+    if (typeof localStorage === 'undefined') return;
+    localStorage.setItem(`pollapp.answers.${surveyId}`, JSON.stringify(answers));
+  }
+
+  getPreviousAnswers(surveyId: string): Record<string, string[]> {
+    if (typeof localStorage === 'undefined') return {};
+    try {
+      const raw = localStorage.getItem(`pollapp.answers.${surveyId}`);
+      return raw ? (JSON.parse(raw) as Record<string, string[]>) : {};
+    } catch {
+      return {};
+    }
+  }
+
   private markAsVoted(surveyId: string): void {
     if (typeof localStorage !== 'undefined') {
       localStorage.setItem(`pollapp.voted.${surveyId}`, '1');
