@@ -7,6 +7,7 @@ import {
   UpdateSurveyDTO,
   SurveyResponse,
   SurveyResult,
+  SurveyParticipant,
 } from '../models/survey.model';
 import { DEMO_SURVEY_RESULTS, DEMO_SURVEYS } from '../demo/demo-surveys';
 import { supabaseClient } from './supabase-client';
@@ -435,6 +436,7 @@ export class SurveyService {
             accessCode,
             participantToken,
             answers: response.answers,
+            respondentName: response.respondentName ?? null,
           },
         });
 
@@ -471,6 +473,7 @@ export class SurveyService {
           survey_id: response.surveyId,
           respondent_id: user?.id ?? null,
           participant_token: response.participantToken ?? this.ensureParticipantToken(response.surveyId),
+          respondent_name: response.respondentName ?? null,
         })
         .select('id, created_at')
         .single();
@@ -627,6 +630,38 @@ export class SurveyService {
       });
     } catch (err) {
       this.errorSignal.set(err instanceof Error ? err.message : 'Failed to load survey results');
+      return [];
+    }
+  }
+
+  /** Returns the current response count for a survey via a lightweight COUNT query. */
+  async loadParticipantCount(surveyId: string): Promise<number> {
+    if (this.isDemoSurveyId(surveyId)) return 0;
+    const { count } = await this.supabase
+      .from('survey_responses')
+      .select('*', { count: 'exact', head: true })
+      .eq('survey_id', surveyId);
+    return count ?? 0;
+  }
+
+  /** Loads the list of participants (name + timestamp) for a survey. */
+  async loadSurveyParticipants(surveyId: string): Promise<SurveyParticipant[]> {
+    if (this.isDemoSurveyId(surveyId)) return [];
+
+    try {
+      const { data, error } = await this.supabase
+        .from('survey_responses')
+        .select('respondent_name, created_at')
+        .eq('survey_id', surveyId)
+        .order('created_at', { ascending: true });
+
+      if (error) throw error;
+
+      return (data ?? []).map((row) => ({
+        name: (row.respondent_name as string | null) ?? null,
+        respondedAt: row.created_at as string,
+      }));
+    } catch {
       return [];
     }
   }

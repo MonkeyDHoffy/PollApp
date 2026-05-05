@@ -1,0 +1,30 @@
+<div class="onboarding-modal" role="dialog" aria-modal="true" [attr.aria-label]="t()('onboardingTitle')">
+    <div class="onboarding-modal__panel">
+        <div class="onboarding-modal__icon" aria-hidden="true">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                <circle cx="12" cy="7" r="4" />
+            </svg>
+        </div>
+        <h2 class="onboarding-modal__title">{{ t()('onboardingTitle') }}</h2>
+        <p class="onboarding-modal__desc">{{ t()('onboardingDesc') }}</p>
+        <form class="onboarding-modal__form" [formGroup]="form" (ngSubmit)="submitName()" novalidate>
+            <div class="onboarding-modal__field"
+                [class.onboarding-modal__field--error]="nameControl.touched && nameControl.invalid">
+                <input type="text" class="onboarding-modal__input"
+                    [formControl]="nameControl"
+                    [placeholder]="t()('namePlaceholder')"
+                    maxlength="10"
+                    autocomplete="name"
+                    autofocus />
+                @if (nameControl.touched && nameControl.hasError('required')) {
+                <span class="onboarding-modal__err">{{ t()('guestNameRequired') }}</span>
+                }
+            </div>
+            <button type="submit" class="onboarding-modal__submit" [disabled]="submitting()">
+                {{ submitting() ? '...' : t()('onboardingCta') }}
+            </button>
+        </form>
+    </div>
+</div>

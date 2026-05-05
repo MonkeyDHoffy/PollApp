@@ -1,0 +1,31 @@
+<div class="guest-modal" role="dialog" aria-modal="true" [attr.aria-label]="t()('guestModalTitle')">
+    <div class="guest-modal__backdrop" (click)="cancel()"></div>
+    <div class="guest-modal__panel">
+        <h2 class="guest-modal__title">{{ t()('guestModalTitle') }}</h2>
+        <p class="guest-modal__desc">{{ t()('guestModalDesc') }}</p>
+
+        <div class="guest-modal__field" [class.guest-modal__field--error]="hasError()">
+            <input type="text" class="guest-modal__input"
+                [placeholder]="t()('namePlaceholder')"
+                [value]="nameInput()"
+                (input)="onNameInput($any($event.target).value)"
+                (keydown.enter)="confirm()"
+                maxlength="40"
+                autocomplete="off" />
+            @if (hasError()) {
+            <span class="guest-modal__error-msg">{{ t()('guestNameRequired') }}</span>
+            }
+        </div>
+
+        <p class="guest-modal__restrictions">{{ t()('guestRestrictions') }}</p>
+
+        <div class="guest-modal__actions">
+            <button type="button" class="guest-modal__cancel" (click)="cancel()">
+                {{ t()('cancel') }}
+            </button>
+            <button type="button" class="guest-modal__confirm" (click)="confirm()">
+                {{ t()('continueAsGuest') }}
+            </button>
+        </div>
+    </div>
+</div>

@@ -5,11 +5,6 @@
                 <img src="/assets/logo/Property 1=Purple dark.png" alt="PollApp" class="survey-detail__logo" />
             </a>
             <div class="survey-detail__header-actions">
-                <!-- Language toggle -->
-                <button type="button" class="survey-detail__lang-btn" (click)="langService.toggle()">
-                    {{ langService.lang() === 'en' ? 'DE' : 'EN' }}
-                </button>
-
                 <button type="button" class="survey-detail__back-btn" (click)="goHome()" [attr.aria-label]="t()('back')">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                         stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -28,8 +23,6 @@
                     @if (creatorMenuOpen()) {
                     <div class="survey-detail__creator-menu">
                         <button type="button" (click)="copyCreatorLink()">{{ t()('copyLink') }}</button>
-                        <button type="button" (click)="editCurrentSurvey()">{{ t()('editMode') }}</button>
-                        <button type="button" (click)="duplicateCurrentSurvey()">{{ t()('duplicate') }}</button>
                         <button type="button" (click)="exportResultsCsv()" [disabled]="exportingCsv()">
                             {{ exportingCsv() ? t()('exporting') : t()('exportCsv') }}
                         </button>
@@ -232,6 +225,19 @@
                 <p class="survey-detail__results-empty-text">{{ t()('resultsPlaceholder') }}</p>
                 <p class="survey-detail__results-empty-placeholder">{{ t()('noAnswersYet') }}</p>
                 }
+
+                <button type="button" class="survey-detail__participants-btn"
+                    (click)="openParticipants()" [disabled]="participantsLoading()">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                        <circle cx="9" cy="7" r="4"/>
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                    </svg>
+                    {{ participantCount() }}
+                    {{ participantCount() === 1 ? t()('participantSingular') : t()('participantsCount') }}
+                </button>
             </aside>
         </div>
         } @else {
@@ -241,26 +247,28 @@
 </section>
 
 @if (showCompleteConfirm()) {
-<div class="survey-detail__confirm-backdrop" (click)="cancelCompleteConfirm()"></div>
-<div class="survey-detail__confirm-dialog" role="alertdialog" aria-modal="true">
-    <h3 class="survey-detail__confirm-title">{{ t()('confirmCompleteTitle') }}</h3>
-    <p class="survey-detail__confirm-text">{{ t()('confirmCompleteText') }}</p>
-    <div class="survey-detail__confirm-actions">
-        <app-button [label]="t()('cancel')" variant="secondary" (pressed)="cancelCompleteConfirm()" />
-        <app-button [label]="t()('confirmCompleteBtn')" variant="primary" (pressed)="completeSurvey()" />
-    </div>
-</div>
+<app-confirm-dialog
+    [title]="t()('confirmCompleteTitle')"
+    [text]="t()('confirmCompleteText')"
+    [confirmLabel]="t()('confirmCompleteBtn')"
+    [cancelLabel]="t()('cancel')"
+    (confirmed)="completeSurvey()"
+    (cancelled)="cancelCompleteConfirm()" />
 }
 
 @if (showDeleteConfirm()) {
-<div class="survey-detail__confirm-backdrop" (click)="cancelDelete()"></div>
-<div class="survey-detail__confirm-dialog" role="alertdialog" aria-modal="true">
-    <h3 class="survey-detail__confirm-title">{{ t()('deleteSurveyTitle') }}</h3>
-    <p class="survey-detail__confirm-text">{{ t()('deleteSurveyText') }}</p>
-    <div class="survey-detail__confirm-actions">
-        <app-button [label]="t()('cancel')" variant="secondary" (pressed)="cancelDelete()" />
-        <app-button [label]="deletingSurvey() ? t()('deleting') : t()('confirmDelete')"
-            variant="primary" [disabled]="deletingSurvey()" (pressed)="deleteCurrentSurvey()" />
-    </div>
-</div>
+<app-confirm-dialog
+    [title]="t()('deleteSurveyTitle')"
+    [text]="t()('deleteSurveyText')"
+    [confirmLabel]="deletingSurvey() ? t()('deleting') : t()('confirmDelete')"
+    [cancelLabel]="t()('cancel')"
+    [loading]="deletingSurvey()"
+    (confirmed)="deleteCurrentSurvey()"
+    (cancelled)="cancelDelete()" />
+}
+
+@if (participantsOpen()) {
+<app-participants-popup
+    [participants]="participants()"
+    (closed)="closeParticipants()" />
 }

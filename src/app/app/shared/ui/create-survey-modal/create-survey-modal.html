@@ -1,0 +1,301 @@
+<div class="create-survey-modal" role="dialog" aria-modal="true" [attr.aria-label]="t()('createNewSurvey')">
+    <div class="create-survey-modal__backdrop" (click)="requestClose()"></div>
+    <section class="create-survey-modal__panel">
+        <header class="create-survey-modal__header">
+            <h2 class="create-survey-modal__title">
+                {{ isEditMode() ? t()('editSurvey') : t()('createNewSurvey') }}
+            </h2>
+            <div class="create-survey-modal__header-actions">
+                <button type="button" class="create-survey-modal__preview-toggle"
+                    [class.create-survey-modal__preview-toggle--active]="previewMode()"
+                    (click)="previewMode.update(v => !v)">
+                    {{ previewMode() ? t()('editMode') : t()('preview') }}
+                </button>
+                <button type="button" class="create-survey-modal__cancel" (click)="requestClose()">
+                    {{ t()('cancel') }}
+                </button>
+            </div>
+        </header>
+
+        @if (confirmDiscardOpen()) {
+        <div class="create-survey-modal__discard-overlay">
+            <p class="create-survey-modal__discard-title">{{ t()('discardChanges') }}</p>
+            <p class="create-survey-modal__discard-text">{{ t()('discardText') }}</p>
+            <div class="create-survey-modal__discard-actions">
+                <button type="button" class="create-survey-modal__secondary" (click)="cancelDiscard()">
+                    {{ t()('keepEditing') }}</button>
+                <button type="button" class="create-survey-modal__cancel" (click)="confirmDiscard()">
+                    {{ t()('discard') }}</button>
+            </div>
+        </div>
+        }
+
+        @if (previewMode()) {
+        <div class="create-survey-modal__preview">
+            <div class="create-survey-modal__preview-header">
+                @if (previewData().category) {
+                <span class="create-survey-modal__preview-category">{{ previewData().category }}</span>
+                }
+                <h3 class="create-survey-modal__preview-title">{{ previewData().title }}</h3>
+                @if (previewData().description) {
+                <p class="create-survey-modal__preview-desc">{{ previewData().description }}</p>
+                }
+            </div>
+            <div class="create-survey-modal__preview-questions">
+                @for (question of previewData().questions; track question.index) {
+                <div class="create-survey-modal__preview-question">
+                    <h4>{{ question.index + 1 }}. {{ question.text }}</h4>
+                    @if (question.description) {
+                    <p class="create-survey-modal__preview-question-desc">{{ question.description }}</p>
+                    }
+                    <p class="create-survey-modal__preview-hint">
+                        {{ question.allowMultiple ? t()('multipleAnswers') : t()('singleAnswer') }}
+                    </p>
+                    <div class="create-survey-modal__preview-answers">
+                        @for (answer of question.answers; track answer.label) {
+                        <label class="create-survey-modal__preview-answer">
+                            <input [type]="question.allowMultiple ? 'checkbox' : 'radio'"
+                                [name]="'preview-q-' + question.index" disabled />
+                            <span>{{ answer.label }}. {{ answer.text }}</span>
+                        </label>
+                        }
+                        @if (question.answers.length === 0) {
+                        <p class="create-survey-modal__preview-empty">No answers added yet.</p>
+                        }
+                    </div>
+                </div>
+                }
+                @if (previewData().questions.length === 0) {
+                <p class="create-survey-modal__preview-empty">No questions added yet.</p>
+                }
+            </div>
+        </div>
+        }
+
+        <form class="create-survey-modal__form" [formGroup]="form" (ngSubmit)="publishOrSave()"
+            [style.display]="previewMode() ? 'none' : ''">
+            <div class="create-survey-modal__meta-grid">
+                <div class="create-survey-modal__field">
+                    <span>{{ t()('surveyName') }}</span>
+                    <div class="create-survey-modal__input-row">
+                        <div class="create-survey-modal__input-wrap"
+                            [class.create-survey-modal__input-wrap--error]="form.controls.title.touched && form.controls.title.hasError('required')">
+                            <input type="text" formControlName="title"
+                                [placeholder]="t()('surveyNamePlaceholder')" maxlength="120" />
+                            @if (form.controls.title.touched && form.controls.title.hasError('required')) {
+                            <span class="create-survey-modal__inline-error">Required</span>
+                            }
+                        </div>
+                        <app-button variant="delete" (pressed)="form.controls.title.setValue('')" />
+                    </div>
+                </div>
+
+                <div class="create-survey-modal__field">
+                    <span>{{ t()('describingText') }}</span>
+                    <div class="create-survey-modal__input-row create-survey-modal__input-row--textarea">
+                        <textarea formControlName="description" rows="3"
+                            placeholder="Short survey description" maxlength="300"></textarea>
+                        <app-button variant="delete" (pressed)="form.controls.description.setValue('')" />
+                    </div>
+                </div>
+
+                <div class="create-survey-modal__field">
+                    <span>{{ t()('setEndDate') }}</span>
+                    <div class="create-survey-modal__input-row">
+                        <input type="date" formControlName="endDate" />
+                        <app-button variant="delete" (pressed)="form.controls.endDate.setValue('')" />
+                    </div>
+                </div>
+
+                <div class="create-survey-modal__field">
+                    <span>{{ t()('chooseCategory') }}</span>
+                    <div class="create-survey-modal__input-wrap"
+                        [class.create-survey-modal__input-wrap--error]="form.controls.category.touched && form.controls.category.hasError('required')">
+                        <select formControlName="category">
+                            <option value="" disabled>{{ t()('selectCategory') }}</option>
+                            @for (category of categories; track category) {
+                            <option [value]="category">{{ category }}</option>
+                            }
+                        </select>
+                        @if (form.controls.category.touched && form.controls.category.hasError('required')) {
+                        <span class="create-survey-modal__inline-error">Required</span>
+                        }
+                    </div>
+                </div>
+
+                <label class="create-survey-modal__field">
+                    <span>{{ t()('visibility') }}</span>
+                    <select formControlName="visibility">
+                        <option value="public">{{ t()('publicLabel') }}</option>
+                        <option value="private">{{ t()('privateLabel') }}</option>
+                    </select>
+                </label>
+
+                @if (isPrivateSurvey()) {
+                <div class="create-survey-modal__field">
+                    <span>{{ t()('accessCodeLabel') }}</span>
+                    <div class="create-survey-modal__input-row">
+                        <input type="text" formControlName="accessCode"
+                            [placeholder]="t()('accessCodePlaceholder')" maxlength="40" />
+                        <app-button variant="delete" (pressed)="form.controls.accessCode.setValue('')" />
+                    </div>
+                </div>
+                }
+            </div>
+
+            <div class="create-survey-modal__questions" formArrayName="questions">
+                @if (isEditMode()) {
+                <p class="create-survey-modal__success">{{ t()('questionReadOnly') }}</p>
+                }
+                @for (question of questionsArray.controls; track $index; let qIdx = $index) {
+                <div class="create-survey-modal__question" [formGroupName]="qIdx">
+                    <div class="create-survey-modal__question-header">
+                        <p>{{ qIdx + 1 }}. {{ t()('question') }}</p>
+                        @if (questionsArray.length > 1 && !isEditMode()) {
+                        <app-button variant="delete" (pressed)="removeQuestion(qIdx)" />
+                        }
+                    </div>
+
+                    <div class="create-survey-modal__input-row">
+                        <div class="create-survey-modal__input-wrap"
+                            [class.create-survey-modal__input-wrap--error]="$any(question).get('questionText').touched && $any(question).get('questionText').hasError('required')">
+                            <input type="text" formControlName="questionText"
+                                placeholder="Which date would work best for you?"
+                                [readonly]="isEditMode()" maxlength="160" />
+                            @if ($any(question).get('questionText').touched &&
+                            $any(question).get('questionText').hasError('required')) {
+                            <span class="create-survey-modal__inline-error">Required</span>
+                            }
+                        </div>
+                        @if (!isEditMode()) {
+                        <app-button variant="delete"
+                            (pressed)="$any(question).get('questionText').setValue('')" />
+                        }
+                    </div>
+
+                    <div class="create-survey-modal__input-row create-survey-modal__input-row--textarea">
+                        <textarea formControlName="questionDescription" rows="2"
+                            placeholder="Short question description (optional)"
+                            class="create-survey-modal__question-desc"
+                            [readonly]="isEditMode()" maxlength="200"></textarea>
+                        @if (!isEditMode()) {
+                        <app-button variant="delete"
+                            (pressed)="$any(question).get('questionDescription').setValue('')" />
+                        }
+                    </div>
+
+                    <div class="create-survey-modal__answers-head">
+                        <p>{{ t()('answersLabel') }}</p>
+                        <label class="create-survey-modal__checkbox-row">
+                            <input type="checkbox" formControlName="allowMultiple" />
+                            <span>{{ t()('allowMultiple') }}</span>
+                        </label>
+                    </div>
+
+                    <div formArrayName="answers" class="create-survey-modal__answers-list">
+                        @for (answer of questionAnswersArray(qIdx).controls; track $index; let aIdx = $index) {
+                        <div class="create-survey-modal__answer-row">
+                            <span>{{ answerLabel(aIdx) }}.</span>
+                            <div class="create-survey-modal__answer-input-wrap"
+                                [class.create-survey-modal__answer-input-wrap--error]="$any(questionAnswersArray(qIdx).at(aIdx)).touched && $any(questionAnswersArray(qIdx).at(aIdx)).hasError('required')">
+                                <input [formControlName]="aIdx" type="text" placeholder="Answer option"
+                                    [readonly]="isEditMode()" maxlength="120" />
+                                @if ($any(questionAnswersArray(qIdx).at(aIdx)).touched &&
+                                $any(questionAnswersArray(qIdx).at(aIdx)).hasError('required')) {
+                                <span class="create-survey-modal__answer-inline-error">Required</span>
+                                }
+                            </div>
+                            @if (!isEditMode()) {
+                            <app-button variant="delete"
+                                (pressed)="questionAnswersArray(qIdx).length > 2 ? removeAnswer(qIdx, aIdx) : questionAnswersArray(qIdx).at(aIdx).setValue('')" />
+                            }
+                        </div>
+                        }
+                    </div>
+
+                    @if (!isEditMode()) {
+                    <button type="button" class="create-survey-modal__link-btn" (click)="addAnswer(qIdx)">
+                        {{ t()('addAnswer') }}
+                    </button>
+                    }
+                </div>
+                }
+            </div>
+
+            <div class="create-survey-modal__actions-row">
+                @if (submitAttempted() && form.invalid) {
+                <p class="create-survey-modal__error">{{ t()('fillRequired') }}</p>
+                }
+                @if (submitAttempted() && isPrivateSurvey() && !form.controls.accessCode.value.trim()) {
+                <p class="create-survey-modal__error">{{ t()('accessCodeRequired') }}</p>
+                }
+                @if (createError()) {
+                <p class="create-survey-modal__error">{{ createError() }}</p>
+                }
+                @if (publishSuccessMessage() && isEditMode()) {
+                <p class="create-survey-modal__success">{{ publishSuccessMessage() }}</p>
+                }
+                @if (publishedShareLink() && isEditMode()) {
+                <div class="create-survey-modal__share-box">
+                    <input type="text" [value]="publishedShareLink()" readonly />
+                    <button type="button" class="create-survey-modal__secondary" (click)="copyShareLink()">
+                        {{ t()('copyLink') }}</button>
+                </div>
+                }
+                <button type="button" class="create-survey-modal__secondary" (click)="addQuestion()"
+                    [disabled]="isEditMode()">{{ t()('addNextQuestion') }}</button>
+                <button type="submit" class="create-survey-modal__publish" [disabled]="createLoading()">
+                    {{ createLoading()
+                    ? (isEditMode() ? t()('savingModal') : t()('publishing'))
+                    : (isEditMode() ? t()('saveChanges') : t()('publish')) }}
+                </button>
+            </div>
+        </form>
+    </section>
+</div>
+
+<!-- Publish confirm overlay — renders above the main modal -->
+@if (publishConfirmOpen()) {
+<div class="publish-confirm" role="dialog" aria-modal="true"
+    [attr.aria-label]="publishStep() === 'confirm' ? t()('publishConfirmTitle') : publishSuccessMessage()">
+    <div class="publish-confirm__backdrop"
+        (click)="publishStep() === 'confirm' ? cancelPublishConfirm() : null"></div>
+    <div class="publish-confirm__panel">
+
+        @if (publishStep() === 'confirm') {
+        <h3 class="publish-confirm__title">{{ t()('publishConfirmTitle') }}</h3>
+        <p class="publish-confirm__text">{{ t()('publishConfirmText') }}</p>
+        @if (createError()) {
+        <p class="publish-confirm__error">{{ createError() }}</p>
+        }
+        <div class="publish-confirm__actions">
+            <app-button [label]="t()('keepEditing')" variant="secondary" (pressed)="cancelPublishConfirm()" />
+            <app-button [label]="createLoading() ? t()('publishing') : t()('publishNow')"
+                variant="primary" [disabled]="createLoading()" (pressed)="confirmPublish()" />
+        </div>
+
+        } @else {
+        <div class="publish-confirm__success-icon" aria-hidden="true">
+            <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10" />
+                <polyline points="9 12 12 15 16 9" />
+            </svg>
+        </div>
+        <h3 class="publish-confirm__title">{{ publishSuccessMessage() }}</h3>
+        @if (publishedShareLink()) {
+        <div class="publish-confirm__link-row">
+            <input type="text" class="publish-confirm__link-input"
+                [value]="publishedShareLink()" readonly />
+            <button type="button" class="publish-confirm__copy-btn"
+                (click)="copyShareLink()">{{ t()('copyLink') }}</button>
+        </div>
+        }
+        <div class="publish-confirm__home-action">
+            <app-button [label]="t()('backToHome')" variant="primary" (pressed)="goHomeAfterPublish()" />
+        </div>
+        }
+
+    </div>
+</div>
+}

@@ -166,6 +166,13 @@ export const TRANSLATIONS = {
     responseError: 'Could not submit your response. Please try again.',
     responseSaved: 'Thanks! Your response has been saved.',
     responseSavedToast: 'Your response has been saved!',
+
+    // Participants
+    participantsCount: 'participants',
+    participantSingular: 'participant',
+    participantsTitle: 'Participants',
+    anonymous: 'Anonymous',
+    noParticipantsYet: 'No participants yet.',
   },
 
   de: {
@@ -335,6 +342,13 @@ export const TRANSLATIONS = {
     responseError: 'Antwort konnte nicht gespeichert werden. Bitte versuche es erneut.',
     responseSaved: 'Danke! Deine Antwort wurde gespeichert.',
     responseSavedToast: 'Deine Antwort wurde gespeichert!',
+
+    // Participants
+    participantsCount: 'Teilnehmer',
+    participantSingular: 'Teilnehmer',
+    participantsTitle: 'Teilnehmer',
+    anonymous: 'Anonym',
+    noParticipantsYet: 'Noch keine Teilnehmer.',
   },
 } as const;
 

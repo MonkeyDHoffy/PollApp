@@ -70,11 +70,15 @@ create table if not exists public.survey_responses (
   survey_id uuid not null references public.surveys(id) on delete cascade,
   respondent_id uuid references auth.users(id) on delete set null,
   participant_token text,
+  respondent_name text,
   created_at timestamptz not null default now()
 );
 
 alter table public.survey_responses
   add column if not exists participant_token text;
+
+alter table public.survey_responses
+  add column if not exists respondent_name text;
 
 create table if not exists public.survey_response_answers (
   id uuid primary key default gen_random_uuid(),
@@ -279,16 +283,19 @@ using (
 );
 
 drop policy if exists "responses_select_owner_or_creator" on public.survey_responses;
-create policy "responses_select_owner_or_creator"
+drop policy if exists "responses_select_published_or_owner_or_creator" on public.survey_responses;
+create policy "responses_select_published_or_owner_or_creator"
 on public.survey_responses
 for select
 using (
   auth.uid() = respondent_id
   or exists (
-    select 1
-    from public.surveys s
-    where s.id = survey_id
-      and s.creator_id = auth.uid()
+    select 1 from public.surveys s
+    where s.id = survey_id and s.creator_id = auth.uid()
+  )
+  or exists (
+    select 1 from public.surveys s
+    where s.id = survey_id and s.status = 'published'
   )
 );
 
@@ -307,7 +314,8 @@ with check (
 );
 
 drop policy if exists "response_answers_select_owner_or_creator" on public.survey_response_answers;
-create policy "response_answers_select_owner_or_creator"
+drop policy if exists "response_answers_select_published_or_owner_or_creator" on public.survey_response_answers;
+create policy "response_answers_select_published_or_owner_or_creator"
 on public.survey_response_answers
 for select
 using (
@@ -319,6 +327,7 @@ using (
       and (
         r.respondent_id = auth.uid()
         or s.creator_id = auth.uid()
+        or s.status = 'published'
       )
   )
 );

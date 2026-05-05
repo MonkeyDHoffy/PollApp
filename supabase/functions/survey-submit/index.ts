@@ -35,6 +35,7 @@ Deno.serve(async (req) => {
     const accessCode = body?.accessCode ? body.accessCode.toString().trim() : null;
     const participantToken = (body?.participantToken ?? '').toString().trim();
     const answers = Array.isArray(body?.answers) ? body.answers : [];
+    const respondentName = typeof body?.respondentName === 'string' ? body.respondentName.trim() || null : null;
 
     if (!shareToken || !participantToken) {
       return jsonResponse(400, { code: 'INVALID_INPUT', message: 'shareToken and participantToken are required' });
@@ -88,6 +89,7 @@ Deno.serve(async (req) => {
       .insert({
         survey_id: surveyRow.id,
         participant_token: participantToken,
+        respondent_name: respondentName,
       })
       .select('id')
       .single();
