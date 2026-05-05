@@ -393,7 +393,7 @@
             </div>
             <h2 class="onboarding-modal__title">{{ t()('onboardingTitle') }}</h2>
             <p class="onboarding-modal__desc">{{ t()('onboardingDesc') }}</p>
-            <form class="onboarding-modal__form" (ngSubmit)="submitOnboardingName()" novalidate>
+            <form class="onboarding-modal__form" [formGroup]="onboardingForm" (ngSubmit)="submitOnboardingName()" novalidate>
                 <div class="onboarding-modal__field"
                     [class.onboarding-modal__field--error]="onboardingNameControl.touched && onboardingNameControl.invalid">
                     <input type="text" class="onboarding-modal__input" [formControl]="onboardingNameControl"

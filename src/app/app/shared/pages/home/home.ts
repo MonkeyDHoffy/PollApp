@@ -291,6 +291,7 @@ export class HomeComponent implements OnDestroy {
     Validators.required,
     Validators.maxLength(40),
   ]);
+  protected readonly onboardingForm = this.fb.group({ name: this.onboardingNameControl });
   protected readonly onboardingSubmitting = signal(false);
 
   protected readonly createSurveyForm = this.fb.group({
