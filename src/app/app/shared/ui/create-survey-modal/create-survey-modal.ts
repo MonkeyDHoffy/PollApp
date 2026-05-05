@@ -9,11 +9,13 @@ import {
   signal,
 } from '@angular/core';
 import {
+  AbstractControl,
   FormArray,
   FormBuilder,
   FormControl,
   FormGroup,
   ReactiveFormsModule,
+  ValidationErrors,
   Validators,
 } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -52,6 +54,13 @@ const CATEGORIES = [
   'Technology & Innovation',
   'Other',
 ] as const;
+
+function pastDateValidator(control: AbstractControl): ValidationErrors | null {
+  if (!control.value) return null;
+  const d = new Date();
+  const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  return control.value < today ? { pastDate: true } : null;
+}
 
 /**
  * Modal for creating or editing a survey.
@@ -115,7 +124,7 @@ export class CreateSurveyModalComponent implements OnInit {
   protected readonly form = this.fb.group({
     title: this.fb.nonNullable.control('', [Validators.required, Validators.maxLength(120)]),
     description: this.fb.nonNullable.control('', [Validators.maxLength(300)]),
-    endDate: this.fb.nonNullable.control(''),
+    endDate: this.fb.nonNullable.control('', [pastDateValidator]),
     category: this.fb.nonNullable.control('', [Validators.required]),
     visibility: this.fb.nonNullable.control<'public' | 'private'>('public'),
     anonymous: this.fb.nonNullable.control(false),
@@ -146,6 +155,12 @@ export class CreateSurveyModalComponent implements OnInit {
   /** Returns the answers FormArray for a given question index. */
   protected questionAnswersArray(questionIndex: number): FormArray {
     return this.questionsArray.at(questionIndex).get('answers') as FormArray;
+  }
+
+  protected onVisibilityChange(): void {
+    if (this.form.controls.visibility.value === 'public') {
+      this.form.controls.accessCode.setValue('');
+    }
   }
 
   protected addQuestion(): void {

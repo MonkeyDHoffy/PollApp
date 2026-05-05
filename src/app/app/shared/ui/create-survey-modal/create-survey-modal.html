@@ -102,7 +102,13 @@
                 <div class="create-survey-modal__field">
                     <span>{{ t()('setEndDate') }}</span>
                     <div class="create-survey-modal__input-row">
-                        <input type="date" formControlName="endDate" />
+                        <div class="create-survey-modal__input-wrap"
+                            [class.create-survey-modal__input-wrap--error]="form.controls.endDate.touched && form.controls.endDate.hasError('pastDate')">
+                            <input type="date" formControlName="endDate" />
+                            @if (form.controls.endDate.touched && form.controls.endDate.hasError('pastDate')) {
+                            <span class="create-survey-modal__inline-error">{{ t()('endDatePastError') }}</span>
+                            }
+                        </div>
                         <app-button variant="delete" (pressed)="form.controls.endDate.setValue('')" />
                     </div>
                 </div>
@@ -125,7 +131,7 @@
 
                 <label class="create-survey-modal__field">
                     <span>{{ t()('visibility') }}</span>
-                    <select formControlName="visibility">
+                    <select formControlName="visibility" (change)="onVisibilityChange()">
                         <option value="public">{{ t()('publicLabel') }}</option>
                         <option value="private">{{ t()('privateLabel') }}</option>
                     </select>

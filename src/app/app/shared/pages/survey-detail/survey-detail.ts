@@ -102,14 +102,6 @@ export class SurveyDetailComponent implements AfterViewInit {
     return !!(userId && survey && survey.creatorId === userId);
   });
 
-  /** Shows only the username part of the creator email to protect privacy. */
-  protected readonly displayCreator = computed(() => {
-    if (this.isCreatorSurvey()) return null;
-    const email = this.survey()?.creatorEmail;
-    if (!email) return null;
-    return email.includes('@') ? email.split('@')[0] : email;
-  });
-
   protected readonly questions = computed<QuestionView[]>(() => {
     const survey = this.survey();
     if (!survey) return [];

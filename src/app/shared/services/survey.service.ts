@@ -431,14 +431,17 @@ export class SurveyService {
 
       const currentSurvey = this.currentSurveySignal();
       if (currentSurvey?.visibility === 'private' && currentSurvey.shareToken) {
-        const participantToken = this.ensureParticipantToken(`share-${currentSurvey.shareToken}`);
+        const { data: { user: privateUser } } = await this.supabase.auth.getUser();
+        const participantToken = privateUser
+          ? null
+          : this.ensureParticipantToken(`share-${currentSurvey.shareToken}`);
         const accessCode = this.shareAccessCodeSignal()[currentSurvey.shareToken] ?? undefined;
 
         const { error } = await this.supabase.functions.invoke('survey-submit', {
           body: {
             shareToken: currentSurvey.shareToken,
             accessCode,
-            participantToken,
+            participantToken: participantToken ?? '',
             answers: response.answers,
             respondentName: response.respondentName ?? null,
           },
@@ -448,18 +451,16 @@ export class SurveyService {
           throw new Error(error.message || 'Failed to submit response');
         }
 
+        this.markAsVoted(response.surveyId, privateUser?.id);
         this.userResponsesSignal.update((responses) => [
           ...responses,
           {
             ...response,
-            participantToken,
+            participantToken: participantToken ?? undefined,
             id: `shared-${Date.now()}`,
             respondedAt: new Date().toISOString(),
           },
         ]);
-
-        const { data: { user: privateUser } } = await this.supabase.auth.getUser();
-        this.markAsVoted(response.surveyId, privateUser?.id);
         return true;
       }
 
@@ -498,6 +499,7 @@ export class SurveyService {
         }
       }
 
+      this.markAsVoted(response.surveyId, user?.id);
       this.userResponsesSignal.update((responses) => [
         ...responses,
         {
@@ -507,8 +509,6 @@ export class SurveyService {
           respondedAt: createdResponse.created_at,
         },
       ]);
-
-      this.markAsVoted(response.surveyId, user?.id);
       return true;
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to submit response';
@@ -770,7 +770,6 @@ export class SurveyService {
     return {
       id: row.id,
       creatorId: row.creator_id,
-      creatorEmail: row.creator_email ?? undefined,
       title: row.title,
       description: row.description ?? undefined,
       category: row.category,
@@ -848,7 +847,6 @@ export class SurveyService {
     return `
       id,
       creator_id,
-      creator_email,
       title,
       description,
       category,
@@ -881,7 +879,7 @@ export class SurveyService {
     const text = this.errorToText(err).toLowerCase();
     return (
       text.includes('column')
-      && (text.includes('visibility') || text.includes('is_anonymous') || text.includes('share_token') || text.includes('access_code') || text.includes('question_description') || text.includes('creator_email'))
+      && (text.includes('visibility') || text.includes('is_anonymous') || text.includes('share_token') || text.includes('access_code') || text.includes('question_description'))
     );
   }
 
@@ -1055,7 +1053,6 @@ export class SurveyService {
     return {
       id: survey.id,
       creatorId: survey.creatorId,
-      creatorEmail: survey.creatorEmail ?? undefined,
       title: survey.title,
       description: survey.description ?? undefined,
       category: survey.category,

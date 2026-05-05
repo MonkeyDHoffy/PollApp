@@ -1,30 +1,41 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.4';
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+const ALLOWED_ORIGINS = [
+  'https://www.pollapp.hoffja.de',
+  'https://pollapp.hoffja.de',
+  'http://localhost:4200',
+  'http://localhost:4201',
+];
 
-function jsonResponse(status: number, body: Record<string, unknown>) {
+function getCorsHeaders(origin: string | null) {
+  const allowed = origin && ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+  return {
+    'Access-Control-Allow-Origin': allowed,
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  };
+}
+
+function jsonResponse(status: number, body: Record<string, unknown>, origin: string | null) {
   return new Response(JSON.stringify(body), {
     status,
     headers: {
-      ...corsHeaders,
+      ...getCorsHeaders(origin),
       'Content-Type': 'application/json',
     },
   });
 }
 
 Deno.serve(async (req) => {
+  const origin = req.headers.get('Origin');
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
+    return new Response('ok', { headers: getCorsHeaders(origin) });
   }
 
   const supabaseUrl = Deno.env.get('SUPABASE_URL');
   const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
   if (!supabaseUrl || !serviceRoleKey) {
-    return jsonResponse(500, { code: 'SERVER_CONFIG_ERROR', message: 'Missing Supabase env vars' });
+    return jsonResponse(500, { code: 'SERVER_CONFIG_ERROR', message: 'Missing Supabase env vars' }, origin);
   }
 
   const admin = createClient(supabaseUrl, serviceRoleKey);
@@ -38,7 +49,7 @@ Deno.serve(async (req) => {
     const respondentName = typeof body?.respondentName === 'string' ? body.respondentName.trim() || null : null;
 
     if (!shareToken) {
-      return jsonResponse(400, { code: 'INVALID_INPUT', message: 'shareToken is required' });
+      return jsonResponse(400, { code: 'INVALID_INPUT', message: 'shareToken is required' }, origin);
     }
 
     // Resolve authenticated user from JWT if present
@@ -54,7 +65,7 @@ Deno.serve(async (req) => {
 
     // Guests must supply a participantToken for deduplication
     if (!respondentId && !participantToken) {
-      return jsonResponse(400, { code: 'INVALID_INPUT', message: 'participantToken is required for guests' });
+      return jsonResponse(400, { code: 'INVALID_INPUT', message: 'participantToken is required for guests' }, origin);
     }
 
     const { data: surveyRow, error: surveyError } = await admin
@@ -64,24 +75,24 @@ Deno.serve(async (req) => {
       .single();
 
     if (surveyError || !surveyRow) {
-      return jsonResponse(404, { code: 'SURVEY_NOT_FOUND', message: 'Survey not found' });
+      return jsonResponse(404, { code: 'SURVEY_NOT_FOUND', message: 'Survey not found' }, origin);
     }
 
     if (surveyRow.status !== 'published') {
-      return jsonResponse(403, { code: 'SURVEY_NOT_PUBLISHED', message: 'Survey is not published' });
+      return jsonResponse(403, { code: 'SURVEY_NOT_PUBLISHED', message: 'Survey is not published' }, origin);
     }
 
     if (surveyRow.ends_at && new Date(surveyRow.ends_at).getTime() < Date.now()) {
-      return jsonResponse(403, { code: 'SURVEY_CLOSED', message: 'Survey is closed' });
+      return jsonResponse(403, { code: 'SURVEY_CLOSED', message: 'Survey is closed' }, origin);
     }
 
     if (surveyRow.visibility === 'private') {
       if (!surveyRow.access_code) {
-        return jsonResponse(403, { code: 'ACCESS_CODE_REQUIRED', message: 'Access code required' });
+        return jsonResponse(403, { code: 'ACCESS_CODE_REQUIRED', message: 'Access code required' }, origin);
       }
 
       if (!accessCode || accessCode !== surveyRow.access_code) {
-        return jsonResponse(403, { code: 'INVALID_ACCESS_CODE', message: 'Invalid access code' });
+        return jsonResponse(403, { code: 'INVALID_ACCESS_CODE', message: 'Invalid access code' }, origin);
       }
     }
 
@@ -93,11 +104,11 @@ Deno.serve(async (req) => {
     const { data: existingResponse, error: existingResponseError } = await duplicateQuery;
 
     if (existingResponseError) {
-      return jsonResponse(500, { code: 'RESPONSE_LOOKUP_FAILED', message: existingResponseError.message });
+      return jsonResponse(500, { code: 'RESPONSE_LOOKUP_FAILED', message: existingResponseError.message }, origin);
     }
 
     if (existingResponse?.id) {
-      return jsonResponse(409, { code: 'ALREADY_SUBMITTED', message: 'Already submitted' });
+      return jsonResponse(409, { code: 'ALREADY_SUBMITTED', message: 'Already submitted' }, origin);
     }
 
     const insertPayload: Record<string, unknown> = {
@@ -118,7 +129,7 @@ Deno.serve(async (req) => {
       .single();
 
     if (insertedResponseError || !insertedResponse) {
-      return jsonResponse(500, { code: 'RESPONSE_INSERT_FAILED', message: insertedResponseError?.message ?? 'Unknown insert failure' });
+      return jsonResponse(500, { code: 'RESPONSE_INSERT_FAILED', message: insertedResponseError?.message ?? 'Unknown insert failure' }, origin);
     }
 
     const answerRows = answers.flatMap((entry: any) => {
@@ -134,13 +145,13 @@ Deno.serve(async (req) => {
     if (answerRows.length > 0) {
       const { error: answersInsertError } = await admin.from('survey_response_answers').insert(answerRows);
       if (answersInsertError) {
-        return jsonResponse(500, { code: 'ANSWER_INSERT_FAILED', message: answersInsertError.message });
+        return jsonResponse(500, { code: 'ANSWER_INSERT_FAILED', message: answersInsertError.message }, origin);
       }
     }
 
-    return jsonResponse(200, { ok: true });
+    return jsonResponse(200, { ok: true }, origin);
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown error';
-    return jsonResponse(500, { code: 'SERVER_ERROR', message });
+    return jsonResponse(500, { code: 'SERVER_ERROR', message }, origin);
   }
 });

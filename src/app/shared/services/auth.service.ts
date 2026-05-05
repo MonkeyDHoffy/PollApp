@@ -10,11 +10,21 @@ export class AuthService {
   private readonly supabase = supabaseClient;
   private readonly langService = inject(LangService);
 
+  private static readonly COOLDOWN_KEY = 'pollapp.otp.cooldown';
+  private static readonly COOLDOWN_MS = 60_000;
+
+  private static readStoredCooldown(): number | null {
+    if (typeof localStorage === 'undefined') return null;
+    const ts = parseInt(localStorage.getItem(AuthService.COOLDOWN_KEY) ?? '', 10);
+    return !isNaN(ts) && ts > Date.now() ? ts : null;
+  }
+
   private readonly sessionSignal = signal<Session | null>(null);
   private readonly initializedSignal = signal(false);
   private readonly loadingSignal = signal(false);
   private readonly messageSignal = signal<string | null>(null);
   private readonly errorSignal = signal<string | null>(null);
+  private readonly otpCooldownUntilSignal = signal<number | null>(AuthService.readStoredCooldown());
 
   readonly session = this.sessionSignal.asReadonly();
   readonly initialized = this.initializedSignal.asReadonly();
@@ -67,6 +77,15 @@ export class AuthService {
   }
 
   async sendMagicLink(email: string): Promise<boolean> {
+    const until = this.otpCooldownUntilSignal();
+    if (until && until > Date.now()) {
+      const secs = Math.ceil((until - Date.now()) / 1000);
+      this.errorSignal.set(
+        this.langService.t()('magicLinkCooldown').replace('{s}', String(secs))
+      );
+      return false;
+    }
+
     this.loadingSignal.set(true);
     this.clearNotices();
 
@@ -80,6 +99,7 @@ export class AuthService {
 
       if (error) throw error;
 
+      this.setOtpCooldown();
       this.messageSignal.set(this.langService.t()('magicLinkSent'));
       return true;
     } catch (error) {
@@ -89,12 +109,21 @@ export class AuthService {
         msg.toLowerCase().includes('after') ||
         msg.toLowerCase().includes('security purposes') ||
         msg.toLowerCase().includes('429');
+      if (isRateLimit) this.setOtpCooldown();
       this.errorSignal.set(
         isRateLimit ? this.langService.t()('magicLinkRateLimit') : msg || 'Login fehlgeschlagen.'
       );
       return false;
     } finally {
       this.loadingSignal.set(false);
+    }
+  }
+
+  private setOtpCooldown(): void {
+    const until = Date.now() + AuthService.COOLDOWN_MS;
+    this.otpCooldownUntilSignal.set(until);
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem(AuthService.COOLDOWN_KEY, String(until));
     }
   }
 

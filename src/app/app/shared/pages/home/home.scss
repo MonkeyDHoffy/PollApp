@@ -2211,8 +2211,8 @@
   }
 }
 
-// Auth panel: on very small screens pin to bottom instead of absolute dropdown
-@media (max-width: 360px) {
+// Auth panel: on mobile phones pin to bottom as a sheet instead of absolute dropdown
+@media (max-width: 640px) {
   .home__auth-panel {
     position: fixed;
     top: auto;

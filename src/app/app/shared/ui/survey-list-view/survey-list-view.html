@@ -29,10 +29,6 @@
 
             <h3 class="survey-list-view__title">{{ row.title }}</h3>
 
-            @if (row.creatorEmail) {
-            <p class="survey-list-view__creator">{{ row.creatorEmail }}</p>
-            }
-
             <div class="survey-list-view__footer">
                 <span class="survey-list-view__response-count">
                     {{ row.responseCount }} {{ row.responseCount === 1 ? 'response' : 'responses' }}

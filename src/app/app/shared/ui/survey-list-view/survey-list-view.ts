@@ -11,7 +11,6 @@ type SurveyListItem = {
   badgeLabel: string;
   tone?: SurveyListTone;
   badgeTone?: BadgeTone;
-  creatorEmail?: string;
   responseCount?: number;
   shareToken?: string;
 };
@@ -23,7 +22,6 @@ type SurveyListRow = {
   badgeLabel: string;
   tone: SurveyListTone;
   badgeTone: BadgeTone;
-  creatorEmail?: string;
   responseCount: number;
   shareToken?: string;
 };
@@ -62,7 +60,6 @@ export class SurveyListViewComponent {
       badgeLabel: item.badgeLabel,
       tone: item.tone ?? 'base',
       badgeTone: item.badgeTone ?? 'none',
-      creatorEmail: item.creatorEmail,
       responseCount: item.responseCount ?? 0,
       shareToken: item.shareToken,
     }))

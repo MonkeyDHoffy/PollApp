@@ -35,7 +35,6 @@ type BadgeTone = 'active' | 'expiring' | 'ended' | 'none';
 type HomeSurvey = {
   id: string;
   creatorId: string;
-  creatorEmail?: string;
   category: string;
   title: string;
   badgeLabel: string;
@@ -540,7 +539,6 @@ export class HomeComponent implements OnDestroy {
     return {
       id: survey.id,
       creatorId: survey.creatorId,
-      creatorEmail: survey.creatorEmail,
       category: survey.category,
       title: survey.title,
       description: survey.description,
