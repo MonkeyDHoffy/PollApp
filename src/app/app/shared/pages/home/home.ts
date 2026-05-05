@@ -233,6 +233,8 @@ export class HomeComponent implements OnDestroy {
   protected readonly publishSuccessMessage = signal<string | null>(null);
   protected readonly confirmDiscardOpen = signal(false);
   protected readonly previewMode = signal(false);
+  protected readonly publishConfirmOpen = signal(false);
+  protected readonly publishStep = signal<'confirm' | 'success'>('confirm');
 
   protected readonly isEditingSurvey = computed(() => !!this.editSurveyId());
   protected readonly isPrivateSurvey = computed(
@@ -587,17 +589,51 @@ export class HomeComponent implements OnDestroy {
       return;
     }
 
+    const visibility = this.createSurveyForm.controls.visibility.value;
+    const accessCode = this.createSurveyForm.controls.accessCode.value.trim();
+
+    if (visibility === 'private' && !accessCode) {
+      return;
+    }
+
+    const editSurveyId = this.editSurveyId();
+    if (!editSurveyId) {
+      // Create flow: show confirm modal first
+      this.publishConfirmOpen.set(true);
+      this.publishStep.set('confirm');
+      return;
+    }
+
+    // Edit flow: save directly (no confirm modal)
+    const title = this.createSurveyForm.controls.title.value.trim();
+    const description = this.createSurveyForm.controls.description.value.trim();
+    const category = this.createSurveyForm.controls.category.value.trim();
+    const endDateRaw = this.createSurveyForm.controls.endDate.value.trim();
+
+    const updated = await this.surveyService.updateSurvey(editSurveyId, {
+      title,
+      description: description || undefined,
+      category: category || 'General',
+      endsAt: endDateRaw ? new Date(endDateRaw).toISOString() : undefined,
+      visibility,
+      accessCode: visibility === 'private' ? accessCode : '',
+      status: 'published',
+    } satisfies UpdateSurveyDTO);
+
+    if (!updated) return;
+
+    const editedSurvey = this.mySurveys().find((s) => s.id === editSurveyId);
+    this.publishedShareLink.set(this.buildShareLink(editedSurvey?.shareToken));
+    this.publishSuccessMessage.set(this.t()('surveyUpdated'));
+  }
+
+  protected async confirmPublish(): Promise<void> {
     const title = this.createSurveyForm.controls.title.value.trim();
     const description = this.createSurveyForm.controls.description.value.trim();
     const category = this.createSurveyForm.controls.category.value.trim();
     const endDateRaw = this.createSurveyForm.controls.endDate.value.trim();
     const visibility = this.createSurveyForm.controls.visibility.value;
     const accessCode = this.createSurveyForm.controls.accessCode.value.trim();
-
-    if (visibility === 'private' && !accessCode) {
-      this.submitAttempted.set(true);
-      return;
-    }
 
     const dto: CreateSurveyDTO = {
       title,
@@ -624,26 +660,6 @@ export class HomeComponent implements OnDestroy {
       }),
     };
 
-    const editSurveyId = this.editSurveyId();
-    if (editSurveyId) {
-      const updated = await this.surveyService.updateSurvey(editSurveyId, {
-        title: dto.title,
-        description: dto.description,
-        category: dto.category,
-        endsAt: dto.endsAt,
-        visibility: dto.visibility,
-        accessCode: dto.visibility === 'private' ? dto.accessCode : '',
-        status: 'published',
-      } satisfies UpdateSurveyDTO);
-
-      if (!updated) return;
-
-      const editedSurvey = this.mySurveys().find((s) => s.id === editSurveyId);
-      this.publishedShareLink.set(this.buildShareLink(editedSurvey?.shareToken));
-      this.publishSuccessMessage.set(this.t()('surveyUpdated'));
-      return;
-    }
-
     const created = await this.surveyService.createSurvey(dto);
     if (!created) return;
 
@@ -651,6 +667,17 @@ export class HomeComponent implements OnDestroy {
     this.publishSuccessMessage.set(
       visibility === 'private' ? this.t()('privatePublished') : this.t()('publicPublished')
     );
+    this.publishStep.set('success');
+  }
+
+  protected cancelPublishConfirm(): void {
+    this.publishConfirmOpen.set(false);
+  }
+
+  protected goHomeAfterPublish(): void {
+    this.publishConfirmOpen.set(false);
+    this.closeCreateSurveyModal();
+    void this.router.navigate(['/']);
   }
 
   protected async copyPublishedShareLink(): Promise<void> {
@@ -658,9 +685,9 @@ export class HomeComponent implements OnDestroy {
     if (!link || typeof navigator === 'undefined' || !navigator.clipboard) return;
     try {
       await navigator.clipboard.writeText(link);
-      this.publishSuccessMessage.set(this.t()('linkCopied'));
+      this.toastService.success(this.t()('linkCopied'));
     } catch {
-      this.publishSuccessMessage.set(this.t()('copyFailed'));
+      this.toastService.error(this.t()('copyFailed'));
     }
   }
 

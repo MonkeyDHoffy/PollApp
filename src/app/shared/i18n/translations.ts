@@ -151,6 +151,12 @@ export const TRANSLATIONS = {
     guestNameRequired: 'Please enter a name.',
     guestRestrictions: 'Guests can participate in and view results of public surveys. Creating surveys requires an account.',
 
+    // Publish confirm modal
+    publishConfirmTitle: 'Publish survey?',
+    publishConfirmText: 'Your survey will go live and be shared with participants.',
+    publishNow: 'Publish now',
+    backToHome: 'Back to home',
+
     // Share link feedback
     shareLinkCopied: 'Share link copied to clipboard.',
     shareLinkFailed: 'Could not copy link automatically.',
@@ -313,6 +319,12 @@ export const TRANSLATIONS = {
     continueAsGuest: 'Als Gast fortfahren',
     guestNameRequired: 'Bitte einen Namen eingeben.',
     guestRestrictions: 'Gäste können an öffentlichen Umfragen teilnehmen und Ergebnisse sehen. Zum Erstellen von Umfragen ist ein Account nötig.',
+
+    // Publish confirm modal
+    publishConfirmTitle: 'Umfrage veröffentlichen?',
+    publishConfirmText: 'Deine Umfrage wird live gestellt und mit Teilnehmern geteilt.',
+    publishNow: 'Jetzt veröffentlichen',
+    backToHome: 'Zur Startseite',
 
     // Share link feedback
     shareLinkCopied: 'Share-Link in die Zwischenablage kopiert.',

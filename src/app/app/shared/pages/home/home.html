@@ -650,10 +650,10 @@
                     @if (createError()) {
                     <p class="create-survey-modal__error">{{ createError() }}</p>
                     }
-                    @if (publishSuccessMessage()) {
+                    @if (publishSuccessMessage() && isEditingSurvey()) {
                     <p class="create-survey-modal__success">{{ publishSuccessMessage() }}</p>
                     }
-                    @if (publishedShareLink()) {
+                    @if (publishedShareLink() && isEditingSurvey()) {
                     <div class="create-survey-modal__share-box">
                         <input type="text" [value]="publishedShareLink()" readonly />
                         <button type="button" class="create-survey-modal__secondary"
@@ -670,6 +670,57 @@
                 </div>
             </form>
         </section>
+    </div>
+    }
+
+    <!-- ── Publish confirm modal ───────────────────────────────────────────── -->
+    @if (publishConfirmOpen()) {
+    <div class="publish-confirm" role="dialog" aria-modal="true"
+        [attr.aria-label]="publishStep() === 'confirm' ? t()('publishConfirmTitle') : publishSuccessMessage()">
+        <div class="publish-confirm__backdrop"
+            (click)="publishStep() === 'confirm' ? cancelPublishConfirm() : null"></div>
+        <div class="publish-confirm__panel">
+
+            @if (publishStep() === 'confirm') {
+            <h3 class="publish-confirm__title">{{ t()('publishConfirmTitle') }}</h3>
+            <p class="publish-confirm__text">{{ t()('publishConfirmText') }}</p>
+            @if (createError()) {
+            <p class="publish-confirm__error">{{ createError() }}</p>
+            }
+            <div class="publish-confirm__actions">
+                <app-button [label]="t()('keepEditing')" variant="secondary"
+                    (pressed)="cancelPublishConfirm()" />
+                <app-button
+                    [label]="createLoading() ? t()('publishing') : t()('publishNow')"
+                    variant="primary"
+                    [disabled]="createLoading()"
+                    (pressed)="confirmPublish()" />
+            </div>
+
+            } @else {
+            <div class="publish-confirm__success-icon" aria-hidden="true">
+                <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10" />
+                    <polyline points="9 12 12 15 16 9" />
+                </svg>
+            </div>
+            <h3 class="publish-confirm__title">{{ publishSuccessMessage() }}</h3>
+            @if (publishedShareLink()) {
+            <div class="publish-confirm__link-row">
+                <input type="text" class="publish-confirm__link-input"
+                    [value]="publishedShareLink()" readonly />
+                <button type="button" class="publish-confirm__copy-btn"
+                    (click)="copyPublishedShareLink()">{{ t()('copyLink') }}</button>
+            </div>
+            }
+            <div class="publish-confirm__home-action">
+                <app-button [label]="t()('backToHome')" variant="primary"
+                    (pressed)="goHomeAfterPublish()" />
+            </div>
+            }
+
+        </div>
     </div>
     }
 </div>

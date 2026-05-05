@@ -1917,6 +1917,138 @@
   }
 }
 
+// ── Publish confirm modal ─────────────────────────────────────────────────────
+
+.publish-confirm {
+  position: fixed;
+  inset: 0;
+  z-index: 2100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(14, 8, 20, 0.72);
+  backdrop-filter: blur(6px);
+  animation: page-enter 200ms ease-out both;
+}
+
+.publish-confirm__backdrop {
+  position: absolute;
+  inset: 0;
+}
+
+.publish-confirm__panel {
+  position: relative;
+  z-index: 1;
+  width: min(440px, 100%);
+  padding: 32px;
+  border-radius: var(--sig-lg);
+  background: var(--paper);
+  color: var(--paper-ink);
+  box-shadow: 0 32px 80px rgba(0, 0, 0, 0.35);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  animation: modal-slide-up 260ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+
+  @media (max-width: 480px) {
+    padding: 24px 20px;
+    border-radius: var(--sig-md);
+    gap: 12px;
+  }
+}
+
+.publish-confirm__title {
+  margin: 0;
+  font: 700 20px/1.25 var(--font-ui);
+  color: var(--paper-ink);
+
+  @media (max-width: 360px) {
+    font-size: 17px;
+  }
+}
+
+.publish-confirm__text {
+  margin: 0;
+  font: 400 14px/1.6 var(--font-ui);
+  color: var(--color-text-secondary);
+}
+
+.publish-confirm__error {
+  margin: 0;
+  font: 600 13px/1.4 var(--font-ui);
+  color: var(--color-badge-ended-bg);
+}
+
+.publish-confirm__actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  margin-top: 4px;
+
+  @media (max-width: 320px) {
+    flex-direction: column-reverse;
+  }
+}
+
+.publish-confirm__success-icon {
+  display: flex;
+  justify-content: center;
+  color: var(--color-accent);
+  margin-bottom: 4px;
+}
+
+.publish-confirm__link-row {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.publish-confirm__link-input {
+  flex: 1;
+  min-width: 0;
+  padding: 9px 12px;
+  border: 1.5px solid var(--hairline);
+  border-radius: var(--r-md);
+  font: 500 13px/1 var(--font-ui);
+  color: var(--color-text-subtle, var(--color-text-secondary));
+  background: var(--bg-primary);
+  outline: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  @media (max-width: 320px) {
+    font-size: 11px;
+  }
+}
+
+.publish-confirm__copy-btn {
+  flex-shrink: 0;
+  padding: 9px 16px;
+  border: 1.5px solid var(--hairline);
+  border-radius: var(--r-md);
+  background: transparent;
+  font: 600 13px/1 var(--font-ui);
+  color: var(--paper-ink);
+  cursor: pointer;
+  transition: background 130ms ease, border-color 130ms ease;
+
+  &:hover {
+    background: var(--paper-soft, rgba(255, 255, 255, 0.06));
+    border-color: var(--color-accent);
+  }
+}
+
+.publish-confirm__home-action {
+  display: flex;
+  justify-content: center;
+  margin-top: 4px;
+}
+
 // ── Guest modal ──────────────────────────────────────────────────────────────
 
 .guest-modal {
