@@ -177,7 +177,7 @@
                         [label]="submitting() ? t()('savingSubmit') : t()('completeSurvey')"
                         variant="primary"
                         [disabled]="submitting()"
-                        (pressed)="completeSurvey()" />
+                        (pressed)="openCompleteConfirm()" />
                 </div>
                 }
 
@@ -239,6 +239,18 @@
         }
     </div>
 </section>
+
+@if (showCompleteConfirm()) {
+<div class="survey-detail__confirm-backdrop" (click)="cancelCompleteConfirm()"></div>
+<div class="survey-detail__confirm-dialog" role="alertdialog" aria-modal="true">
+    <h3 class="survey-detail__confirm-title">{{ t()('confirmCompleteTitle') }}</h3>
+    <p class="survey-detail__confirm-text">{{ t()('confirmCompleteText') }}</p>
+    <div class="survey-detail__confirm-actions">
+        <app-button [label]="t()('cancel')" variant="secondary" (pressed)="cancelCompleteConfirm()" />
+        <app-button [label]="t()('confirmCompleteBtn')" variant="primary" (pressed)="completeSurvey()" />
+    </div>
+</div>
+}
 
 @if (showDeleteConfirm()) {
 <div class="survey-detail__confirm-backdrop" (click)="cancelDelete()"></div>

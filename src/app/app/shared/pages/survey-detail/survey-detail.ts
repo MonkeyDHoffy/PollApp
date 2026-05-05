@@ -56,6 +56,7 @@ export class SurveyDetailComponent implements AfterViewInit {
   protected readonly creatorActionMessage = signal<string | null>(null);
   protected readonly deletingSurvey = signal(false);
   protected readonly showDeleteConfirm = signal(false);
+  protected readonly showCompleteConfirm = signal(false);
   protected readonly exportingCsv = signal(false);
   protected readonly alreadyVoted = signal(false);
   protected readonly resultsOpen = signal(true);
@@ -298,7 +299,21 @@ export class SurveyDetailComponent implements AfterViewInit {
     return (this.selectedAnswers()[questionId] ?? []).includes(answerId);
   }
 
+  protected openCompleteConfirm(): void {
+    const answers = Object.values(this.selectedAnswers()).filter((ids) => ids.length > 0);
+    if (answers.length === 0) {
+      this.submitMessage.set(this.t()('selectAtLeastOne'));
+      return;
+    }
+    this.showCompleteConfirm.set(true);
+  }
+
+  protected cancelCompleteConfirm(): void {
+    this.showCompleteConfirm.set(false);
+  }
+
   protected async completeSurvey(): Promise<void> {
+    this.showCompleteConfirm.set(false);
     const survey = this.survey();
     if (!survey) {
       this.submitMessage.set(this.t()('responseError'));

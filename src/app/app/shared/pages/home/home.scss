@@ -2053,3 +2053,41 @@
     justify-content: center;
   }
 }
+
+// ── Responsive overflow fixes ─────────────────────────────────────────────────
+
+// Auth user-row: allow wrap on tiny screens so name + buttons don't overflow
+@media (max-width: 400px) {
+  .home__auth-user-row {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+}
+
+// Create-survey modal meta grid: 2-col → 1-col on narrow screens
+@media (max-width: 640px) {
+  .create-survey-modal__meta-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .create-survey-modal__panel {
+    padding: 20px 16px;
+  }
+
+  .create-survey-modal__form {
+    padding: 16px;
+  }
+}
+
+// Auth panel: on very small screens pin to bottom instead of absolute dropdown
+@media (max-width: 360px) {
+  .home__auth-panel {
+    position: fixed;
+    top: auto;
+    bottom: 0;
+    right: 0;
+    left: 0;
+    width: 100%;
+    border-radius: var(--sig-md) var(--sig-md) 0 0;
+  }
+}
