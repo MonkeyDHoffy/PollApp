@@ -1,38 +1,143 @@
 <div class="home">
     <div class="home__content-wrapper">
-        <!-- Logo header -->
+
+        <!-- Header -->
         <header class="home__header">
             <img src="/assets/logo/Property 1=Orange.png" alt="PollApp Logo" class="home__logo" />
 
-            <div class="home__auth">
-                <div class="home__auth-top-row">
-@if (authUser()) {
+            <div class="home__header-right">
+                <!-- Language toggle -->
+                <button type="button" class="home__lang-btn" (click)="langService.toggle()"
+                    [title]="langService.lang() === 'en' ? 'Auf Deutsch wechseln' : 'Switch to English'">
+                    {{ langService.lang() === 'en' ? 'DE' : 'EN' }}
+                </button>
+
+                <!-- Guest mode button (only when not logged in and not already in guest mode) -->
+                @if (!authUser() && !isGuestMode()) {
+                <button type="button" class="home__guest-btn" (click)="openGuestModal()">
+                    {{ t()('guestMode') }}
+                </button>
+                }
+
+                <!-- Auth area -->
+                <div class="home__auth">
+                    @if (!authInitialized()) {
+                    <div class="home__auth-skeleton" aria-hidden="true"></div>
+                    } @else if (authUser()) {
                     <div class="home__auth-user-row">
-                        <p class="home__auth-user">{{ authUser()?.email }}</p>
+                        @if (editingDisplayName()) {
+                        <div class="home__name-edit">
+                            <input #nameEditInput type="text" class="home__name-edit-input"
+                                [value]="displayNameEditValue()"
+                                (input)="displayNameEditValue.set($any($event.target).value)"
+                                (keydown.enter)="saveDisplayName()"
+                                (keydown.escape)="cancelEditName()"
+                                maxlength="40" [disabled]="displayNameSaving()" />
+                            <button type="button" class="home__name-edit-save" (click)="saveDisplayName()"
+                                [disabled]="displayNameSaving()" [title]="t()('saveChanges')">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <polyline points="20 6 9 17 4 12" />
+                                </svg>
+                            </button>
+                            <button type="button" class="home__name-edit-cancel" (click)="cancelEditName()"
+                                [title]="t()('cancel')">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="3" stroke-linecap="round" aria-hidden="true">
+                                    <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                                </svg>
+                            </button>
+                        </div>
+                        } @else {
+                        <button type="button" class="home__auth-user home__auth-user--editable"
+                            (click)="startEditName()" [title]="t()('editName')">
+                            {{ t()('hello') }}, {{ authDisplayName() }}
+                        </button>
+                        }
                         <button type="button" class="home__auth-btn" (click)="signOut()" [disabled]="authLoading()">
-                            {{ authLoading() ? '...' : 'Sign out' }}
+                            {{ authLoading() ? t()('signingOut') : t()('signOut') }}
+                        </button>
+                    </div>
+                    } @else if (isGuestMode()) {
+                    <div class="home__auth-user-row home__auth-user-row--guest">
+                        <span class="home__guest-name">{{ t()('hello') }}, {{ guestService.guestName() }}</span>
+                        <button type="button" class="home__auth-btn home__auth-btn--signin" (click)="endGuestModeAndSignIn()">
+                            {{ t()('signinBtn') }}
+                        </button>
+                        <button type="button" class="home__auth-btn home__auth-btn--ghost" (click)="endGuestMode()">
+                            {{ t()('endGuestMode') }}
                         </button>
                     </div>
                     } @else {
-                    <div class="home__auth-user-row home__auth-user-row--login">
-                        <input type="email" [formControl]="authEmailControl" placeholder="your@email.com" />
-                        <button type="button" class="home__auth-btn" (click)="sendMagicLink()"
-                            [disabled]="authLoading()">
-                            {{ authLoading() ? 'Sending...' : 'Magic Link' }}
+                    <!-- Sign-in trigger button + dropdown panel -->
+                    <div class="home__auth-panel-wrap">
+                        <button type="button" class="home__auth-btn home__auth-btn--signin"
+                            (click)="authPanelOpen() ? closeAuthPanel() : openAuthPanel()"
+                            [class.home__auth-btn--active]="authPanelOpen()">
+                            {{ t()('signinBtn') }}
+                            <svg class="home__auth-btn-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"
+                                [class.home__auth-btn-chevron--open]="authPanelOpen()" aria-hidden="true">
+                                <polyline points="6 9 12 15 18 9" />
+                            </svg>
                         </button>
+
+                        @if (authPanelOpen()) {
+                        <!-- Backdrop must come before panel in DOM so panel's z-index wins -->
+                        <div class="home__auth-panel-backdrop" (click)="closeAuthPanel()"></div>
+                        <div class="home__auth-panel" role="dialog" [attr.aria-label]="t()('signinBtn')">
+                            <button type="button" class="home__auth-panel-close" (click)="closeAuthPanel()"
+                                aria-label="Close">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2.5" stroke-linecap="round" aria-hidden="true">
+                                    <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                                </svg>
+                            </button>
+                            @if (authMessage()) {
+                            <!-- Success state after link sent -->
+                            <div class="home__auth-panel-success">
+                                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"
+                                    aria-hidden="true">
+                                    <path d="M22 2L11 13" />
+                                    <path d="M22 2L15 22 11 13 2 9l20-7z" />
+                                </svg>
+                                <p class="home__auth-panel-success-title">{{ t()('magicLinkSentTitle') }}</p>
+                                <p class="home__auth-panel-success-sub">{{ t()('magicLinkSentSub') }}</p>
+                            </div>
+                            } @else {
+                            <p class="home__auth-panel-title">{{ t()('signinPanelTitle') }}</p>
+                            <form [formGroup]="authForm" (ngSubmit)="sendMagicLink()" novalidate>
+                            <div class="home__auth-panel-field"
+                                [class.home__auth-panel-field--error]="authPanelEmailTouched() && authEmailControl.invalid">
+                                <label class="home__auth-panel-label">{{ t()('emailLabel') }}</label>
+                                <input type="email" class="home__auth-panel-input" [formControl]="authEmailControl"
+                                    [placeholder]="t()('emailPlaceholder')" autocomplete="email"
+                                    (blur)="authPanelEmailTouched.set(true)"
+                                    (input)="onAuthInputChange()" />
+                                @if (authPanelEmailTouched() && authEmailControl.invalid) {
+                                <span class="home__auth-panel-err">{{ t()('emailInvalid') }}</span>
+                                }
+                            </div>
+
+                            @if (authError()) {
+                            <p class="home__auth-panel-apierr">{{ authError() }}</p>
+                            }
+
+                            <button type="submit" class="home__auth-panel-submit" [disabled]="authLoading()">
+                                {{ authLoading() ? t()('sending') : t()('sendMagicLink') }}
+                            </button>
+                            </form>
+                            }
+                        </div>
+                        }
                     </div>
                     }
-                </div>
 
-                @if (authError()) {
-                <p class="home__auth-error">{{ authError() }}</p>
-                }
-                @if (authMessage()) {
-                <p class="home__auth-message">{{ authMessage() }}</p>
-                }
-                @if (schemaNotice()) {
-                <p class="home__schema-notice">{{ schemaNotice() }}</p>
-                }
+                    @if (schemaNotice()) {
+                    <p class="home__schema-notice">{{ schemaNotice() }}</p>
+                    }
+                </div>
             </div>
         </header>
 
@@ -40,35 +145,30 @@
         <section class="hero">
             <div class="hero__container">
                 <div class="hero__content">
-                    <h1 class="hero__title">Collect feedback, Unlock Ideas</h1>
-                    <p class="hero__description">
-                        Create and share surveys in minutes – from team events to workplace culture. Collect opinions,
-                        engage your
-                        audience, and turn feedback into action.
-                    </p>
+                    <h1 class="hero__title">{{ t()('heroTitle') }}</h1>
+                    <p class="hero__description">{{ t()('heroDesc') }}</p>
                     <div class="hero__actions">
-                        <button class="hero__new-survey-btn"
-                            [disabled]="!canCreateSurvey()"
+                        <button class="hero__new-survey-btn" [disabled]="!canCreateSurvey()"
                             (click)="openCreateSurveyModal()">
-                            <span class="hero__new-survey-btn__label">New survey</span>
+                            <span class="hero__new-survey-btn__label">{{ t()('newSurvey') }}</span>
                             <span class="hero__new-survey-btn__icon" aria-hidden="true">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
-                                    <circle cx="12" cy="12" r="9"/>
-                                    <path d="M12 8v8M8 12h8"/>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+                                    stroke-linecap="round">
+                                    <circle cx="12" cy="12" r="9" />
+                                    <path d="M12 8v8M8 12h8" />
                                 </svg>
                             </span>
                         </button>
                     </div>
-                    @if (!canCreateSurvey() && !isDemoMode()) {
-                    <p class="hero__login-hint">Log in oder aktiviere den Gastmodus, um Umfragen zu sehen oder zu
-                        erstellen.</p>
+                    @if (!canViewSurveys()) {
+                    <p class="hero__login-hint">{{ t()('loginHint') }}</p>
+                    } @else if (isGuestMode() && !canCreateSurvey()) {
+                    <p class="hero__login-hint hero__login-hint--guest">{{ t()('guestRestrictions') }}</p>
                     }
                 </div>
 
-                <div class="hero__visuals" #heroVisuals
-                    (mousemove)="onHeroMouseMove($event)"
-                    (mouseleave)="onHeroMouseLeave()"
-                    (touchmove)="onHeroTouchMove($event)"
+                <div class="hero__visuals" #heroVisuals (mousemove)="onHeroMouseMove($event)"
+                    (mouseleave)="onHeroMouseLeave()" (touchmove)="onHeroTouchMove($event)"
                     (touchend)="onHeroTouchEnd()">
                     <img src="/assets/visual/position 03@2x 1.png" alt="Survey illustration" class="hero__phone" />
                     <img src="/assets/visual/Questin mark.png" alt="Question mark"
@@ -81,30 +181,33 @@
             </div>
         </section>
 
-        <!-- Your surveys section -->
+        <!-- Survey section -->
         @if (!canViewSurveys()) {
         <section class="surveys surveys--locked">
-            <h2 class="surveys__title">Your surveys</h2>
-            <p class="surveys__locked-text">Du bist aktuell ausgeloggt. Melde dich per Magic Link an oder nutze den
-                Gastmodus, um Beispielumfragen zu erkunden.</p>
+            <h2 class="surveys__title">{{ t()('yourSurveys') }}</h2>
+            <p class="surveys__locked-text">{{ t()('loggedOutText') }}</p>
         </section>
         } @else {
         <section class="surveys">
-            <h2 class="surveys__title">Your surveys</h2>
+            <h2 class="surveys__title">{{ t()('yourSurveys') }}</h2>
 
-            <!-- Ending soon surveys carousel -->
+            <!-- Carousel: ending soon -->
             <div class="surveys__ending-soon">
                 <div class="surveys__carousel-header">
-                    <h3 class="surveys__subtitle">{{ isDemoMode() ? 'Ending soon surveys' : 'Public surveys (ending soon)' }}</h3>
+                    <h3 class="surveys__subtitle">{{ t()('publicSurveysEndingSoon') }}</h3>
                     @if (!surveysLoading() && endingSoonSurveys().length > 0) {
                     <div class="surveys__carousel-nav">
-                        <button type="button" class="surveys__carousel-btn" (click)="carouselScroll(-1)" aria-label="Previous">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <button type="button" class="surveys__carousel-btn" (click)="carouselScroll(-1)"
+                            aria-label="Previous">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                                 <polyline points="15 18 9 12 15 6" />
                             </svg>
                         </button>
-                        <button type="button" class="surveys__carousel-btn" (click)="carouselScroll(1)" aria-label="Next">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <button type="button" class="surveys__carousel-btn" (click)="carouselScroll(1)"
+                            aria-label="Next">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                                 <polyline points="9 18 15 12 9 6" />
                             </svg>
                         </button>
@@ -124,9 +227,9 @@
                 </div>
                 } @else if (endingSoonSurveys().length === 0) {
                 <div class="surveys__carousel-empty">
-                    <p class="surveys__carousel-empty-text">No active surveys right now — be the first to create one.</p>
+                    <p class="surveys__carousel-empty-text">{{ t()('noActiveSurveys') }}</p>
                     @if (canCreateSurvey()) {
-                    <app-button label="Create survey" variant="primary" (pressed)="openCreateSurveyModal()" />
+                    <app-button [label]="t()('createSurvey')" variant="primary" (pressed)="openCreateSurveyModal()" />
                     }
                 </div>
                 } @else {
@@ -134,34 +237,35 @@
                     @for (survey of endingSoonSurveys(); track survey.id) {
                     <div class="surveys__carousel-item">
                         <app-highlight-card [category]="survey.category" [title]="survey.title"
-                            [badgeLabel]="survey.badgeLabel" [tone]="survey.tone || 'base'"
-                            [surveyId]="survey.id" (clicked)="openSurvey($event)" />
+                            [badgeLabel]="survey.badgeLabel" [tone]="survey.tone || 'base'" [surveyId]="survey.id"
+                            (clicked)="openSurvey($event)" />
                     </div>
                     }
                 </div>
                 }
             </div>
 
-            <!-- Sticky toolbar + result bar -->
+            <!-- Sticky toolbar -->
             <div class="surveys__sticky-header">
                 <div class="surveys__toolbar">
                     <label class="surveys__search-wrap">
                         <svg class="surveys__search-icon" width="15" height="15" viewBox="0 0 24 24" fill="none"
                             stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
                             aria-hidden="true">
-                            <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+                            <circle cx="11" cy="11" r="8" />
+                            <line x1="21" y1="21" x2="16.65" y2="16.65" />
                         </svg>
-                        <input class="surveys__search" type="search" placeholder="Search surveys..."
+                        <input class="surveys__search" type="search" [placeholder]="t()('searchSurveys')"
                             [value]="searchQuery()" (input)="searchQuery.set($any($event.target).value)" />
                     </label>
 
                     <div class="surveys__toolbar-divider" aria-hidden="true"></div>
 
                     <div class="surveys__filter-buttons">
-                        <app-button label="Active" variant="filter"
+                        <app-button [label]="t()('active')" variant="filter"
                             [filterStyle]="selectedStatus() === 'active' ? 'active' : 'base'"
                             (pressed)="onFilterActive()" />
-                        <app-button label="Past" variant="filter"
+                        <app-button [label]="t()('past')" variant="filter"
                             [filterStyle]="selectedStatus() === 'past' ? 'active' : 'base'"
                             (pressed)="onFilterPast()" />
                     </div>
@@ -169,23 +273,22 @@
                     <div class="surveys__toolbar-divider" aria-hidden="true"></div>
 
                     <div class="surveys__sort">
-                        <app-dropdown-menu label="Category" [options]="filterCategories()"
-                            [selected]="selectedCategory() === 'all' ? 'All' : selectedCategory()"
-                            [showSelectionValue]="true" [openUpward]="true"
+                        <app-dropdown-menu [label]="t()('category')" [options]="filterCategoryOptions()"
+                            [selected]="selectedCategoryLabel()" [showSelectionValue]="true"
                             (selectedChange)="onCategoryChange($event)" />
-                        <app-dropdown-menu label="Sort" [options]="sortOptions"
-                            [selected]="selectedSort()" [showSelectionValue]="true" [openUpward]="true"
+                        <app-dropdown-menu [label]="t()('sort')" [options]="sortOptionLabels()"
+                            [selected]="selectedSortLabel()" [showSelectionValue]="true"
                             (selectedChange)="onSortChange($event)" />
                     </div>
 
                     @if (canCreateSurvey()) {
                     <div class="surveys__toolbar-divider" aria-hidden="true"></div>
                     <button class="surveys__toolbar-add-btn" (click)="openCreateSurveyModal()"
-                        title="Create new survey" aria-label="Create new survey">
+                        [title]="t()('createSurvey')" [attr.aria-label]="t()('createSurvey')">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
                             stroke-linecap="round" aria-hidden="true">
-                            <circle cx="12" cy="12" r="9"/>
-                            <path d="M12 8v8M8 12h8"/>
+                            <circle cx="12" cy="12" r="9" />
+                            <path d="M12 8v8M8 12h8" />
                         </svg>
                     </button>
                     }
@@ -195,15 +298,18 @@
                 <div class="surveys__result-bar">
                     <span class="surveys__result-count">
                         <span class="surveys__result-count-num">{{ filteredSurveys().length }}</span>
-                        {{ filteredSurveys().length === 1 ? 'survey' : 'surveys' }}
-                        @if (searchQuery().trim()) { for "<strong>{{ searchQuery() }}</strong>" }
+                        {{ filteredSurveys().length === 1 ? t()('surveyWord') : t()('surveysWord') }}
+                        @if (searchQuery().trim()) {
+                        {{ t()('forWord') }} "<strong>{{ searchQuery() }}</strong>"
+                        }
                     </span>
                     <div class="surveys__result-tags">
                         @if (selectedStatus() !== 'all') {
-                        <span class="surveys__result-tag">{{ selectedStatus() }}</span>
+                        <span class="surveys__result-tag">{{ selectedStatus() === 'active' ? t()('active') : t()('past')
+                            }}</span>
                         }
                         @if (selectedCategory() !== 'all') {
-                        <span class="surveys__result-tag">{{ selectedCategory() }}</span>
+                        <span class="surveys__result-tag">{{ selectedCategoryLabel() }}</span>
                         }
                     </div>
                 </div>
@@ -224,56 +330,117 @@
             } @else if (filteredSurveys().length === 0) {
             <div class="surveys__empty">
                 @if (searchQuery().trim()) {
-                <p class="surveys__empty-heading">No results for "{{ searchQuery() }}"</p>
-                <p class="surveys__empty-text">Try a different search term or clear the filters.</p>
-                <app-button label="Clear search" variant="secondary" (pressed)="searchQuery.set('')" />
+                <p class="surveys__empty-heading">{{ t()('noResults') }} "{{ searchQuery() }}"</p>
+                <p class="surveys__empty-text">{{ t()('tryDifferent') }}</p>
+                <app-button [label]="t()('clearSearch')" variant="secondary" (pressed)="searchQuery.set('')" />
                 } @else {
-                <p class="surveys__empty-heading">No surveys here yet</p>
-                <p class="surveys__empty-text">Be the first to create a survey and start collecting responses.</p>
+                <p class="surveys__empty-heading">{{ t()('noSurveysYet') }}</p>
+                <p class="surveys__empty-text">{{ t()('beFirst') }}</p>
                 @if (canCreateSurvey()) {
-                <app-button label="Create survey" variant="primary" (pressed)="openCreateSurveyModal()" />
+                <app-button [label]="t()('createSurvey')" variant="primary" (pressed)="openCreateSurveyModal()" />
                 }
                 }
             </div>
             } @else {
-            <app-survey-list-view [items]="filteredSurveys()"
-                [heading]="isDemoMode() ? 'Survey view in the list' : 'Public surveys'"
-                (surveySelected)="openSurvey($event)"
-                (shareLinkClicked)="onShareLinkClicked($event)" />
+            <app-survey-list-view [items]="filteredSurveys()" [heading]="t()('publicSurveys')"
+                (surveySelected)="openSurvey($event)" (shareLinkClicked)="onShareLinkClicked($event)" />
             }
         </section>
         }
     </div>
 
+    <!-- ── Guest modal ──────────────────────────────────────────────────── -->
+    @if (guestModalOpen()) {
+    <div class="guest-modal" role="dialog" aria-modal="true" [attr.aria-label]="t()('guestModalTitle')">
+        <div class="guest-modal__backdrop" (click)="closeGuestModal()"></div>
+        <div class="guest-modal__panel">
+            <h2 class="guest-modal__title">{{ t()('guestModalTitle') }}</h2>
+            <p class="guest-modal__desc">{{ t()('guestModalDesc') }}</p>
+
+            <div class="guest-modal__field" [class.guest-modal__field--error]="guestNameError()">
+                <input type="text" class="guest-modal__input" [placeholder]="t()('namePlaceholder')"
+                    [value]="guestNameInput()" (input)="onGuestNameInput($any($event.target).value)"
+                    (keydown.enter)="confirmGuestMode()" maxlength="40" autocomplete="off" />
+                @if (guestNameError()) {
+                <span class="guest-modal__error-msg">{{ t()('guestNameRequired') }}</span>
+                }
+            </div>
+
+            <p class="guest-modal__restrictions">{{ t()('guestRestrictions') }}</p>
+
+            <div class="guest-modal__actions">
+                <button type="button" class="guest-modal__cancel" (click)="closeGuestModal()">
+                    {{ t()('cancel') }}
+                </button>
+                <button type="button" class="guest-modal__confirm" (click)="confirmGuestMode()">
+                    {{ t()('continueAsGuest') }}
+                </button>
+            </div>
+        </div>
+    </div>
+    }
+
+    <!-- ── First-login onboarding modal ─────────────────────────────────── -->
+    @if (needsDisplayName()) {
+    <div class="onboarding-modal" role="dialog" aria-modal="true" [attr.aria-label]="t()('onboardingTitle')">
+        <div class="onboarding-modal__panel">
+            <div class="onboarding-modal__icon" aria-hidden="true">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                    <circle cx="12" cy="7" r="4" />
+                </svg>
+            </div>
+            <h2 class="onboarding-modal__title">{{ t()('onboardingTitle') }}</h2>
+            <p class="onboarding-modal__desc">{{ t()('onboardingDesc') }}</p>
+            <form class="onboarding-modal__form" (ngSubmit)="submitOnboardingName()" novalidate>
+                <div class="onboarding-modal__field"
+                    [class.onboarding-modal__field--error]="onboardingNameControl.touched && onboardingNameControl.invalid">
+                    <input type="text" class="onboarding-modal__input" [formControl]="onboardingNameControl"
+                        [placeholder]="t()('namePlaceholder')" maxlength="40" autocomplete="name"
+                        autofocus />
+                    @if (onboardingNameControl.touched && onboardingNameControl.hasError('required')) {
+                    <span class="onboarding-modal__err">{{ t()('guestNameRequired') }}</span>
+                    }
+                </div>
+                <button type="submit" class="onboarding-modal__submit" [disabled]="onboardingSubmitting()">
+                    {{ onboardingSubmitting() ? '...' : t()('onboardingCta') }}
+                </button>
+            </form>
+        </div>
+    </div>
+    }
+
+    <!-- ── Create / Edit survey modal ──────────────────────────────────── -->
     @if (createSurveyOpen()) {
-    <div class="create-survey-modal" role="dialog" aria-modal="true" aria-label="Create new survey">
+    <div class="create-survey-modal" role="dialog" aria-modal="true" [attr.aria-label]="t()('createNewSurvey')">
         <div class="create-survey-modal__backdrop" (click)="requestCloseModal()"></div>
         <section class="create-survey-modal__panel">
             <header class="create-survey-modal__header">
-                <div>
-                    <span class="create-survey-modal__badge">Draft</span>
-                    <h2 class="create-survey-modal__title">{{ isEditingSurvey() ? 'Edit survey' : 'Create new survey' }}
-                    </h2>
-                </div>
+                <h2 class="create-survey-modal__title">
+                    {{ isEditingSurvey() ? t()('editSurvey') : t()('createNewSurvey') }}
+                </h2>
                 <div class="create-survey-modal__header-actions">
                     <button type="button" class="create-survey-modal__preview-toggle"
                         [class.create-survey-modal__preview-toggle--active]="previewMode()"
                         (click)="previewMode.update(v => !v)">
-                        {{ previewMode() ? 'Edit' : 'Preview' }}
+                        {{ previewMode() ? t()('editMode') : t()('preview') }}
                     </button>
                     <button type="button" class="create-survey-modal__cancel" (click)="requestCloseModal()">
-                        Cancel
+                        {{ t()('cancel') }}
                     </button>
                 </div>
             </header>
 
             @if (confirmDiscardOpen()) {
             <div class="create-survey-modal__discard-overlay">
-                <p class="create-survey-modal__discard-title">Discard changes?</p>
-                <p class="create-survey-modal__discard-text">All unsaved inputs will be lost.</p>
+                <p class="create-survey-modal__discard-title">{{ t()('discardChanges') }}</p>
+                <p class="create-survey-modal__discard-text">{{ t()('discardText') }}</p>
                 <div class="create-survey-modal__discard-actions">
-                    <button type="button" class="create-survey-modal__secondary" (click)="cancelDiscard()">Keep editing</button>
-                    <button type="button" class="create-survey-modal__cancel" (click)="confirmDiscard()">Discard</button>
+                    <button type="button" class="create-survey-modal__secondary" (click)="cancelDiscard()">{{
+                        t()('keepEditing') }}</button>
+                    <button type="button" class="create-survey-modal__cancel" (click)="confirmDiscard()">{{
+                        t()('discard') }}</button>
                 </div>
             </div>
             }
@@ -296,8 +463,9 @@
                         @if (question.description) {
                         <p class="create-survey-modal__preview-question-desc">{{ question.description }}</p>
                         }
-                        <p class="create-survey-modal__preview-hint">{{ question.allowMultiple ? 'Multiple answers
-                            allowed' : 'Single answer only' }}</p>
+                        <p class="create-survey-modal__preview-hint">
+                            {{ question.allowMultiple ? t()('multipleAnswers') : t()('singleAnswer') }}
+                        </p>
                         <div class="create-survey-modal__preview-answers">
                             @for (answer of question.answers; track answer.label) {
                             <label class="create-survey-modal__preview-answer">
@@ -323,12 +491,14 @@
                 [style.display]="previewMode() ? 'none' : ''">
                 <div class="create-survey-modal__meta-grid">
                     <div class="create-survey-modal__field">
-                        <span>Survey name</span>
+                        <span>{{ t()('surveyName') }}</span>
                         <div class="create-survey-modal__input-row">
                             <div class="create-survey-modal__input-wrap"
                                 [class.create-survey-modal__input-wrap--error]="createSurveyForm.controls.title.touched && createSurveyForm.controls.title.hasError('required')">
-                                <input type="text" formControlName="title" placeholder="Team Event Survey" maxlength="120" />
-                                @if (createSurveyForm.controls.title.touched && createSurveyForm.controls.title.hasError('required')) {
+                                <input type="text" formControlName="title" [placeholder]="t()('surveyNamePlaceholder')"
+                                    maxlength="120" />
+                                @if (createSurveyForm.controls.title.touched &&
+                                createSurveyForm.controls.title.hasError('required')) {
                                 <span class="create-survey-modal__inline-error">Required</span>
                                 }
                             </div>
@@ -337,16 +507,17 @@
                     </div>
 
                     <div class="create-survey-modal__field">
-                        <span>Describing text (optional)</span>
+                        <span>{{ t()('describingText') }}</span>
                         <div class="create-survey-modal__input-row create-survey-modal__input-row--textarea">
-                            <textarea formControlName="description" rows="3"
-                                placeholder="Short survey description" maxlength="300"></textarea>
-                            <app-button variant="delete" (pressed)="createSurveyForm.controls.description.setValue('')" />
+                            <textarea formControlName="description" rows="3" placeholder="Short survey description"
+                                maxlength="300"></textarea>
+                            <app-button variant="delete"
+                                (pressed)="createSurveyForm.controls.description.setValue('')" />
                         </div>
                     </div>
 
                     <div class="create-survey-modal__field">
-                        <span>Set end date (optional)</span>
+                        <span>{{ t()('setEndDate') }}</span>
                         <div class="create-survey-modal__input-row">
                             <input type="date" formControlName="endDate" />
                             <app-button variant="delete" (pressed)="createSurveyForm.controls.endDate.setValue('')" />
@@ -354,35 +525,38 @@
                     </div>
 
                     <div class="create-survey-modal__field">
-                        <span>Choose category</span>
+                        <span>{{ t()('chooseCategory') }}</span>
                         <div class="create-survey-modal__input-wrap"
                             [class.create-survey-modal__input-wrap--error]="createSurveyForm.controls.category.touched && createSurveyForm.controls.category.hasError('required')">
                             <select formControlName="category">
-                                <option value="" disabled>Select category</option>
+                                <option value="" disabled>{{ t()('selectCategory') }}</option>
                                 @for (category of categories; track category) {
                                 <option [value]="category">{{ category }}</option>
                                 }
                             </select>
-                            @if (createSurveyForm.controls.category.touched && createSurveyForm.controls.category.hasError('required')) {
+                            @if (createSurveyForm.controls.category.touched &&
+                            createSurveyForm.controls.category.hasError('required')) {
                             <span class="create-survey-modal__inline-error">Required</span>
                             }
                         </div>
                     </div>
 
                     <label class="create-survey-modal__field">
-                        <span>Visibility</span>
+                        <span>{{ t()('visibility') }}</span>
                         <select formControlName="visibility">
-                            <option value="public">Public</option>
-                            <option value="private">Private</option>
+                            <option value="public">{{ t()('publicLabel') }}</option>
+                            <option value="private">{{ t()('privateLabel') }}</option>
                         </select>
                     </label>
 
                     @if (isPrivateSurvey()) {
                     <div class="create-survey-modal__field">
-                        <span>Access code for private survey</span>
+                        <span>{{ t()('accessCodeLabel') }}</span>
                         <div class="create-survey-modal__input-row">
-                            <input type="text" formControlName="accessCode" placeholder="e.g. TEAM2026" maxlength="40" />
-                            <app-button variant="delete" (pressed)="createSurveyForm.controls.accessCode.setValue('')" />
+                            <input type="text" formControlName="accessCode" [placeholder]="t()('accessCodePlaceholder')"
+                                maxlength="40" />
+                            <app-button variant="delete"
+                                (pressed)="createSurveyForm.controls.accessCode.setValue('')" />
                         </div>
                     </div>
                     }
@@ -390,12 +564,12 @@
 
                 <div class="create-survey-modal__questions" formArrayName="questions">
                     @if (isEditingSurvey()) {
-                    <p class="create-survey-modal__success">Question structure is currently read-only in edit mode.</p>
+                    <p class="create-survey-modal__success">{{ t()('questionReadOnly') }}</p>
                     }
                     @for (question of questionsArray.controls; track $index; let qIdx = $index) {
                     <div class="create-survey-modal__question" [formGroupName]="qIdx">
                         <div class="create-survey-modal__question-header">
-                            <p>{{ qIdx + 1 }}. Question</p>
+                            <p>{{ qIdx + 1 }}. {{ t()('question') }}</p>
                             @if (questionsArray.length > 1 && !isEditingSurvey()) {
                             <app-button variant="delete" (pressed)="removeQuestion(qIdx)" />
                             }
@@ -407,7 +581,8 @@
                                 <input type="text" formControlName="questionText"
                                     placeholder="Which date would work best for you?" [readonly]="isEditingSurvey()"
                                     maxlength="160" />
-                                @if ($any(question).get('questionText').touched && $any(question).get('questionText').hasError('required')) {
+                                @if ($any(question).get('questionText').touched &&
+                                $any(question).get('questionText').hasError('required')) {
                                 <span class="create-survey-modal__inline-error">Required</span>
                                 }
                             </div>
@@ -419,18 +594,19 @@
                         <div class="create-survey-modal__input-row create-survey-modal__input-row--textarea">
                             <textarea formControlName="questionDescription" rows="2"
                                 placeholder="Short question description (optional)"
-                                class="create-survey-modal__question-desc"
-                                [readonly]="isEditingSurvey()" maxlength="200"></textarea>
+                                class="create-survey-modal__question-desc" [readonly]="isEditingSurvey()"
+                                maxlength="200"></textarea>
                             @if (!isEditingSurvey()) {
-                            <app-button variant="delete" (pressed)="$any(question).get('questionDescription').setValue('')" />
+                            <app-button variant="delete"
+                                (pressed)="$any(question).get('questionDescription').setValue('')" />
                             }
                         </div>
 
                         <div class="create-survey-modal__answers-head">
-                            <p>Answers</p>
+                            <p>{{ t()('answersLabel') }}</p>
                             <label class="create-survey-modal__checkbox-row">
                                 <input type="checkbox" formControlName="allowMultiple" />
-                                <span>Allow multiple answers</span>
+                                <span>{{ t()('allowMultiple') }}</span>
                             </label>
                         </div>
 
@@ -442,7 +618,8 @@
                                     [class.create-survey-modal__answer-input-wrap--error]="$any(questionAnswersArray(qIdx).at(aIdx)).touched && $any(questionAnswersArray(qIdx).at(aIdx)).hasError('required')">
                                     <input [formControlName]="aIdx" type="text" placeholder="Answer option"
                                         [readonly]="isEditingSurvey()" maxlength="120" />
-                                    @if ($any(questionAnswersArray(qIdx).at(aIdx)).touched && $any(questionAnswersArray(qIdx).at(aIdx)).hasError('required')) {
+                                    @if ($any(questionAnswersArray(qIdx).at(aIdx)).touched &&
+                                    $any(questionAnswersArray(qIdx).at(aIdx)).hasError('required')) {
                                     <span class="create-survey-modal__answer-inline-error">Required</span>
                                     }
                                 </div>
@@ -456,7 +633,7 @@
 
                         @if (!isEditingSurvey()) {
                         <button type="button" class="create-survey-modal__link-btn" (click)="addAnswer(qIdx)">
-                            Add answer
+                            {{ t()('addAnswer') }}
                         </button>
                         }
                     </div>
@@ -465,10 +642,10 @@
 
                 <div class="create-survey-modal__actions-row">
                     @if (submitAttempted() && createSurveyForm.invalid) {
-                    <p class="create-survey-modal__error">Please fill in all required fields above.</p>
+                    <p class="create-survey-modal__error">{{ t()('fillRequired') }}</p>
                     }
                     @if (submitAttempted() && isPrivateSurvey() && !createSurveyForm.controls.accessCode.value.trim()) {
-                    <p class="create-survey-modal__error">Bitte Access code fuer private Umfragen setzen.</p>
+                    <p class="create-survey-modal__error">{{ t()('accessCodeRequired') }}</p>
                     }
                     @if (createError()) {
                     <p class="create-survey-modal__error">{{ createError() }}</p>
@@ -480,15 +657,15 @@
                     <div class="create-survey-modal__share-box">
                         <input type="text" [value]="publishedShareLink()" readonly />
                         <button type="button" class="create-survey-modal__secondary"
-                            (click)="copyPublishedShareLink()">Copy link</button>
+                            (click)="copyPublishedShareLink()">{{ t()('copyLink') }}</button>
                     </div>
                     }
                     <button type="button" class="create-survey-modal__secondary" (click)="addQuestion()"
-                        [disabled]="isEditingSurvey()">Add next
-                        question</button>
+                        [disabled]="isEditingSurvey()">{{ t()('addNextQuestion') }}</button>
                     <button type="submit" class="create-survey-modal__publish" [disabled]="createLoading()">
-                        {{ createLoading() ? (isEditingSurvey() ? 'Saving...' : 'Publishing...') : (isEditingSurvey() ?
-                        'Save changes' : 'Publish') }}
+                        {{ createLoading()
+                        ? (isEditingSurvey() ? t()('savingModal') : t()('publishing'))
+                        : (isEditingSurvey() ? t()('saveChanges') : t()('publish')) }}
                     </button>
                 </div>
             </form>

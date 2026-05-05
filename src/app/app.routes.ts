@@ -3,20 +3,8 @@ import { HomeComponent } from './app/shared/pages/home/home';
 import { SurveyDetailComponent } from './app/shared/pages/survey-detail/survey-detail';
 
 export const routes: Routes = [
-  {
-    path: '',
-    component: HomeComponent,
-  },
-  {
-    path: 'demo',
-    component: HomeComponent,
-  },
-  {
-    path: 'survey/:id',
-    component: SurveyDetailComponent,
-  },
-  {
-    path: 'join/:token',
-    component: SurveyDetailComponent,
-  },
+  { path: '', component: HomeComponent },
+  { path: 'survey/:id', component: SurveyDetailComponent },
+  { path: 'join/:token', component: SurveyDetailComponent },
+  { path: '**', redirectTo: '' },
 ];

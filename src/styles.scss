@@ -1,95 +1,52 @@
-@import url('https://fonts.googleapis.com/css2?family=Nokora:wght@700&family=Nerko+One&display=swap');
-
-:root {
-  // Dark theme — PollApp
-  --bg-primary: #35273a;
-  --bg-surface: #4a3c53;
-  --bg-surface-muted: #3e3147;
-  --bg-surface-deep: #4a3757;
-  --bg-surface-card: #4e3a5b;
-
-  --color-accent: #f0ad63;
-  --color-accent-warm: #f4c183;
-  --color-accent-text: #2c1e28;
-
-  --color-text-primary: #f2f0f4;
-  --color-text-secondary: #c4b3c8;
-  --color-text-muted: #a897b4;
-  --color-text-subtle: #7a6585;
-
-  --color-badge-active-bg: #7ec98a;
-  --color-badge-active-text: #0f3018;
-  --color-badge-expiring-bg: #f5c84a;
-  --color-badge-expiring-text: #3a2800;
-  --color-badge-ended-bg: #c97e7e;
-  --color-badge-ended-text: #2e0c0c;
-  --color-badge-default-bg: #f8b871;
-  --color-badge-default-text: #2b1a16;
-
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 16px;
-  --font-ui-bold: 'Nokora', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-}
+// src/styles.scss — PollApp global styles (refined "Warm Playful")
+@use './tokens';
+@import url('https://fonts.googleapis.com/css2?family=Mulish:wght@500;600;700;800&family=Nerko+One&display=swap');
 
 @keyframes page-enter {
-  from {
-    opacity: 0;
-    transform: translateY(14px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes card-enter {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
-* {
-  box-sizing: border-box;
-}
+* { box-sizing: border-box; }
 
-html,
-body {
+html, body {
   margin: 0;
   background: var(--bg-primary);
   color: var(--color-text-primary);
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: var(--font-ui);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-// ─── App Footer ───────────────────────────────────────────────────────────────
-
+// ─── App Footer ──────────────────────────────────────────────────────────────
 .app-footer {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 7px;
   padding: 22px 16px 32px;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  border-top: 1px solid var(--hairline-soft);
   margin-top: 12px;
 }
 
 .app-footer__text {
-  font: 500 12px/1 'Segoe UI', sans-serif;
-  color: #6b5c77;
+  font: 600 12px/1 var(--font-ui);
+  color: var(--color-text-subtle);
   letter-spacing: 0.03em;
 }
 
 .app-footer__link {
-  font: 700 15px/1 'Nerko One', cursive;
-  color: rgba(240, 173, 99, 0.7);
+  font: 400 16px/1 var(--font-display);
+  color: var(--color-accent);
+  opacity: 0.8;
   text-decoration: none;
-  letter-spacing: 0.04em;
-  transition: color 180ms ease;
+  letter-spacing: 0.02em;
+  transition: opacity var(--dur) var(--ease-out);
 
-  &:hover { color: #f0ad63; }
+  &:hover { opacity: 1; }
 }

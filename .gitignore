@@ -48,3 +48,5 @@ Thumbs.db
 
 # Local context files
 *.context.json
+FEATURES.md
+src/_tokens.scss

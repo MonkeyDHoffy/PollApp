@@ -3,6 +3,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { SurveyResult } from '../../../../shared/models/survey.model';
 import { SurveyService } from '../../../../shared/services/survey.service';
 import { ToastService } from '../../../../shared/services/toast.service';
+import { LangService } from '../../../../shared/services/lang.service';
 import { ButtonComponent } from '../../ui/button/button';
 import { AuthService } from '../../../../shared/services/auth.service';
 
@@ -32,16 +33,21 @@ export class SurveyDetailComponent {
   private readonly surveyService = inject(SurveyService);
   private readonly authService = inject(AuthService);
   private readonly toastService = inject(ToastService);
+  protected readonly langService = inject(LangService);
   private readonly destroyRef = inject(DestroyRef);
+
   private readonly surveyId = this.route.snapshot.paramMap.get('id');
   private readonly joinToken = this.route.snapshot.paramMap.get('token');
   private readonly joinCode = this.route.snapshot.queryParamMap.get('code');
+
+  protected readonly t = this.langService.t;
 
   protected readonly survey = computed(() => this.surveyService.currentSurvey());
   protected readonly loading = computed(() => this.surveyService.loading());
   protected readonly error = computed(() => this.surveyService.error());
   protected readonly schemaNotice = computed(() => this.surveyService.schemaNotice());
   protected readonly authUser = computed(() => this.authService.user());
+
   protected readonly creatorMenuOpen = signal(false);
   protected readonly creatorActionMessage = signal<string | null>(null);
   protected readonly deletingSurvey = signal(false);
@@ -60,23 +66,24 @@ export class SurveyDetailComponent {
   protected readonly resultsLoading = signal(false);
   protected readonly resultsFlash = signal(false);
   protected readonly mobileActiveTab = signal<'form' | 'results'>('form');
-  protected readonly isDemoSurvey = computed(() => (this.survey()?.id ?? '').startsWith('demo-'));
+
   protected readonly isCreatorSurvey = computed(() => {
     const userId = this.authUser()?.id;
     const survey = this.survey();
-    if (!userId || !survey) {
-      return false;
-    }
-
-    return survey.creatorId === userId;
+    return !!(userId && survey && survey.creatorId === userId);
   });
-  protected readonly homeLabel = computed(() => 'Create survey');
+
+  // Show only the part before @ to protect privacy; never shown to creator
+  protected readonly displayCreator = computed(() => {
+    if (this.isCreatorSurvey()) return null;
+    const email = this.survey()?.creatorEmail;
+    if (!email) return null;
+    return email.includes('@') ? email.split('@')[0] : email;
+  });
 
   protected readonly questionColumns = computed(() => {
     const survey = this.survey();
-    if (!survey) {
-      return { left: [] as QuestionView[], right: [] as QuestionView[] };
-    }
+    if (!survey) return { left: [] as QuestionView[], right: [] as QuestionView[] };
 
     const questions: QuestionView[] = survey.questions.map((question, index) => ({
       id: question.id,
@@ -91,17 +98,15 @@ export class SurveyDetailComponent {
       })),
     }));
 
-    const left = questions.filter((_, index) => index % 2 === 0);
-    const right = questions.filter((_, index) => index % 2 === 1);
-
-    return { left, right };
+    return {
+      left: questions.filter((_, i) => i % 2 === 0),
+      right: questions.filter((_, i) => i % 2 === 1),
+    };
   });
 
   protected readonly resultsRows = computed(() => {
     const survey = this.survey();
-    if (!survey) {
-      return [];
-    }
+    if (!survey) return [];
 
     const resultsByQuestion = new Map(
       this.liveResults().map((result) => [
@@ -112,27 +117,24 @@ export class SurveyDetailComponent {
 
     return survey.questions.map((question) => {
       const questionResults = resultsByQuestion.get(question.id);
-
-      const answers = question.answers.map((answer, answerIndex) => {
-        const result = questionResults?.get(answer.id);
-        return {
-          id: answer.id,
-          label: this.optionLabel(answerIndex),
-          percentage: result?.percentage ?? 0,
-          count: result?.count ?? 0,
-        };
-      });
-
       return {
         questionId: question.id,
         questionText: question.text,
-        answers,
+        answers: question.answers.map((answer, answerIndex) => {
+          const result = questionResults?.get(answer.id);
+          return {
+            id: answer.id,
+            label: this.optionLabel(answerIndex),
+            percentage: result?.percentage ?? 0,
+            count: result?.count ?? 0,
+          };
+        }),
       };
     });
   });
 
   protected readonly hasResults = computed(() =>
-    this.resultsRows().some((row) => row.answers.some((answer) => answer.count > 0))
+    this.resultsRows().some((row) => row.answers.some((a) => a.count > 0))
   );
 
   protected readonly isSurveyEnded = computed(() => {
@@ -146,6 +148,18 @@ export class SurveyDetailComponent {
   protected readonly answeredQuestionsCount = computed(() =>
     Object.values(this.selectedAnswers()).filter((answers) => answers.length > 0).length
   );
+
+  protected readonly formattedEndsAt = computed(() => {
+    const endsAt = this.survey()?.endsAt;
+    if (!endsAt) return this.t()('noEndDate');
+    const date = new Date(endsAt);
+    if (Number.isNaN(date.getTime())) return this.t()('noEndDate');
+    return new Intl.DateTimeFormat(this.langService.lang() === 'de' ? 'de-DE' : 'en-GB', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    }).format(date);
+  });
 
   constructor() {
     if (this.surveyId) {
@@ -167,7 +181,7 @@ export class SurveyDetailComponent {
   }
 
   protected goHome(): void {
-    void this.router.navigate([this.isDemoSurvey() ? '/demo' : '/']);
+    void this.router.navigate(['/']);
   }
 
   protected toggleCreatorMenu(): void {
@@ -176,53 +190,38 @@ export class SurveyDetailComponent {
 
   protected async copyCreatorLink(): Promise<void> {
     const shareToken = this.survey()?.shareToken;
+    this.creatorMenuOpen.set(false);
     if (!shareToken || typeof navigator === 'undefined' || !navigator.clipboard) {
       this.creatorActionMessage.set('No share link available for this survey.');
-      this.creatorMenuOpen.set(false);
       return;
     }
-
-    const link = `${window.location.origin}/join/${shareToken}`;
-
     try {
-      await navigator.clipboard.writeText(link);
-      this.toastService.success('Share link copied to clipboard.');
+      await navigator.clipboard.writeText(`${window.location.origin}/join/${shareToken}`);
+      this.toastService.success(this.t()('shareLinkCopied'));
     } catch {
-      this.toastService.error('Could not copy link automatically.');
+      this.toastService.error(this.t()('shareLinkFailed'));
     }
-
-    this.creatorMenuOpen.set(false);
   }
 
   protected editCurrentSurvey(): void {
     const surveyId = this.survey()?.id;
-    if (!surveyId) {
-      return;
-    }
-
+    if (!surveyId) return;
     this.creatorMenuOpen.set(false);
     void this.router.navigate(['/'], { queryParams: { edit: surveyId } });
   }
 
   protected duplicateCurrentSurvey(): void {
     const surveyId = this.survey()?.id;
-    if (!surveyId) {
-      return;
-    }
-
+    if (!surveyId) return;
     this.creatorMenuOpen.set(false);
     void this.router.navigate(['/'], { queryParams: { duplicate: surveyId } });
   }
 
   protected async exportResultsCsv(): Promise<void> {
     const survey = this.survey();
-    if (!survey || this.exportingCsv()) {
-      return;
-    }
-
+    if (!survey || this.exportingCsv()) return;
     this.exportingCsv.set(true);
     this.creatorMenuOpen.set(false);
-
     try {
       const csv = await this.surveyService.buildResultsCsv(survey.id);
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -251,50 +250,24 @@ export class SurveyDetailComponent {
   protected async deleteCurrentSurvey(): Promise<void> {
     const survey = this.survey();
     if (!survey || this.deletingSurvey()) return;
-
     this.deletingSurvey.set(true);
     const deleted = await this.surveyService.deleteSurvey(survey.id);
     this.deletingSurvey.set(false);
     this.showDeleteConfirm.set(false);
-
     if (!deleted) {
       this.toastService.error(this.error() ?? 'Could not delete survey.');
       return;
     }
-
     this.toastService.success('Survey deleted.');
     void this.router.navigate(['/']);
   }
 
-  protected readonly formattedEndsAt = computed(() => {
-    const endsAt = this.survey()?.endsAt;
-    if (!endsAt) {
-      return 'No end date';
-    }
-
-    const date = new Date(endsAt);
-    if (Number.isNaN(date.getTime())) {
-      return 'No end date';
-    }
-
-    return new Intl.DateTimeFormat('de-DE', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-    }).format(date);
-  });
-
   protected toggleAnswer(questionId: string, answerId: string, allowMultiple: boolean): void {
     this.selectedAnswers.update((state) => {
       const current = state[questionId] ?? [];
-
       if (!allowMultiple) {
-        return {
-          ...state,
-          [questionId]: current.includes(answerId) ? [] : [answerId],
-        };
+        return { ...state, [questionId]: current.includes(answerId) ? [] : [answerId] };
       }
-
       return {
         ...state,
         [questionId]: current.includes(answerId)
@@ -311,29 +284,26 @@ export class SurveyDetailComponent {
   protected async completeSurvey(): Promise<void> {
     const survey = this.survey();
     if (!survey) {
-      this.submitMessage.set('Survey is not available yet.');
+      this.submitMessage.set(this.t()('responseError'));
       return;
     }
 
     const answers = Object.entries(this.selectedAnswers())
-      .filter(([, selectedAnswerIds]) => selectedAnswerIds.length > 0)
+      .filter(([, ids]) => ids.length > 0)
       .map(([questionId, selectedAnswerIds]) => ({ questionId, selectedAnswerIds }));
 
     if (answers.length === 0) {
-      this.submitMessage.set('Select at least one answer before completing the survey.');
+      this.submitMessage.set(this.t()('selectAtLeastOne'));
       return;
     }
 
     this.submitting.set(true);
     this.submitMessage.set(null);
 
-    const saved = await this.surveyService.submitSurveyResponse({
-      surveyId: survey.id,
-      answers,
-    });
+    const saved = await this.surveyService.submitSurveyResponse({ surveyId: survey.id, answers });
 
     if (!saved) {
-      this.submitMessage.set(this.error() ?? 'Could not submit your response. Please try again.');
+      this.submitMessage.set(this.error() ?? this.t()('responseError'));
       this.submitting.set(false);
       return;
     }
@@ -343,13 +313,13 @@ export class SurveyDetailComponent {
     this.submitted.set(true);
     this.alreadyVoted.set(true);
     this.resultsOpen.set(true);
-    this.submitMessage.set('Thanks! Your response has been saved.');
-    this.toastService.success('Your response has been saved!');
+    this.submitMessage.set(this.t()('responseSaved'));
+    this.toastService.success(this.t()('responseSavedToast'));
     this.submitting.set(false);
   }
 
   protected toggleResults(): void {
-    this.resultsOpen.update((value) => !value);
+    this.resultsOpen.update((v) => !v);
   }
 
   protected switchTab(tab: 'form' | 'results'): void {
@@ -362,12 +332,11 @@ export class SurveyDetailComponent {
       this.toastService.error('No share link available.');
       return;
     }
-    const link = `${window.location.origin}/join/${shareToken}`;
     try {
-      await navigator.clipboard.writeText(link);
-      this.toastService.success('Share link copied to clipboard.');
+      await navigator.clipboard.writeText(`${window.location.origin}/join/${shareToken}`);
+      this.toastService.success(this.t()('shareLinkCopied'));
     } catch {
-      this.toastService.error('Could not copy link automatically.');
+      this.toastService.error(this.t()('shareLinkFailed'));
     }
   }
 
@@ -376,15 +345,9 @@ export class SurveyDetailComponent {
   }
 
   protected applyAccessCode(): void {
-    if (!this.joinToken) {
-      return;
-    }
-
+    if (!this.joinToken) return;
     const code = this.accessCode().trim();
-    if (!code) {
-      return;
-    }
-
+    if (!code) return;
     void this.loadSurveyByJoinToken(this.joinToken, code);
   }
 
@@ -413,31 +376,26 @@ export class SurveyDetailComponent {
   private async loadSurveyByJoinToken(joinToken: string, accessCode?: string): Promise<void> {
     const loaded = await this.surveyService.loadSurveyByShareToken(joinToken, accessCode);
     if (!loaded) {
-      this.accessCodeRequired.set(this.error() === 'Access code required.' || this.error() === 'Invalid access code.');
+      this.accessCodeRequired.set(
+        this.error() === 'Access code required.' || this.error() === 'Invalid access code.'
+      );
       return;
     }
 
     this.accessCodeRequired.set(false);
     const surveyId = this.survey()?.id;
-    if (!surveyId) {
-      return;
-    }
+    if (!surveyId) return;
 
     await this.refreshResults(surveyId);
     this.startLiveSubscription(surveyId);
   }
 
   private startLiveSubscription(surveyId: string): void {
-    if (surveyId.startsWith('demo-')) {
-      return;
-    }
-
     const cleanup = this.surveyService.subscribeToSurveyUpdates(
       surveyId,
       () => void this.refreshResults(surveyId),
       (status) => this.isLive.set(status === 'SUBSCRIBED'),
     );
-
     this.destroyRef.onDestroy(cleanup);
   }
 }

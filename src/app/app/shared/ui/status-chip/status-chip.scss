@@ -4,16 +4,16 @@
 	justify-content: center;
 	min-height: 32px;
 	padding: 7px 12px;
-	border-radius: 0;
-	border-top-right-radius: 14px;
-	font-family: var(--font-ui-bold);
+	border-radius: var(--r-sm);
+	border-top-right-radius: var(--r-md);
+	font-family: var(--font-ui);
 	font-size: 1rem;
 	line-height: 1;
-	color: #2b1a16;
-	background: #f8b871;
+	color: var(--color-badge-default-text);
+	background: var(--color-badge-default-bg);
 }
 
 .status-chip--draft {
-	background: #e5d9cb;
-	color: #362925;
+	background: var(--paper-soft);
+	color: var(--paper-ink);
 }

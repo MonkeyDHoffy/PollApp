@@ -7,20 +7,20 @@
 
 .results-card__title {
   margin: 0;
-  font-family: 'Mulish', sans-serif;
+  font-family: var(--font-ui);
   font-size: 16px;
   font-weight: 700;
   line-height: 1;
-  color: #393244;
+  color: var(--paper-ink);
 }
 
 .results-card__question {
   margin: 0;
-  font-family: 'Mulish', sans-serif;
+  font-family: var(--font-ui);
   font-size: 36px;
   font-weight: 700;
   line-height: 1;
-  color: #332a3f;
+  color: var(--paper-ink);
 }
 
 .results-card__list {
@@ -36,17 +36,17 @@
 }
 
 .results-card__label {
-  font-family: 'Mulish', sans-serif;
+  font-family: var(--font-ui);
   font-size: 28px;
   font-weight: 700;
   line-height: 1;
-  color: #352f3f;
+  color: var(--paper-ink);
 }
 
 .results-card__bar {
   height: 17px;
   border-radius: 999px;
-  background: #dedddf;
+  background: var(--paper-soft);
   overflow: hidden;
 }
 
@@ -54,15 +54,15 @@
   display: block;
   height: 100%;
   border-radius: 999px;
-  background: #f0ad63;
+  background: var(--color-accent);
 }
 
 .results-card__value {
   min-width: 40px;
   text-align: right;
-  font-family: 'Mulish', sans-serif;
+  font-family: var(--font-ui);
   font-size: 23px;
   font-weight: 700;
   line-height: 1;
-  color: #cf8b46;
+  color: var(--color-accent-dark);
 }

@@ -2,8 +2,8 @@
 	display: inline-flex;
 	gap: 0.35rem;
 	padding: 0.28rem;
-	border-radius: var(--radius-lg);
-	background: var(--color-surface-alt);
+	border-radius: var(--r-lg);
+	background: var(--bg-surface);
 }
 
 .ui-tab {
@@ -11,7 +11,7 @@
 	align-items: center;
 	gap: 0.45rem;
 	border: 1px solid transparent;
-	border-radius: var(--radius-md);
+	border-radius: var(--r-md);
 	background: transparent;
 	color: var(--color-text-muted);
 	padding: 0.5rem 0.8rem;
@@ -22,13 +22,13 @@
 }
 
 .ui-tab:hover {
-	color: var(--color-text-strong);
+	color: var(--color-text-primary);
 }
 
 .ui-tab--active {
-	background: var(--color-surface);
-	color: var(--color-text-strong);
-	border-color: var(--color-border);
+	background: var(--bg-surface-hi);
+	color: var(--color-text-primary);
+	border-color: var(--hairline);
 }
 
 .ui-tab__badge {
@@ -37,6 +37,6 @@
 	border-radius: 999px;
 	text-align: center;
 	font-size: 0.74rem;
-	background: color-mix(in srgb, var(--color-primary) 22%, transparent);
-	color: var(--color-primary-strong);
+	background: rgba(243, 168, 85, 0.22);
+	color: var(--color-accent-dark);
 }

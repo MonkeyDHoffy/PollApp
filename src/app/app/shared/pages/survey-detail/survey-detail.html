@@ -5,45 +5,48 @@
                 <img src="/assets/logo/Property 1=Purple dark.png" alt="PollApp" class="survey-detail__logo" />
             </a>
             <div class="survey-detail__header-actions">
-                <button type="button" class="survey-detail__back-btn" (click)="goHome()" aria-label="Back to home">
+                <!-- Language toggle -->
+                <button type="button" class="survey-detail__lang-btn" (click)="langService.toggle()">
+                    {{ langService.lang() === 'en' ? 'DE' : 'EN' }}
+                </button>
+
+                <button type="button" class="survey-detail__back-btn" (click)="goHome()" [attr.aria-label]="t()('back')">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                         stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                         <path d="M19 12H5M12 5l-7 7 7 7"/>
                     </svg>
-                    Back
+                    {{ t()('back') }}
                 </button>
 
                 @if (isCreatorSurvey()) {
                 <div class="survey-detail__creator-menu-wrap">
                     <button type="button" class="survey-detail__creator-trigger" (click)="toggleCreatorMenu()"
                         [attr.aria-expanded]="creatorMenuOpen()" aria-label="Survey actions">
-                        <span></span>
-                        <span></span>
-                        <span></span>
+                        <span></span><span></span><span></span>
                     </button>
 
                     @if (creatorMenuOpen()) {
                     <div class="survey-detail__creator-menu">
-                        <button type="button" (click)="copyCreatorLink()">Copy link</button>
-                        <button type="button" (click)="editCurrentSurvey()">Edit</button>
-                        <button type="button" (click)="duplicateCurrentSurvey()">Duplicate</button>
+                        <button type="button" (click)="copyCreatorLink()">{{ t()('copyLink') }}</button>
+                        <button type="button" (click)="editCurrentSurvey()">{{ t()('editMode') }}</button>
+                        <button type="button" (click)="duplicateCurrentSurvey()">{{ t()('duplicate') }}</button>
                         <button type="button" (click)="exportResultsCsv()" [disabled]="exportingCsv()">
-                            {{ exportingCsv() ? 'Exporting...' : 'Export CSV' }}
+                            {{ exportingCsv() ? t()('exporting') : t()('exportCsv') }}
                         </button>
                         <button type="button" class="survey-detail__creator-menu-delete"
-                            (click)="openDeleteConfirm()">Delete</button>
+                            (click)="openDeleteConfirm()">{{ t()('deleteLabel') }}</button>
                     </div>
                     }
                 </div>
                 } @else if (survey()?.shareToken) {
-                <button type="button" class="survey-detail__share-btn" (click)="copyShareLink()" aria-label="Share survey">
+                <button type="button" class="survey-detail__share-btn" (click)="copyShareLink()" [attr.aria-label]="t()('share')">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                         stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
                         <polyline points="16 6 12 2 8 6" />
                         <line x1="12" y1="2" x2="12" y2="15" />
                     </svg>
-                    Share
+                    {{ t()('share') }}
                 </button>
                 }
             </div>
@@ -58,16 +61,16 @@
         }
 
         @if (loading()) {
-        <p class="survey-detail__state">Loading survey...</p>
+        <p class="survey-detail__state">{{ t()('loadingSurvey') }}</p>
         } @else if (accessCodeRequired()) {
         <div class="survey-detail__access-panel">
             <p class="survey-detail__state survey-detail__state--error">{{ error() }}</p>
             <label>
-                Access code
+                {{ t()('accessCode') }}
                 <input type="text" [value]="accessCode()" (input)="updateAccessCode($any($event.target).value)"
-                    placeholder="Enter access code" />
+                    [placeholder]="t()('enterAccessCode')" />
             </label>
-            <app-button label="Unlock survey" variant="primary" (pressed)="applyAccessCode()" />
+            <app-button [label]="t()('unlockSurvey')" variant="primary" (pressed)="applyAccessCode()" />
         </div>
         } @else if (error()) {
         <p class="survey-detail__state survey-detail__state--error">{{ error() }}</p>
@@ -76,31 +79,33 @@
         <div class="survey-detail__mobile-tabs">
             <button type="button" class="survey-detail__mobile-tab"
                 [class.survey-detail__mobile-tab--active]="mobileActiveTab() === 'form'"
-                (click)="switchTab('form')">Survey</button>
+                (click)="switchTab('form')">{{ t()('surveyTab') }}</button>
             <button type="button" class="survey-detail__mobile-tab"
                 [class.survey-detail__mobile-tab--active]="mobileActiveTab() === 'results'"
-                (click)="switchTab('results')">Results</button>
+                (click)="switchTab('results')">{{ t()('resultsTab') }}</button>
         </div>
 
         <div class="survey-detail__layout">
             <article class="survey-detail__form-card"
                 [class.survey-detail__form-card--mobile-hidden]="mobileActiveTab() === 'results'">
+
                 <div class="survey-detail__top-row">
                     <div class="survey-detail__meta-stack">
-                        <span class="survey-detail__status">Published</span>
-                        <p class="survey-detail__meta-line">Ends on {{ formattedEndsAt() }}</p>
+                        <span class="survey-detail__status">{{ t()('publishedStatus') }}</span>
+                        <p class="survey-detail__meta-line">{{ t()('endsOn') }} {{ formattedEndsAt() }}</p>
                     </div>
-                    <p class="survey-detail__meta-line survey-detail__meta-line--category">Category: {{
-                        survey()?.category }}</p>
+                    <p class="survey-detail__meta-line survey-detail__meta-line--category">
+                        {{ t()('categoryLabel') }}: {{ survey()?.category }}
+                    </p>
                 </div>
 
-                @if (survey()?.creatorEmail) {
-                <p class="survey-detail__creator">Erstellt von: {{ survey()?.creatorEmail }}</p>
+                @if (displayCreator()) {
+                <p class="survey-detail__creator">{{ t()('createdBy') }}: {{ displayCreator() }}</p>
                 }
+
                 <h1 class="survey-detail__title">{{ survey()?.title }}</h1>
                 <p class="survey-detail__description">
-                    {{ survey()?.description || 'Share your opinion and help shape the next decision with this survey.'
-                    }}
+                    {{ survey()?.description || 'Share your opinion and help shape the next decision with this survey.' }}
                 </p>
 
                 @if (isSurveyEnded()) {
@@ -108,14 +113,12 @@
                     <span class="survey-detail__ended-banner-icon" aria-hidden="true">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                             stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                            <circle cx="12" cy="12" r="10" />
-                            <polyline points="12 6 12 12 16 14" />
+                            <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
                         </svg>
                     </span>
                     <div>
-                        <p class="survey-detail__ended-banner-title">Survey has ended</p>
-                        <p class="survey-detail__ended-banner-sub">This survey is closed. Results are still visible on
-                            the right.</p>
+                        <p class="survey-detail__ended-banner-title">{{ t()('surveyHasEnded') }}</p>
+                        <p class="survey-detail__ended-banner-sub">{{ t()('surveyEndedSub') }}</p>
                     </div>
                 </div>
                 }
@@ -126,8 +129,9 @@
                         <div class="survey-detail__progress-fill"
                             [style.width.%]="(answeredQuestionsCount() / totalQuestionsCount()) * 100"></div>
                     </div>
-                    <span class="survey-detail__progress-label">{{ answeredQuestionsCount() }}/{{
-                        totalQuestionsCount() }} answered</span>
+                    <span class="survey-detail__progress-label">
+                        {{ answeredQuestionsCount() }}/{{ totalQuestionsCount() }} {{ t()('answered') }}
+                    </span>
                 </div>
                 }
 
@@ -139,8 +143,7 @@
                             @if (question.description) {
                             <p class="survey-detail__question-desc">{{ question.description }}</p>
                             }
-                            <p>{{ question.allowMultiple ? 'More than one answer is possible.' : 'Only one answer can be
-                                selected.' }}</p>
+                            <p>{{ question.allowMultiple ? t()('multipleAnswers') : t()('singleAnswer') }}</p>
                             <div class="survey-detail__answers">
                                 @for (answer of question.answers; track answer.id) {
                                 <label class="survey-detail__answer-row">
@@ -162,8 +165,7 @@
                             @if (question.description) {
                             <p class="survey-detail__question-desc">{{ question.description }}</p>
                             }
-                            <p>{{ question.allowMultiple ? 'More than one answer is possible.' : 'Only one answer can be
-                                selected.' }}</p>
+                            <p>{{ question.allowMultiple ? t()('multipleAnswers') : t()('singleAnswer') }}</p>
                             <div class="survey-detail__answers">
                                 @for (answer of question.answers; track answer.id) {
                                 <label class="survey-detail__answer-row">
@@ -188,14 +190,17 @@
                         </svg>
                     </span>
                     <div>
-                        <p class="survey-detail__already-voted-title">Du hast bereits teilgenommen</p>
-                        <p class="survey-detail__already-voted-sub">Deine Antwort wurde gespeichert.</p>
+                        <p class="survey-detail__already-voted-title">{{ t()('alreadyVotedTitle') }}</p>
+                        <p class="survey-detail__already-voted-sub">{{ t()('alreadyVotedSub') }}</p>
                     </div>
                 </div>
                 } @else if (!isSurveyEnded()) {
                 <div class="survey-detail__form-actions">
-                    <app-button [label]="submitting() ? 'Saving...' : 'Complete survey'" variant="primary"
-                        [disabled]="submitting()" (pressed)="completeSurvey()" />
+                    <app-button
+                        [label]="submitting() ? t()('savingSubmit') : t()('completeSurvey')"
+                        variant="primary"
+                        [disabled]="submitting()"
+                        (pressed)="completeSurvey()" />
                 </div>
                 }
 
@@ -210,8 +215,13 @@
                 [class.survey-detail__results--flash]="resultsFlash()"
                 [class.survey-detail__results--mobile-hidden]="mobileActiveTab() === 'form'">
 
-                <h2>Survey results @if (isLive()) {<span class="survey-detail__live-badge"><span
-                            class="survey-detail__live-dot"></span>LIVE</span>}</h2>
+                <h2>{{ t()('surveyResults') }}
+                    @if (isLive()) {
+                    <span class="survey-detail__live-badge">
+                        <span class="survey-detail__live-dot"></span>LIVE
+                    </span>
+                    }
+                </h2>
 
                 @if (resultsLoading()) {
                 <div class="survey-detail__results-skeleton">
@@ -242,14 +252,13 @@
                     }
                 </div>
                 } @else {
-                <p class="survey-detail__results-empty-text">Results will be shown here after participants complete the
-                    survey.</p>
-                <p class="survey-detail__results-empty-placeholder">There are no answers yet.</p>
+                <p class="survey-detail__results-empty-text">{{ t()('resultsPlaceholder') }}</p>
+                <p class="survey-detail__results-empty-placeholder">{{ t()('noAnswersYet') }}</p>
                 }
             </aside>
         </div>
         } @else {
-        <p class="survey-detail__state">Survey not found.</p>
+        <p class="survey-detail__state">{{ t()('surveyNotFound') }}</p>
         }
     </div>
 </section>
@@ -257,13 +266,12 @@
 @if (showDeleteConfirm()) {
 <div class="survey-detail__confirm-backdrop" (click)="cancelDelete()"></div>
 <div class="survey-detail__confirm-dialog" role="alertdialog" aria-modal="true">
-    <h3 class="survey-detail__confirm-title">Umfrage löschen?</h3>
-    <p class="survey-detail__confirm-text">Diese Aktion kann nicht rückgängig gemacht werden. Alle Antworten werden
-        ebenfalls gelöscht.</p>
+    <h3 class="survey-detail__confirm-title">{{ t()('deleteSurveyTitle') }}</h3>
+    <p class="survey-detail__confirm-text">{{ t()('deleteSurveyText') }}</p>
     <div class="survey-detail__confirm-actions">
-        <app-button label="Abbrechen" variant="secondary" (pressed)="cancelDelete()" />
-        <app-button [label]="deletingSurvey() ? 'Deleting...' : 'Ja, löschen'" variant="primary"
-            [disabled]="deletingSurvey()" (pressed)="deleteCurrentSurvey()" />
+        <app-button [label]="t()('cancel')" variant="secondary" (pressed)="cancelDelete()" />
+        <app-button [label]="deletingSurvey() ? t()('deleting') : t()('confirmDelete')"
+            variant="primary" [disabled]="deletingSurvey()" (pressed)="deleteCurrentSurvey()" />
     </div>
 </div>
 }

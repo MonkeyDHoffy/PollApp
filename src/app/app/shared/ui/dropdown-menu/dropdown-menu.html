@@ -1,4 +1,4 @@
-<div class="ui-dropdown" [class.ui-dropdown--open]="open()" [class.ui-dropdown--up]="openUpward()">
+<div class="ui-dropdown" [class.ui-dropdown--open]="open()">
     <button class="ui-dropdown__trigger" type="button" [class.ui-dropdown__trigger--ghost]="appearance() === 'ghost'"
         [attr.aria-expanded]="open()" (click)="onToggle()">
         <span class="ui-dropdown__label">{{ label() }}</span>
@@ -17,8 +17,7 @@
     }
 
     @if (showSelectionValue()) {
-    <p class="ui-dropdown__selection"
-       [style.visibility]="!open() && currentSelection().trim() ? 'visible' : 'hidden'">
+    <p class="ui-dropdown__selection" [style.visibility]="!open() && currentSelection().trim() ? 'visible' : 'hidden'">
         {{ currentSelection() }}
     </p>
     }

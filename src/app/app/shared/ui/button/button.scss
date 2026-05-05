@@ -1,7 +1,12 @@
+:host {
+	display: inline-flex;
+	align-items: stretch;
+}
+
 .ui-button {
 	border: 1px solid transparent;
-	border-radius: var(--radius-md);
-	font-family: var(--font-ui-bold);
+	border-radius: var(--r-md);
+	font-family: var(--font-ui);
 	font-size: 1.06rem;
 	font-weight: 700;
 	line-height: 1;
@@ -42,7 +47,7 @@
 }
 
 .ui-button--primary {
-	color: #20112f;
+	color: var(--color-accent-text);
 }
 
 .ui-button--primary:hover:not(:disabled) {
@@ -51,17 +56,17 @@
 
 .ui-button--primary-base {
 	width: 138px;
-	background: #ffcfa1;
+	background: var(--color-accent-soft);
 }
 
 .ui-button--primary-add {
 	width: 172px;
-	background: #ffb770;
+	background: var(--color-accent);
 }
 
 .ui-button--primary-confirm {
 	width: 166px;
-	background: #ffb770;
+	background: var(--color-accent);
 }
 
 .ui-button--with-icon {
@@ -127,7 +132,7 @@
 .ui-button__icon-svg {
 	width: 22px;
 	height: 22px;
-	stroke: #20112f;
+	stroke: var(--color-accent-text);
 	stroke-width: 2;
 	stroke-linecap: round;
 	stroke-linejoin: round;
@@ -141,8 +146,8 @@
 }
 
 .ui-button--secondary {
-	background: #f2c089;
-	color: #fffbf5;
+	background: var(--color-accent-soft);
+	color: var(--color-accent-text);
 	min-height: 44px;
 	padding: 10px 16px;
 	font-size: 1.02rem;
@@ -154,13 +159,13 @@
 }
 
 .ui-button--secondary-muted {
-	background: #e5d9cb;
-	color: #f8f0e8;
+	background: var(--paper-soft);
+	color: var(--paper-ink);
 }
 
 .ui-button--filter {
-	background: #e8d9ca;
-	color: #433028;
+	background: var(--bg-surface-hi);
+	color: var(--color-text-primary);
 	min-height: 40px;
 	padding: 0 8px;
 	width: 100%;
@@ -170,12 +175,13 @@
 }
 
 .ui-button--filter-active {
-	background: #f0ad63;
+	background: var(--color-accent);
+	color: var(--color-accent-text);
 }
 
 .ui-button--tertiary {
 	background: transparent;
-	color: #f8f2ff;
+	color: var(--color-text-primary);
 	min-height: 50px;
 	padding: 12px 16px;
 	font-size: 1.02rem;
@@ -183,11 +189,11 @@
 }
 
 .ui-button--tertiary:hover:not(:disabled) {
-	background: #665974;
+	background: var(--bg-surface-hi);
 }
 
 .ui-button--tertiary-muted {
-	background: #665974;
+	background: var(--bg-surface-hi);
 }
 
 .ui-button--tertiary .ui-button__label {
@@ -199,7 +205,7 @@
 }
 
 .ui-button--tertiary .ui-button__icon-svg {
-	stroke: #f8f2ff;
+	stroke: var(--color-text-primary);
 	width: 14px;
 	height: 14px;
 }
@@ -254,11 +260,11 @@
 
 .ui-button--ghost {
 	background: transparent;
-	color: var(--color-primary-strong);
+	color: var(--color-text-primary);
 }
 
 .ui-button--ghost:hover:not(:disabled) {
-	background: var(--color-surface-alt);
+	background: var(--bg-surface-hi);
 }
 
 @media (max-width: 560px) {

@@ -3,8 +3,8 @@
   min-height: 260px;
   gap: 10px;
   padding: 32px 20px;
-  border-top-right-radius: 80px;
-  background: #e7e3ea;
+  border-top-right-radius: var(--sig-lg);
+  background: var(--paper);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -13,7 +13,7 @@
 }
 
 .highlight-card--muted {
-  background: #ddd4e4;
+  background: var(--paper-soft);
 }
 
 .highlight-card--clickable {
@@ -21,7 +21,7 @@
 
   &:hover {
     transform: translateY(-3px);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
   }
 
   &:active {
@@ -31,24 +31,24 @@
 
 .highlight-card__category {
   margin: 0;
-  font-family: 'Mulish', sans-serif;
+  font-family: var(--font-ui);
   font-weight: 700;
   font-size: 13px;
   line-height: 1;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: #7a6585;
+  color: var(--color-text-subtle);
 }
 
 .highlight-card__title {
   margin: 0;
   max-width: 100%;
-  font-family: 'Mulish', sans-serif;
+  font-family: var(--font-ui);
   font-weight: 700;
   font-size: 26px;
   line-height: 1.1;
   letter-spacing: 0;
-  color: #382f43;
+  color: var(--paper-ink);
   word-break: break-word;
   overflow-wrap: anywhere;
 }
@@ -60,15 +60,15 @@
   align-items: center;
   min-height: 26px;
   padding: 4px 12px;
-  border-radius: 0;
-  border-top-right-radius: 12px;
-  font-family: 'Mulish', sans-serif;
+  border-radius: var(--r-sm);
+  border-top-right-radius: var(--r-md);
+  font-family: var(--font-ui);
   font-weight: 700;
   font-size: 13px;
   line-height: 1;
   letter-spacing: 0;
-  color: #2b1a16;
-  background: #f8b871;
+  color: var(--color-badge-default-text);
+  background: var(--color-badge-default-bg);
 }
 
 .highlight-card--title-lg .highlight-card__title {
