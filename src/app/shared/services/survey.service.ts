@@ -454,18 +454,12 @@ export class SurveyService {
           },
         ]);
 
-        this.markAsVoted(response.surveyId);
+        const { data: { user: privateUser } } = await this.supabase.auth.getUser();
+        this.markAsVoted(response.surveyId, privateUser?.id);
         return true;
       }
 
-      const {
-        data: { user },
-        error: userError,
-      } = await this.supabase.auth.getUser();
-
-      if (userError) {
-        throw userError;
-      }
+      const { data: { user } } = await this.supabase.auth.getUser();
 
       const { data: createdResponse, error: responseInsertError } = await this.supabase
         .from('survey_responses')
@@ -510,7 +504,7 @@ export class SurveyService {
         },
       ]);
 
-      this.markAsVoted(response.surveyId);
+      this.markAsVoted(response.surveyId, user?.id);
       return true;
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to submit response';
@@ -995,9 +989,19 @@ export class SurveyService {
     }));
   }
 
-  hasAlreadyVoted(surveyId: string): boolean {
+  hasAlreadyVoted(surveyId: string, userId?: string | null): boolean {
     if (typeof localStorage === 'undefined') return false;
-    return localStorage.getItem(`pollapp.voted.${surveyId}`) === '1';
+    const identity = userId ?? 'guest';
+    return localStorage.getItem(`pollapp.voted.${surveyId}.${identity}`) === '1';
+  }
+
+  async checkUserHasResponded(surveyId: string, userId: string): Promise<boolean> {
+    const { count } = await this.supabase
+      .from('survey_responses')
+      .select('*', { count: 'exact', head: true })
+      .eq('survey_id', surveyId)
+      .eq('respondent_id', userId);
+    return (count ?? 0) > 0;
   }
 
   savePreviousAnswers(surveyId: string, answers: Record<string, string[]>): void {
@@ -1015,9 +1019,10 @@ export class SurveyService {
     }
   }
 
-  private markAsVoted(surveyId: string): void {
+  private markAsVoted(surveyId: string, userId?: string | null): void {
     if (typeof localStorage !== 'undefined') {
-      localStorage.setItem(`pollapp.voted.${surveyId}`, '1');
+      const identity = userId ?? 'guest';
+      localStorage.setItem(`pollapp.voted.${surveyId}.${identity}`, '1');
     }
   }
 

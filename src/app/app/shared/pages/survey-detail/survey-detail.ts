@@ -377,7 +377,10 @@ export class SurveyDetailComponent implements AfterViewInit {
     await this.surveyService.loadSurveyById(surveyId);
     this.participantCount.set(this.surveyService.currentSurvey()?.totalResponses ?? 0);
     await this.refreshResults(surveyId);
-    const voted = this.surveyService.hasAlreadyVoted(surveyId);
+    const userId = this.authUser()?.id;
+    const voted = userId
+      ? await this.surveyService.checkUserHasResponded(surveyId, userId)
+      : this.surveyService.hasAlreadyVoted(surveyId);
     this.alreadyVoted.set(voted);
     if (voted) this.selectedAnswers.set(this.surveyService.getPreviousAnswers(surveyId));
     this.startLiveSubscription(surveyId);
