@@ -466,7 +466,7 @@ export class SurveyService {
         .insert({
           survey_id: response.surveyId,
           respondent_id: user?.id ?? null,
-          participant_token: response.participantToken ?? this.ensureParticipantToken(response.surveyId),
+          participant_token: user ? null : (response.participantToken ?? this.ensureParticipantToken(response.surveyId)),
           respondent_name: response.respondentName ?? null,
         })
         .select('id, created_at')

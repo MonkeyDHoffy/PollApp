@@ -37,8 +37,24 @@ Deno.serve(async (req) => {
     const answers = Array.isArray(body?.answers) ? body.answers : [];
     const respondentName = typeof body?.respondentName === 'string' ? body.respondentName.trim() || null : null;
 
-    if (!shareToken || !participantToken) {
-      return jsonResponse(400, { code: 'INVALID_INPUT', message: 'shareToken and participantToken are required' });
+    if (!shareToken) {
+      return jsonResponse(400, { code: 'INVALID_INPUT', message: 'shareToken is required' });
+    }
+
+    // Resolve authenticated user from JWT if present
+    let respondentId: string | null = null;
+    const authHeader = req.headers.get('Authorization');
+    if (authHeader?.startsWith('Bearer ')) {
+      const userClient = createClient(supabaseUrl, Deno.env.get('SUPABASE_ANON_KEY') ?? '', {
+        global: { headers: { Authorization: authHeader } },
+      });
+      const { data: { user } } = await userClient.auth.getUser();
+      respondentId = user?.id ?? null;
+    }
+
+    // Guests must supply a participantToken for deduplication
+    if (!respondentId && !participantToken) {
+      return jsonResponse(400, { code: 'INVALID_INPUT', message: 'participantToken is required for guests' });
     }
 
     const { data: surveyRow, error: surveyError } = await admin
@@ -69,12 +85,12 @@ Deno.serve(async (req) => {
       }
     }
 
-    const { data: existingResponse, error: existingResponseError } = await admin
-      .from('survey_responses')
-      .select('id')
-      .eq('survey_id', surveyRow.id)
-      .eq('participant_token', participantToken)
-      .maybeSingle();
+    // Deduplication: logged-in users by respondent_id, guests by participant_token
+    const duplicateQuery = respondentId
+      ? admin.from('survey_responses').select('id').eq('survey_id', surveyRow.id).eq('respondent_id', respondentId).maybeSingle()
+      : admin.from('survey_responses').select('id').eq('survey_id', surveyRow.id).eq('participant_token', participantToken).maybeSingle();
+
+    const { data: existingResponse, error: existingResponseError } = await duplicateQuery;
 
     if (existingResponseError) {
       return jsonResponse(500, { code: 'RESPONSE_LOOKUP_FAILED', message: existingResponseError.message });
@@ -84,13 +100,20 @@ Deno.serve(async (req) => {
       return jsonResponse(409, { code: 'ALREADY_SUBMITTED', message: 'Already submitted' });
     }
 
+    const insertPayload: Record<string, unknown> = {
+      survey_id: surveyRow.id,
+      respondent_name: respondentName,
+    };
+
+    if (respondentId) {
+      insertPayload['respondent_id'] = respondentId;
+    } else {
+      insertPayload['participant_token'] = participantToken;
+    }
+
     const { data: insertedResponse, error: insertedResponseError } = await admin
       .from('survey_responses')
-      .insert({
-        survey_id: surveyRow.id,
-        participant_token: participantToken,
-        respondent_name: respondentName,
-      })
+      .insert(insertPayload)
       .select('id')
       .single();
 
