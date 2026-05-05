@@ -131,6 +131,8 @@
   border-radius: var(--r-lg);
   border-top-right-radius: var(--sig-xl);
   padding: 34px 34px 42px;
+  min-width: 0;
+  overflow-x: hidden;
 }
 
 .survey-detail__top-row {
@@ -196,6 +198,8 @@
   color: var(--paper-ink);
   font: 600 15px/1.32 var(--font-ui);
   max-width: 720px;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 .survey-detail__questions-list {
@@ -204,6 +208,8 @@
 }
 
 .survey-detail__question-block {
+  min-width: 0;
+
   h3 {
     margin: 0 0 4px;
     color: var(--paper-ink);
@@ -217,6 +223,8 @@
     margin: 0 0 16px;
     color: var(--color-text-subtle);
     font: 600 11px/1.2 var(--font-ui);
+    overflow-wrap: break-word;
+    word-break: break-word;
   }
 }
 
@@ -224,6 +232,8 @@
   margin: 0 0 10px;
   color: var(--paper-ink);
   font: 600 13px/1.4 var(--font-ui);
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 .survey-detail__answers {
@@ -238,6 +248,14 @@
   color: var(--paper-ink);
   font: 700 15px/1.26 var(--font-ui);
   cursor: pointer;
+  min-width: 0;
+
+  span {
+    overflow-wrap: break-word;
+    word-break: break-word;
+    min-width: 0;
+    flex: 1;
+  }
 
   input {
     margin-top: 2px;
