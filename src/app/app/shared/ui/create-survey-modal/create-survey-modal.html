@@ -131,6 +131,16 @@
                     </select>
                 </label>
 
+                <label class="create-survey-modal__field create-survey-modal__field--checkbox">
+                    <span>{{ t()('anonymousSurveyLabel') }}</span>
+                    <div class="create-survey-modal__checkbox-row">
+                        <input type="checkbox" formControlName="anonymous" id="anonymous-toggle" />
+                        <label for="anonymous-toggle" class="create-survey-modal__checkbox-desc">
+                            {{ t()('anonymousSurveyDesc') }}
+                        </label>
+                    </div>
+                </label>
+
                 @if (isPrivateSurvey()) {
                 <div class="create-survey-modal__field">
                     <span>{{ t()('accessCodeLabel') }}</span>

@@ -25,35 +25,9 @@
                     <div class="home__auth-skeleton" aria-hidden="true"></div>
                     } @else if (authUser()) {
                     <div class="home__auth-user-row">
-                        @if (editingDisplayName()) {
-                        <div class="home__name-edit">
-                            <input #nameEditInput type="text" class="home__name-edit-input"
-                                [value]="displayNameEditValue()"
-                                (input)="displayNameEditValue.set($any($event.target).value)"
-                                (keydown.enter)="saveDisplayName()"
-                                (keydown.escape)="cancelEditName()"
-                                maxlength="10" [disabled]="displayNameSaving()" />
-                            <button type="button" class="home__name-edit-save" (click)="saveDisplayName()"
-                                [disabled]="displayNameSaving()" [title]="t()('saveChanges')">
-                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                    stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                    <polyline points="20 6 9 17 4 12" />
-                                </svg>
-                            </button>
-                            <button type="button" class="home__name-edit-cancel" (click)="cancelEditName()"
-                                [title]="t()('cancel')">
-                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                    stroke-width="3" stroke-linecap="round" aria-hidden="true">
-                                    <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-                                </svg>
-                            </button>
-                        </div>
-                        } @else {
-                        <button type="button" class="home__auth-user home__auth-user--editable"
-                            (click)="startEditName()" [title]="t()('editName')">
+                        <span class="home__auth-user">
                             {{ t()('hello') }}, {{ authDisplayName() }}
-                        </button>
-                        }
+                        </span>
                         <button type="button" class="home__auth-btn" (click)="signOut()" [disabled]="authLoading()">
                             {{ authLoading() ? t()('signingOut') : t()('signOut') }}
                         </button>

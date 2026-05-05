@@ -62,6 +62,7 @@ export class SurveyDetailComponent implements AfterViewInit {
   protected readonly error = computed(() => this.surveyService.error());
   protected readonly schemaNotice = computed(() => this.surveyService.schemaNotice());
   protected readonly authUser = computed(() => this.authService.user());
+  protected readonly isAnonymous = computed(() => this.survey()?.isAnonymous ?? false);
 
   // ── Intersection observer for sticky progress bar ─────────────────────────
 

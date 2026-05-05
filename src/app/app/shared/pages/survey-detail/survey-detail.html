@@ -227,7 +227,9 @@
                 }
 
                 <button type="button" class="survey-detail__participants-btn"
-                    (click)="openParticipants()" [disabled]="participantsLoading()">
+                    (click)="isAnonymous() ? null : openParticipants()"
+                    [disabled]="participantsLoading() || isAnonymous()"
+                    [title]="isAnonymous() ? t()('anonymousSurveyLabel') : ''">
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                         stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                         <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>

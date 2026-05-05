@@ -36,6 +36,7 @@ interface SurveyFormData {
   endsAt?: string;
   category: string;
   visibility?: 'public' | 'private';
+  isAnonymous?: boolean;
   accessCode?: string;
   shareToken?: string;
   questions: Survey['questions'];
@@ -102,6 +103,9 @@ export class CreateSurveyModalComponent implements OnInit {
   protected readonly isPrivateSurvey = computed(
     () => this.form.controls.visibility.value === 'private'
   );
+  protected readonly isAnonymousSurvey = computed(
+    () => this.form.controls.anonymous.value
+  );
   protected readonly hasUnsavedChanges = computed(() =>
     this.checkForUnsavedChanges()
   );
@@ -114,6 +118,7 @@ export class CreateSurveyModalComponent implements OnInit {
     endDate: this.fb.nonNullable.control(''),
     category: this.fb.nonNullable.control('', [Validators.required]),
     visibility: this.fb.nonNullable.control<'public' | 'private'>('public'),
+    anonymous: this.fb.nonNullable.control(false),
     accessCode: this.fb.nonNullable.control('', [Validators.maxLength(40)]),
     questions: this.fb.array([this.createQuestionGroup()]),
   });
@@ -293,6 +298,7 @@ export class CreateSurveyModalComponent implements OnInit {
       endsAt: vals.endDate ? new Date(vals.endDate).toISOString() : undefined,
       status: 'published',
       visibility: vals.visibility,
+      isAnonymous: vals.anonymous,
       accessCode: vals.visibility === 'private' ? vals.accessCode : undefined,
       questions: this.buildQuestionsDto(),
     };
@@ -306,6 +312,7 @@ export class CreateSurveyModalComponent implements OnInit {
       category: vals.category || 'General',
       endsAt: vals.endDate ? new Date(vals.endDate).toISOString() : undefined,
       visibility: vals.visibility,
+      isAnonymous: vals.anonymous,
       accessCode: vals.visibility === 'private' ? vals.accessCode : '',
       status: 'published',
     };
@@ -318,6 +325,7 @@ export class CreateSurveyModalComponent implements OnInit {
       category: this.form.controls.category.value.trim(),
       endDate: this.form.controls.endDate.value.trim(),
       visibility: this.form.controls.visibility.value,
+      anonymous: this.form.controls.anonymous.value,
       accessCode: this.form.controls.accessCode.value.trim(),
     };
   }
@@ -353,6 +361,7 @@ export class CreateSurveyModalComponent implements OnInit {
       endDate: this.toDateInputValue(survey.endsAt),
       category: survey.category,
       visibility: survey.visibility ?? 'public',
+      anonymous: survey.isAnonymous ?? false,
       accessCode: survey.accessCode ?? '',
     });
     const groups = survey.questions.length > 0

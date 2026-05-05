@@ -31,6 +31,7 @@ export interface Survey {
   category: string;
   status: SurveyStatus;
   visibility: SurveyVisibility;
+  isAnonymous: boolean;
   shareToken?: string;
   accessCode?: string;
   questions: SurveyQuestion[];
@@ -76,6 +77,7 @@ export interface CreateSurveyDTO {
   endsAt?: string;
   status?: SurveyStatus;
   visibility?: SurveyVisibility;
+  isAnonymous?: boolean;
   accessCode?: string;
   questions: {
     text: string;
@@ -93,6 +95,7 @@ export interface UpdateSurveyDTO {
   status?: SurveyStatus;
   endsAt?: string;
   visibility?: SurveyVisibility;
+  isAnonymous?: boolean;
   accessCode?: string;
 }
 

@@ -101,6 +101,8 @@ export class AuthService {
   async updateDisplayName(name: string): Promise<void> {
     const trimmed = name.trim();
     if (!trimmed) return;
+    const existing = this.user()?.user_metadata?.['display_name'] as string | undefined;
+    if (existing?.trim()) return;
     const { data, error } = await this.supabase.auth.updateUser({
       data: { display_name: trimmed },
     });

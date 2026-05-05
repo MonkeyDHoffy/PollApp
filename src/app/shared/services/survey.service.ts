@@ -230,6 +230,7 @@ export class SurveyService {
 
       if (!this.useLegacySurveyColumns) {
         insertPayload['visibility'] = surveyData.visibility ?? 'public';
+        insertPayload['is_anonymous'] = surveyData.isAnonymous ?? false;
         insertPayload['share_token'] = this.generateShareToken();
         insertPayload['access_code'] = surveyData.accessCode ?? null;
       }
@@ -349,6 +350,9 @@ export class SurveyService {
         }
         if (updates.accessCode !== undefined) {
           updatePayload['access_code'] = updates.accessCode || null;
+        }
+        if (updates.isAnonymous !== undefined) {
+          updatePayload['is_anonymous'] = updates.isAnonymous;
         }
       }
 
@@ -772,6 +776,7 @@ export class SurveyService {
       category: row.category,
       status: row.status,
       visibility: row.visibility ?? 'public',
+      isAnonymous: row.is_anonymous ?? false,
       shareToken: row.share_token ?? undefined,
       accessCode: row.access_code ?? undefined,
       questions: questionRows
@@ -849,6 +854,7 @@ export class SurveyService {
       category,
       status,
       visibility,
+      is_anonymous,
       share_token,
       access_code,
       ends_at,
@@ -875,7 +881,7 @@ export class SurveyService {
     const text = this.errorToText(err).toLowerCase();
     return (
       text.includes('column')
-      && (text.includes('visibility') || text.includes('share_token') || text.includes('access_code') || text.includes('question_description') || text.includes('creator_email'))
+      && (text.includes('visibility') || text.includes('is_anonymous') || text.includes('share_token') || text.includes('access_code') || text.includes('question_description') || text.includes('creator_email'))
     );
   }
 
@@ -1055,6 +1061,7 @@ export class SurveyService {
       category: survey.category,
       status: survey.status,
       visibility: survey.visibility,
+      isAnonymous: survey.isAnonymous ?? false,
       shareToken: survey.shareToken ?? undefined,
       accessCode: undefined,
       questions: Array.isArray(survey.questions)
