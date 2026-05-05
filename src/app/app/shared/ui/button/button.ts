@@ -34,6 +34,7 @@ export class ButtonComponent {
   protected readonly isEditConfirmed = signal(false);
 
   protected readonly hasIcon = computed(() => this.isAddIcon() || this.isCheckIcon());
+  protected readonly isCompact = computed(() => this.label().length > 14);
 
   protected readonly isAddStyle = computed(
     () => this.variant() === 'primary' && this.primaryStyle() === 'add'

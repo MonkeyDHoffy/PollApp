@@ -32,7 +32,7 @@
                                 (input)="displayNameEditValue.set($any($event.target).value)"
                                 (keydown.enter)="saveDisplayName()"
                                 (keydown.escape)="cancelEditName()"
-                                maxlength="40" [disabled]="displayNameSaving()" />
+                                maxlength="10" [disabled]="displayNameSaving()" />
                             <button type="button" class="home__name-edit-save" (click)="saveDisplayName()"
                                 [disabled]="displayNameSaving()" [title]="t()('saveChanges')">
                                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -397,7 +397,7 @@
                 <div class="onboarding-modal__field"
                     [class.onboarding-modal__field--error]="onboardingNameControl.touched && onboardingNameControl.invalid">
                     <input type="text" class="onboarding-modal__input" [formControl]="onboardingNameControl"
-                        [placeholder]="t()('namePlaceholder')" maxlength="40" autocomplete="name"
+                        [placeholder]="t()('namePlaceholder')" maxlength="10" autocomplete="name"
                         autofocus />
                     @if (onboardingNameControl.touched && onboardingNameControl.hasError('required')) {
                     <span class="onboarding-modal__err">{{ t()('guestNameRequired') }}</span>

@@ -289,7 +289,7 @@ export class HomeComponent implements OnDestroy {
   protected readonly authForm = this.fb.group({ email: this.authEmailControl });
   protected readonly onboardingNameControl = this.fb.nonNullable.control('', [
     Validators.required,
-    Validators.maxLength(40),
+    Validators.maxLength(10),
   ]);
   protected readonly onboardingForm = this.fb.group({ name: this.onboardingNameControl });
   protected readonly onboardingSubmitting = signal(false);

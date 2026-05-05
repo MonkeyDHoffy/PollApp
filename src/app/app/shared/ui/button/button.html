@@ -8,6 +8,7 @@
     [class.ui-button--tertiary-muted]="isTertiaryMuted()" [class.ui-button--sm]="size() === 'sm'"
     [class.ui-button--md]="size() === 'md'" [class.ui-button--lg]="size() === 'lg'"
     [class.ui-button--icon-inline]="variant() === 'tertiary'" [class.ui-button--with-icon]="hasIcon()"
+    [class.ui-button--compact]="isCompact()"
     [disabled]="disabled()" [type]="type()" [attr.aria-label]="ariaLabel()" (click)="onClick()">
     @if (variant() === 'delete') {
     <span class="ui-button__icon-png--delete-container">

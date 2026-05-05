@@ -267,6 +267,10 @@
 	background: var(--bg-surface-hi);
 }
 
+.ui-button--compact {
+	font-size: 0.82rem;
+}
+
 @media (max-width: 560px) {
 	.ui-button--primary-base,
 	.ui-button--primary-add,
