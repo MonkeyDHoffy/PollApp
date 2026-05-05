@@ -281,7 +281,7 @@ export const TRANSLATIONS = {
     savingSubmit: 'Wird gespeichert...',
     alreadyVotedTitle: 'Du hast bereits teilgenommen',
     alreadyVotedSub: 'Deine Antwort wurde gespeichert.',
-    surveyResults: 'Umfrageergebnisse',
+    surveyResults: 'Ergebnisse',
     noAnswersYet: 'Noch keine Antworten.',
     resultsPlaceholder: 'Ergebnisse werden hier angezeigt, nachdem Teilnehmer die Umfrage ausgefüllt haben.',
     surveyNotFound: 'Umfrage nicht gefunden.',

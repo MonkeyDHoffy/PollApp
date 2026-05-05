@@ -124,7 +124,8 @@
                 }
 
                 @if (!alreadyVoted() && !isSurveyEnded() && totalQuestionsCount() > 0) {
-                <div class="survey-detail__progress">
+                <div #progressSentinel class="survey-detail__progress-sentinel"></div>
+                <div #progressBar class="survey-detail__progress">
                     <div class="survey-detail__progress-track">
                         <div class="survey-detail__progress-fill"
                             [style.width.%]="(answeredQuestionsCount() / totalQuestionsCount()) * 100"></div>
@@ -135,50 +136,26 @@
                 </div>
                 }
 
-                <div class="survey-detail__questions-grid">
-                    <div class="survey-detail__questions-col">
-                        @for (question of questionColumns().left; track question.id) {
-                        <section class="survey-detail__question-block">
-                            <h3>{{ question.index + 1 }}. {{ question.text }}</h3>
-                            @if (question.description) {
-                            <p class="survey-detail__question-desc">{{ question.description }}</p>
-                            }
-                            <p>{{ question.allowMultiple ? t()('multipleAnswers') : t()('singleAnswer') }}</p>
-                            <div class="survey-detail__answers">
-                                @for (answer of question.answers; track answer.id) {
-                                <label class="survey-detail__answer-row">
-                                    <input type="checkbox" [checked]="isSelected(question.id, answer.id)"
-                                        [disabled]="alreadyVoted() || isSurveyEnded()"
-                                        (change)="toggleAnswer(question.id, answer.id, question.allowMultiple)" />
-                                    <span>{{ answer.optionLabel }}. {{ answer.text }}</span>
-                                </label>
-                                }
-                            </div>
-                        </section>
+                <div class="survey-detail__questions-list">
+                    @for (question of questions(); track question.id) {
+                    <section class="survey-detail__question-block">
+                        <h3>{{ question.index + 1 }}. {{ question.text }}</h3>
+                        @if (question.description) {
+                        <p class="survey-detail__question-desc">{{ question.description }}</p>
                         }
-                    </div>
-
-                    <div class="survey-detail__questions-col">
-                        @for (question of questionColumns().right; track question.id) {
-                        <section class="survey-detail__question-block">
-                            <h3>{{ question.index + 1 }}. {{ question.text }}</h3>
-                            @if (question.description) {
-                            <p class="survey-detail__question-desc">{{ question.description }}</p>
+                        <p>{{ question.allowMultiple ? t()('multipleAnswers') : t()('singleAnswer') }}</p>
+                        <div class="survey-detail__answers">
+                            @for (answer of question.answers; track answer.id) {
+                            <label class="survey-detail__answer-row">
+                                <input type="checkbox" [checked]="isSelected(question.id, answer.id)"
+                                    [disabled]="alreadyVoted() || isSurveyEnded()"
+                                    (change)="toggleAnswer(question.id, answer.id, question.allowMultiple)" />
+                                <span>{{ answer.optionLabel }}. {{ answer.text }}</span>
+                            </label>
                             }
-                            <p>{{ question.allowMultiple ? t()('multipleAnswers') : t()('singleAnswer') }}</p>
-                            <div class="survey-detail__answers">
-                                @for (answer of question.answers; track answer.id) {
-                                <label class="survey-detail__answer-row">
-                                    <input type="checkbox" [checked]="isSelected(question.id, answer.id)"
-                                        [disabled]="alreadyVoted() || isSurveyEnded()"
-                                        (change)="toggleAnswer(question.id, answer.id, question.allowMultiple)" />
-                                    <span>{{ answer.optionLabel }}. {{ answer.text }}</span>
-                                </label>
-                                }
-                            </div>
-                        </section>
-                        }
-                    </div>
+                        </div>
+                    </section>
+                    }
                 </div>
 
                 @if (alreadyVoted()) {

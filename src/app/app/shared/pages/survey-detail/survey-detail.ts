@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, computed, effect, inject, signal } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, Component, DestroyRef, ElementRef, QueryList, ViewChildren, computed, effect, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { SurveyResult } from '../../../../shared/models/survey.model';
 import { SurveyService } from '../../../../shared/services/survey.service';
@@ -27,7 +27,7 @@ type QuestionView = {
   styleUrl: './survey-detail.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class SurveyDetailComponent {
+export class SurveyDetailComponent implements AfterViewInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly surveyService = inject(SurveyService);
@@ -47,6 +47,10 @@ export class SurveyDetailComponent {
   protected readonly error = computed(() => this.surveyService.error());
   protected readonly schemaNotice = computed(() => this.surveyService.schemaNotice());
   protected readonly authUser = computed(() => this.authService.user());
+
+  @ViewChildren('progressSentinel') private progressSentinels!: QueryList<ElementRef<HTMLElement>>;
+  @ViewChildren('progressBar') private progressBars!: QueryList<ElementRef<HTMLElement>>;
+  private progressObserver?: IntersectionObserver;
 
   protected readonly creatorMenuOpen = signal(false);
   protected readonly creatorActionMessage = signal<string | null>(null);
@@ -81,11 +85,10 @@ export class SurveyDetailComponent {
     return email.includes('@') ? email.split('@')[0] : email;
   });
 
-  protected readonly questionColumns = computed(() => {
+  protected readonly questions = computed(() => {
     const survey = this.survey();
-    if (!survey) return { left: [] as QuestionView[], right: [] as QuestionView[] };
-
-    const questions: QuestionView[] = survey.questions.map((question, index) => ({
+    if (!survey) return [] as QuestionView[];
+    return survey.questions.map((question, index) => ({
       id: question.id,
       index,
       text: question.text,
@@ -97,11 +100,6 @@ export class SurveyDetailComponent {
         optionLabel: this.optionLabel(answerIndex),
       })),
     }));
-
-    return {
-      left: questions.filter((_, i) => i % 2 === 0),
-      right: questions.filter((_, i) => i % 2 === 1),
-    };
   });
 
   protected readonly resultsRows = computed(() => {
@@ -178,6 +176,25 @@ export class SurveyDetailComponent {
         setTimeout(() => this.resultsFlash.set(false), 700);
       }
     });
+  }
+
+  ngAfterViewInit(): void {
+    this.progressSentinels.changes.subscribe(() => this.setupProgressObserver());
+    this.setupProgressObserver();
+  }
+
+  private setupProgressObserver(): void {
+    this.progressObserver?.disconnect();
+    const sentinel = this.progressSentinels.first?.nativeElement;
+    const bar = this.progressBars.first?.nativeElement;
+    if (!sentinel || !bar) return;
+
+    this.progressObserver = new IntersectionObserver(
+      ([entry]) => bar.classList.toggle('is-stuck', !entry.isIntersecting),
+      { threshold: 0, rootMargin: '0px' }
+    );
+    this.progressObserver.observe(sentinel);
+    this.destroyRef.onDestroy(() => this.progressObserver?.disconnect());
   }
 
   protected goHome(): void {
