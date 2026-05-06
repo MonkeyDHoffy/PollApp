@@ -97,7 +97,6 @@ export class CreateSurveyModalComponent implements OnInit {
   // ── UI state ─────────────────────────────────────────────────────────────
 
   protected readonly submitAttempted = signal(false);
-  protected readonly previewMode = signal(false);
   protected readonly confirmDiscardOpen = signal(false);
   protected readonly publishConfirmOpen = signal(false);
   protected readonly publishStep = signal<'confirm' | 'success'>('confirm');
@@ -131,8 +130,6 @@ export class CreateSurveyModalComponent implements OnInit {
     accessCode: this.fb.nonNullable.control('', [Validators.maxLength(40)]),
     questions: this.fb.array([this.createQuestionGroup()]),
   });
-
-  protected readonly previewData = computed(() => this.buildPreviewData());
 
   // ── Lifecycle ─────────────────────────────────────────────────────────────
 
@@ -429,24 +426,4 @@ export class CreateSurveyModalComponent implements OnInit {
     return Number.isNaN(date.getTime()) ? '' : date.toISOString().slice(0, 10);
   }
 
-  private buildPreviewData() {
-    const { title, description, category, questions } = this.form.value;
-    return {
-      title: title?.trim() || 'Untitled survey',
-      description: description?.trim() || '',
-      category: category?.trim() || '',
-      questions: (questions ?? []).map((q: any, idx: number) => ({
-        index: idx,
-        text: (q.questionText ?? '').trim() || `Question ${idx + 1}`,
-        description: (q.questionDescription ?? '').trim(),
-        allowMultiple: !!q.allowMultiple,
-        answers: (q.answers ?? [])
-          .map((a: string, aIdx: number) => ({
-            label: String.fromCharCode(65 + aIdx),
-            text: (a ?? '').trim(),
-          }))
-          .filter((a: any) => a.text.length > 0),
-      })),
-    };
-  }
 }

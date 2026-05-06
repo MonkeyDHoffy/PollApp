@@ -50,4 +50,117 @@ html, body {
   transition: opacity var(--dur) var(--ease-out);
 
   &:hover { opacity: 1; }
+
+  &--legal {
+    font: 600 11px/1 var(--font-ui);
+    color: var(--color-text-subtle);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    opacity: 1;
+
+    &:hover { color: var(--color-accent); opacity: 1; }
+  }
+}
+
+.app-footer__sep {
+  color: var(--color-text-subtle);
+  font: 600 11px/1 var(--font-ui);
+  opacity: 0.3;
+  user-select: none;
+}
+
+// ─── Legal pages (Impressum / Datenschutz) ───────────────────────────────────
+
+.legal-page {
+  min-height: 100vh;
+  background: var(--bg-primary);
+  color: var(--color-text-primary);
+  padding: 40px 24px 80px;
+  animation: page-enter 220ms ease-out both;
+}
+
+.legal-page__container {
+  max-width: 760px;
+  margin: 0 auto;
+  display: grid;
+  gap: 36px;
+}
+
+.legal-page__back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--color-accent);
+  text-decoration: none;
+  font: 700 13px/1 var(--font-ui);
+  opacity: 0.8;
+  transition: opacity 140ms ease;
+  width: fit-content;
+
+  &:hover { opacity: 1; }
+}
+
+.legal-page__title {
+  margin: 0;
+  font: 400 clamp(36px, 7vw, 72px)/0.95 var(--font-display);
+  color: var(--color-accent-dark);
+}
+
+.legal-page__section {
+  display: grid;
+  gap: 12px;
+}
+
+.legal-page__heading {
+  margin: 0;
+  font: 700 16px/1.2 var(--font-ui);
+  color: var(--color-text-primary);
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--hairline-soft);
+}
+
+.legal-page__text {
+  margin: 0;
+  font: 400 14px/1.7 var(--font-ui);
+  color: var(--color-text-secondary);
+}
+
+.legal-page__list {
+  margin: 0;
+  padding-left: 20px;
+  display: grid;
+  gap: 10px;
+
+  li {
+    font: 400 14px/1.65 var(--font-ui);
+    color: var(--color-text-secondary);
+
+    strong { font-weight: 700; color: var(--color-text-primary); }
+  }
+}
+
+.legal-page__inline-link {
+  color: var(--color-accent);
+  text-decoration: none;
+  font-weight: 600;
+  transition: opacity 140ms ease;
+
+  &:hover { opacity: 0.8; }
+}
+
+.legal-page__code {
+  font-family: monospace;
+  font-size: 13px;
+  padding: 1px 5px;
+  background: rgba(243, 168, 85, 0.1);
+  border-radius: 3px;
+  color: var(--color-accent);
+}
+
+.legal-page__meta {
+  margin: 0;
+  font: 600 11px/1 var(--font-ui);
+  color: var(--color-text-subtle);
+  padding-top: 8px;
+  border-top: 1px solid var(--hairline-soft);
 }

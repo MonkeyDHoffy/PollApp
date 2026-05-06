@@ -35,7 +35,8 @@
                     } @else if (isGuestMode()) {
                     <div class="home__auth-user-row home__auth-user-row--guest">
                         <span class="home__guest-name">{{ t()('hello') }}, {{ guestService.guestName() }}</span>
-                        <button type="button" class="home__auth-btn home__auth-btn--signin" (click)="endGuestModeAndSignIn()">
+                        <button type="button" class="home__auth-btn home__auth-btn--signin"
+                            (click)="endGuestModeAndSignIn()">
                             {{ t()('signinBtn') }}
                         </button>
                         <button type="button" class="home__auth-btn home__auth-btn--ghost" (click)="endGuestMode()">
@@ -63,14 +64,17 @@
                                 aria-label="Close">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                                     stroke-width="2.5" stroke-linecap="round" aria-hidden="true">
-                                    <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                                    <line x1="18" y1="6" x2="6" y2="18" />
+                                    <line x1="6" y1="6" x2="18" y2="18" />
                                 </svg>
                             </button>
                             @if (authMessage()) {
                             <div class="home__auth-panel-success">
                                 <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                    stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                    <path d="M22 2L11 13" /><path d="M22 2L15 22 11 13 2 9l20-7z" />
+                                    stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"
+                                    aria-hidden="true">
+                                    <path d="M22 2L11 13" />
+                                    <path d="M22 2L15 22 11 13 2 9l20-7z" />
                                 </svg>
                                 <p class="home__auth-panel-success-title">{{ t()('magicLinkSentTitle') }}</p>
                                 <p class="home__auth-panel-success-sub">{{ t()('magicLinkSentSub') }}</p>
@@ -78,23 +82,22 @@
                             } @else {
                             <p class="home__auth-panel-title">{{ t()('signinPanelTitle') }}</p>
                             <form [formGroup]="authForm" (ngSubmit)="sendMagicLink()" novalidate>
-                            <div class="home__auth-panel-field"
-                                [class.home__auth-panel-field--error]="authPanelEmailTouched() && authEmailControl.invalid">
-                                <label class="home__auth-panel-label">{{ t()('emailLabel') }}</label>
-                                <input type="email" class="home__auth-panel-input" [formControl]="authEmailControl"
-                                    [placeholder]="t()('emailPlaceholder')" autocomplete="email"
-                                    (blur)="authPanelEmailTouched.set(true)"
-                                    (input)="onAuthInputChange()" />
-                                @if (authPanelEmailTouched() && authEmailControl.invalid) {
-                                <span class="home__auth-panel-err">{{ t()('emailInvalid') }}</span>
+                                <div class="home__auth-panel-field"
+                                    [class.home__auth-panel-field--error]="authPanelEmailTouched() && authEmailControl.invalid">
+                                    <label class="home__auth-panel-label">{{ t()('emailLabel') }}</label>
+                                    <input type="email" class="home__auth-panel-input" [formControl]="authEmailControl"
+                                        [placeholder]="t()('emailPlaceholder')" autocomplete="email"
+                                        (blur)="authPanelEmailTouched.set(true)" (input)="onAuthInputChange()" />
+                                    @if (authPanelEmailTouched() && authEmailControl.invalid) {
+                                    <span class="home__auth-panel-err">{{ t()('emailInvalid') }}</span>
+                                    }
+                                </div>
+                                @if (authError()) {
+                                <p class="home__auth-panel-apierr">{{ authError() }}</p>
                                 }
-                            </div>
-                            @if (authError()) {
-                            <p class="home__auth-panel-apierr">{{ authError() }}</p>
-                            }
-                            <button type="submit" class="home__auth-panel-submit" [disabled]="authLoading()">
-                                {{ authLoading() ? t()('sending') : t()('sendMagicLink') }}
-                            </button>
+                                <button type="submit" class="home__auth-panel-submit" [disabled]="authLoading()">
+                                    {{ authLoading() ? t()('sending') : t()('sendMagicLink') }}
+                                </button>
                             </form>
                             }
                         </div>
@@ -122,7 +125,8 @@
                             <span class="hero__new-survey-btn__icon" aria-hidden="true">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
                                     stroke-linecap="round">
-                                    <circle cx="12" cy="12" r="9" /><path d="M12 8v8M8 12h8" />
+                                    <circle cx="12" cy="12" r="9" />
+                                    <path d="M12 8v8M8 12h8" />
                                 </svg>
                             </span>
                         </button>
@@ -138,8 +142,10 @@
                     (mouseleave)="onHeroMouseLeave()" (touchmove)="onHeroTouchMove($event)"
                     (touchend)="onHeroTouchEnd()">
                     <img src="/assets/visual/position 03@2x 1.png" alt="Survey illustration" class="hero__phone" />
-                    <img src="/assets/visual/Questin mark.png" alt="Question mark" class="hero__icon hero__icon--question" />
-                    <img src="/assets/visual/typing bubble.png" alt="Typing bubble" class="hero__icon hero__icon--bubble" />
+                    <img src="/assets/visual/Questin mark.png" alt="Question mark"
+                        class="hero__icon hero__icon--question" />
+                    <img src="/assets/visual/typing bubble.png" alt="Typing bubble"
+                        class="hero__icon hero__icon--bubble" />
                     <img src="/assets/visual/star.png" alt="Star" class="hero__icon hero__icon--star" />
                     <img src="/assets/visual/check.png" alt="Check" class="hero__icon hero__icon--check" />
                 </div>
@@ -163,13 +169,15 @@
                     <h3 class="surveys__subtitle">{{ t()('publicSurveysEndingSoon') }}</h3>
                     @if (!surveysLoading() && endingSoonSurveys().length > 0) {
                     <div class="surveys__carousel-nav">
-                        <button type="button" class="surveys__carousel-btn" (click)="carouselScroll(-1)" aria-label="Previous">
+                        <button type="button" class="surveys__carousel-btn" (click)="carouselScroll(-1)"
+                            aria-label="Previous">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                                 stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                                 <polyline points="15 18 9 12 15 6" />
                             </svg>
                         </button>
-                        <button type="button" class="surveys__carousel-btn" (click)="carouselScroll(1)" aria-label="Next">
+                        <button type="button" class="surveys__carousel-btn" (click)="carouselScroll(1)"
+                            aria-label="Next">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                                 stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                                 <polyline points="9 18 15 12 9 6" />
@@ -219,7 +227,8 @@
                             <svg class="surveys__search-icon" width="15" height="15" viewBox="0 0 24 24" fill="none"
                                 stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
                                 aria-hidden="true">
-                                <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+                                <circle cx="11" cy="11" r="8" />
+                                <line x1="21" y1="21" x2="16.65" y2="16.65" />
                             </svg>
                             <input class="surveys__search" type="search" [placeholder]="t()('searchSurveys')"
                                 [value]="searchQuery()" (input)="searchQuery.set($any($event.target).value)" />
@@ -253,7 +262,8 @@
                             [title]="t()('createSurvey')" [attr.aria-label]="t()('createSurvey')">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
                                 stroke-linecap="round" aria-hidden="true">
-                                <circle cx="12" cy="12" r="9" /><path d="M12 8v8M8 12h8" />
+                                <circle cx="12" cy="12" r="9" />
+                                <path d="M12 8v8M8 12h8" />
                             </svg>
                         </button>
                         }
@@ -265,18 +275,19 @@
                         @if (toolbarCollapsed()) {
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                             stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                            <line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="14" y2="12"/>
-                            <line x1="4" y1="18" x2="11" y2="18"/>
+                            <line x1="4" y1="6" x2="20" y2="6" />
+                            <line x1="4" y1="12" x2="14" y2="12" />
+                            <line x1="4" y1="18" x2="11" y2="18" />
                         </svg>
                         <span>Suche &amp; Filter</span>
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                             stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                            <polyline points="6 9 12 15 18 9"/>
+                            <polyline points="6 9 12 15 18 9" />
                         </svg>
                         } @else {
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                             stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                            <polyline points="18 15 12 9 6 15"/>
+                            <polyline points="18 15 12 9 6 15" />
                         </svg>
                         }
                     </button>
@@ -293,7 +304,8 @@
                     </span>
                     <div class="surveys__result-tags">
                         @if (selectedStatus() !== 'all') {
-                        <span class="surveys__result-tag">{{ selectedStatus() === 'active' ? t()('active') : t()('past') }}</span>
+                        <span class="surveys__result-tag">{{ selectedStatus() === 'active' ? t()('active') : t()('past')
+                            }}</span>
                         }
                         @if (selectedCategory() !== 'all') {
                         <span class="surveys__result-tag">{{ selectedCategoryLabel() }}</span>
@@ -332,9 +344,9 @@
             <app-survey-list-view [items]="visibleSurveys()" [heading]="t()('publicSurveys')"
                 [hasMore]="hasMoreSurveys()" [loadingMore]="loadingMoreSurveys()"
                 [restoreScrollTop]="listRestoreScrollTop()" [viewStateKey]="listViewKey()"
-                (surveySelected)="openSurvey($event)"
-                (shareLinkClicked)="onShareLinkClicked($event)" (listScrolled)="onListScrolled($event)"
-                (scrollTopChanged)="onListScrollTopChanged($event)" (loadMoreRequested)="loadMoreSurveys()" />
+                (surveySelected)="openSurvey($event)" (shareLinkClicked)="onShareLinkClicked($event)"
+                (listScrolled)="onListScrolled($event)" (scrollTopChanged)="onListScrollTopChanged($event)"
+                (loadMoreRequested)="loadMoreSurveys()" />
             }
         </section>
         }
@@ -352,9 +364,7 @@
 
     <!-- ── Create / Edit survey modal ──────────────────────────────────────── -->
     @if (createSurveyOpen()) {
-    <app-create-survey-modal
-        [editSurveyId]="editSurveyId()"
-        [surveyData]="activeSurveyData()"
+    <app-create-survey-modal [editSurveyId]="editSurveyId()" [surveyData]="activeSurveyData()"
         (closed)="onCreateSurveyModalClosed()" />
     }
 </div>

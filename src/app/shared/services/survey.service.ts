@@ -668,29 +668,37 @@ export class SurveyService {
    * ==================== CSV EXPORT ====================
    */
 
-  /**
-   * Lädt alle Rohantworten für eine Umfrage und gibt sie als CSV-String zurück.
-   * Spalten: Frage, Antwort, Anzahl Stimmen, Prozent
-   */
   async buildResultsCsv(surveyId: string): Promise<string> {
     const results = await this.loadSurveyResults(surveyId);
     const survey = this.allSurveys().find((s) => s.id === surveyId) ?? this.currentSurveySignal();
+    const title = survey?.title ?? surveyId;
 
-    const rows: string[][] = [['Survey', 'Question', 'Answer', 'Votes', 'Percentage']];
+    const now = new Date();
+    const exported = now.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })
+      + ', '
+      + now.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })
+      + ' Uhr';
 
-    for (const result of results) {
+    const lines: string[] = [
+      this.csvEscape(`Umfrage: ${title}`),
+      this.csvEscape(`Exportiert: ${exported}`),
+    ];
+
+    results.forEach((result, i) => {
+      lines.push('');
+      lines.push(this.csvEscape(`${i + 1}. ${result.questionText}`));
+      lines.push(['Antwort', 'Stimmen', 'Anteil'].map(h => this.csvEscape(h)).join(','));
       for (const answer of result.answers) {
-        rows.push([
-          this.csvEscape(survey?.title ?? surveyId),
-          this.csvEscape(result.questionText),
+        lines.push([
           this.csvEscape(answer.text),
           String(answer.count),
           `${answer.percentage}%`,
-        ]);
+        ].join(','));
       }
-    }
+    });
 
-    return rows.map((row) => row.join(',')).join('\n');
+    // UTF-8 BOM so Excel on Windows renders umlauts correctly
+    return '﻿' + lines.join('\n');
   }
 
   private csvEscape(value: string): string {
