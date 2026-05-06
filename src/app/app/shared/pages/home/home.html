@@ -159,8 +159,7 @@
             <p class="surveys__locked-text">{{ t()('loggedOutText') }}</p>
         </section>
         } @else {
-        <section class="surveys" #surveysSection [class.surveys--toolbar-pinned]="toolbarPinned()"
-            [style.--surveys-sticky-offset.px]="toolbarStickyOffset()">
+        <section class="surveys">
             <h2 class="surveys__title">{{ t()('yourSurveys') }}</h2>
 
             <!-- Carousel: ending soon -->
@@ -218,9 +217,7 @@
             </div>
 
             <!-- Sticky toolbar -->
-            <div class="surveys__sticky-sentinel" #stickySentinel aria-hidden="true"></div>
-
-            <div class="surveys__sticky-header" #stickyHeader [class.surveys__sticky-header--pinned]="toolbarPinned()">
+            <div class="surveys__sticky-header" #stickyHeader>
                 <div class="surveys__toolbar" [class.surveys__toolbar--collapsed]="toolbarCollapsed()">
                     <div class="surveys__toolbar-body">
                         <label class="surveys__search-wrap">

@@ -16,10 +16,10 @@
   gap: 12px;
   padding: 2px 6px 2px 2px; // right: extra room for scrollbar + shadow
   min-height: 240px;
-  max-height: clamp(360px, calc(100dvh - 180px), 860px);
+  max-height: min(860px, max(320px, var(--survey-list-max-height, calc(100dvh - 220px))));
   overflow-y: auto;
   overflow-x: hidden;
-  overscroll-behavior: contain;
+  overscroll-behavior: auto;
   scrollbar-width: thin;
   scrollbar-color: rgba(243, 168, 85, 0.55) transparent;
 
@@ -32,7 +32,7 @@
 
   @media (max-width: 900px) {
     grid-template-columns: 1fr;
-    max-height: min(64dvh, 760px);
+    max-height: min(760px, max(300px, var(--survey-list-max-height, calc(100dvh - 200px))));
   }
 }
 

@@ -1,5 +1,4 @@
 import {
-  AfterViewInit,
   ChangeDetectionStrategy,
   Component,
   computed,
@@ -71,7 +70,7 @@ const SURVEY_BATCH_SIZE = 40;
   styleUrl: './home.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class HomeComponent implements AfterViewInit, OnDestroy {
+export class HomeComponent implements OnDestroy {
   private readonly fb = inject(FormBuilder);
   private readonly surveyService = inject(SurveyService);
   private readonly authService = inject(AuthService);
@@ -200,15 +199,17 @@ export class HomeComponent implements AfterViewInit, OnDestroy {
   // ── Toolbar collapse (mobile) ─────────────────────────────────────────────
 
   protected readonly toolbarCollapsed = signal(false);
-  protected readonly toolbarPinned = signal(false);
-  protected readonly toolbarStickyOffset = signal(0);
   private _lastPageScrollY = 0;
+  private toolbarManualExpanded = false;
 
   @HostListener('window:scroll')
   protected onWindowScroll(): void {
-    this.syncToolbarStickyState();
-
     if (window.innerWidth >= 768) return;
+    if (this.toolbarManualExpanded) {
+      this._lastPageScrollY = window.scrollY;
+      return;
+    }
+
     const y = window.scrollY;
     if (y > this._lastPageScrollY + 10 && y > 300) {
       this.toolbarCollapsed.set(true);
@@ -216,13 +217,9 @@ export class HomeComponent implements AfterViewInit, OnDestroy {
     this._lastPageScrollY = y;
   }
 
-  @HostListener('window:resize')
-  protected onWindowResize(): void {
-    this.syncToolbarStickyState();
-  }
-
   protected onListScrolled(dir: 'up' | 'down'): void {
     if (window.innerWidth >= 768) return;
+    if (this.toolbarManualExpanded) return;
     if (dir === 'down') this.toolbarCollapsed.set(true);
   }
 
@@ -259,8 +256,13 @@ export class HomeComponent implements AfterViewInit, OnDestroy {
   }
 
   protected toggleToolbar(): void {
-    this.toolbarCollapsed.update(v => !v);
-    setTimeout(() => this.syncToolbarStickyState(), 0);
+    const willCollapse = !this.toolbarCollapsed();
+    this.toolbarCollapsed.set(willCollapse);
+    this.toolbarManualExpanded = !willCollapse;
+    if (!willCollapse) {
+      // Scroll sticky header into view so expanded content is fully visible
+      this.stickyHeaderRef?.nativeElement?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
   }
 
   // ── Modal state ───────────────────────────────────────────────────────────
@@ -302,11 +304,9 @@ export class HomeComponent implements AfterViewInit, OnDestroy {
 
   // ── ViewChildren & parallax ───────────────────────────────────────────────
 
+  @ViewChild('stickyHeader') private stickyHeaderRef?: ElementRef<HTMLDivElement>;
   @ViewChild('carouselTrack') carouselTrackRef?: ElementRef<HTMLDivElement>;
   @ViewChild('heroVisuals') heroVisualsRef?: ElementRef<HTMLElement>;
-  @ViewChild('stickyHeader') private stickyHeaderRef?: ElementRef<HTMLDivElement>;
-  @ViewChild('stickySentinel') private stickySentinelRef?: ElementRef<HTMLDivElement>;
-  @ViewChild('surveysSection') private surveysSectionRef?: ElementRef<HTMLElement>;
   @ViewChild('nameEditInput') private nameEditInputRef?: ElementRef<HTMLInputElement>;
 
   private heroTargetX = 0;
@@ -321,10 +321,6 @@ export class HomeComponent implements AfterViewInit, OnDestroy {
     effect(() => this.handleEditQueryParam());
     effect(() => this.handleDuplicateQueryParam());
     effect(() => this.restoreListViewState());
-  }
-
-  ngAfterViewInit(): void {
-    setTimeout(() => this.syncToolbarStickyState(), 0);
   }
 
   // ── Keyboard ──────────────────────────────────────────────────────────────
@@ -519,26 +515,6 @@ export class HomeComponent implements AfterViewInit, OnDestroy {
 
   ngOnDestroy(): void {
     if (this.heroRafId != null) cancelAnimationFrame(this.heroRafId);
-  }
-
-  private syncToolbarStickyState(): void {
-    const stickyEl = this.stickyHeaderRef?.nativeElement;
-    const sentinelEl = this.stickySentinelRef?.nativeElement;
-    const sectionEl = this.surveysSectionRef?.nativeElement;
-
-    if (!stickyEl || !sentinelEl || !sectionEl) {
-      this.toolbarPinned.set(false);
-      this.toolbarStickyOffset.set(0);
-      return;
-    }
-
-    const stickyHeight = Math.ceil(stickyEl.getBoundingClientRect().height);
-    const sentinelTop = sentinelEl.getBoundingClientRect().top;
-    const sectionBottom = sectionEl.getBoundingClientRect().bottom;
-    const shouldPin = sentinelTop <= 0 && sectionBottom > stickyHeight;
-
-    this.toolbarPinned.set(shouldPin);
-    this.toolbarStickyOffset.set(shouldPin ? stickyHeight : 0);
   }
 
   private restoreListViewState(): void {

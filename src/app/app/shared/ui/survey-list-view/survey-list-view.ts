@@ -74,6 +74,7 @@ export class SurveyListViewComponent implements AfterViewInit {
   @ViewChild('listFrame') private listFrameRef?: ElementRef<HTMLDivElement>;
 
   private _lastFrameScrollTop = 0;
+  private lastTouchClientY: number | null = null;
   private loadMoreLocked = false;
   private activeViewStateKey = 'default';
   private readonly scrollTopByKey = new Map<string, number>();
@@ -147,6 +148,59 @@ export class SurveyListViewComponent implements AfterViewInit {
     if (row.shareToken) {
       this.shareLinkClicked.emit(row.shareToken);
     }
+  }
+
+  protected onFrameWheel(event: WheelEvent): void {
+    const frame = this.listFrameRef?.nativeElement;
+    if (!frame || event.deltaY === 0) return;
+
+    const atTop = frame.scrollTop <= 0;
+    const atBottom = frame.scrollTop + frame.clientHeight >= frame.scrollHeight - 1;
+    const scrollingUp = event.deltaY < 0;
+    const scrollingDown = event.deltaY > 0;
+    const shouldHandoff = (scrollingUp && atTop) || (scrollingDown && atBottom);
+
+    if (!shouldHandoff) return;
+
+    event.preventDefault();
+    window.scrollBy({ top: event.deltaY, behavior: 'auto' });
+  }
+
+  protected onFrameTouchStart(event: TouchEvent): void {
+    const touch = event.touches[0];
+    this.lastTouchClientY = touch ? touch.clientY : null;
+  }
+
+  protected onFrameTouchMove(event: TouchEvent): void {
+    if (event.touches.length !== 1) return;
+
+    const frame = this.listFrameRef?.nativeElement;
+    const touch = event.touches[0];
+    if (!frame || !touch) return;
+
+    if (this.lastTouchClientY == null) {
+      this.lastTouchClientY = touch.clientY;
+      return;
+    }
+
+    const deltaY = this.lastTouchClientY - touch.clientY;
+    this.lastTouchClientY = touch.clientY;
+    if (deltaY === 0) return;
+
+    const atTop = frame.scrollTop <= 0;
+    const atBottom = frame.scrollTop + frame.clientHeight >= frame.scrollHeight - 1;
+    const scrollingUp = deltaY < 0;
+    const scrollingDown = deltaY > 0;
+    const shouldHandoff = (scrollingUp && atTop) || (scrollingDown && atBottom);
+
+    if (!shouldHandoff) return;
+
+    event.preventDefault();
+    window.scrollBy({ top: deltaY, behavior: 'auto' });
+  }
+
+  protected onFrameTouchEnd(): void {
+    this.lastTouchClientY = null;
   }
 
   private restoreFrameScrollTop(): void {
