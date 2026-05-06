@@ -14,18 +14,45 @@
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 12px;
-  padding: 2px; // space for hover shadow
+  padding: 2px 6px 2px 2px; // right: extra room for scrollbar + shadow
+  min-height: 240px;
+  max-height: clamp(360px, calc(100dvh - 180px), 860px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(243, 168, 85, 0.55) transparent;
+
+  &::-webkit-scrollbar { width: 3px; }
+  &::-webkit-scrollbar-track { background: transparent; }
+  &::-webkit-scrollbar-thumb {
+    background: rgba(243, 168, 85, 0.55);
+    border-radius: 99px;
+  }
 
   @media (max-width: 900px) {
     grid-template-columns: 1fr;
+    max-height: min(64dvh, 760px);
   }
+}
+
+.survey-list-view__loading {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  font: 700 11px/1 var(--font-ui);
+  color: var(--color-text-subtle);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 // ─── Card ─────────────────────────────────────────────────────────────────────
 
 .survey-list-view__item {
   background: var(--bg-surface-hi);
-  border-radius: var(--r-md);
+  border-radius: 5px;
   border-top-right-radius: var(--r-lg);
   border-left: 3px solid rgba(243, 168, 85, 0.25);
   padding: 12px 14px 12px 12px;

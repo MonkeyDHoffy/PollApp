@@ -1,4 +1,16 @@
-import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
+import {
+  AfterViewInit,
+  ChangeDetectionStrategy,
+  Component,
+  ElementRef,
+  computed,
+  effect,
+  input,
+  output,
+  ViewChild,
+} from '@angular/core';
+
+type ScrollDir = 'up' | 'down';
 
 type SurveyListTone = 'base' | 'muted';
 
@@ -33,8 +45,12 @@ type SurveyListRow = {
   styleUrl: './survey-list-view.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class SurveyListViewComponent {
+export class SurveyListViewComponent implements AfterViewInit {
   readonly heading = input('Survey view in the list');
+  readonly viewStateKey = input('default');
+  readonly hasMore = input(false);
+  readonly loadingMore = input(false);
+  readonly restoreScrollTop = input(0);
   readonly items = input<SurveyListItem[]>([
     {
       category: 'Team activities',
@@ -51,6 +67,44 @@ export class SurveyListViewComponent {
   ]);
   readonly surveySelected = output<string>();
   readonly shareLinkClicked = output<string>();
+  readonly listScrolled = output<ScrollDir>();
+  readonly scrollTopChanged = output<number>();
+  readonly loadMoreRequested = output<void>();
+
+  @ViewChild('listFrame') private listFrameRef?: ElementRef<HTMLDivElement>;
+
+  private _lastFrameScrollTop = 0;
+  private loadMoreLocked = false;
+  private activeViewStateKey = 'default';
+  private readonly scrollTopByKey = new Map<string, number>();
+
+  constructor() {
+    effect(() => {
+      if (!this.loadingMore()) {
+        this.loadMoreLocked = false;
+      }
+    });
+
+    effect(() => {
+      const key = this.viewStateKey();
+      const frame = this.listFrameRef?.nativeElement;
+      if (frame && this.activeViewStateKey !== key) {
+        this.scrollTopByKey.set(this.activeViewStateKey, frame.scrollTop);
+      }
+      this.activeViewStateKey = key;
+      this.restoreFrameScrollTop();
+    });
+
+    effect(() => {
+      this.restoreScrollTop();
+      this.rows();
+      this.restoreFrameScrollTop();
+    });
+  }
+
+  ngAfterViewInit(): void {
+    this.restoreFrameScrollTop();
+  }
 
   protected readonly rows = computed<SurveyListRow[]>(() =>
     this.items().map((item, index) => ({
@@ -73,10 +127,38 @@ export class SurveyListViewComponent {
     this.surveySelected.emit(row.id);
   }
 
+  protected onFrameScroll(e: Event): void {
+    const el = e.target as HTMLElement;
+    const dir: ScrollDir = el.scrollTop > this._lastFrameScrollTop ? 'down' : 'up';
+    this._lastFrameScrollTop = el.scrollTop;
+    this.scrollTopByKey.set(this.activeViewStateKey, el.scrollTop);
+    this.listScrolled.emit(dir);
+    this.scrollTopChanged.emit(el.scrollTop);
+
+    const remaining = el.scrollHeight - el.scrollTop - el.clientHeight;
+    if (remaining < 220 && this.hasMore() && !this.loadingMore() && !this.loadMoreLocked) {
+      this.loadMoreLocked = true;
+      this.loadMoreRequested.emit();
+    }
+  }
+
   protected onShare(row: SurveyListRow, event: MouseEvent): void {
     event.stopPropagation();
     if (row.shareToken) {
       this.shareLinkClicked.emit(row.shareToken);
     }
+  }
+
+  private restoreFrameScrollTop(): void {
+    const frame = this.listFrameRef?.nativeElement;
+    if (!frame) return;
+    const targetTop = this.scrollTopByKey.get(this.activeViewStateKey) ?? this.restoreScrollTop();
+    if (Math.abs(frame.scrollTop - targetTop) <= 1) return;
+    requestAnimationFrame(() => {
+      const liveFrame = this.listFrameRef?.nativeElement;
+      if (!liveFrame) return;
+      liveFrame.scrollTop = targetTop;
+      this._lastFrameScrollTop = targetTop;
+    });
   }
 }

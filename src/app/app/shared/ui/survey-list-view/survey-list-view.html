@@ -1,7 +1,7 @@
 <section class="survey-list-view" aria-label="Survey list view">
     <p class="survey-list-view__heading">{{ heading() }}</p>
 
-    <div class="survey-list-view__frame">
+    <div class="survey-list-view__frame" #listFrame (scroll)="onFrameScroll($event)">
         @for (row of rows(); track row.id) {
         <article class="survey-list-view__item"
             [class.survey-list-view__item--muted]="row.tone === 'muted'"
@@ -41,6 +41,10 @@
                 </span>
             </div>
         </article>
+        }
+
+        @if (loadingMore()) {
+        <div class="survey-list-view__loading">Loading more surveys...</div>
         }
     </div>
 </section>

@@ -11,9 +11,9 @@
 .home__content-wrapper {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 40px;
-  overflow-x: clip; // clip statt hidden — bricht position:sticky nicht
-  animation: page-enter 260ms ease-out both;
+  padding: 40px 40px 0;
+  overflow: visible; // keep ancestors non-scrolling so sticky can attach to viewport
+  animation: home-fade-in 260ms ease-out both;
 
   @media (max-width: 768px) {
     padding: 24px 16px;
@@ -22,6 +22,11 @@
   @media (max-width: 480px) {
     padding: 14px 12px;
   }
+}
+
+@keyframes home-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 // Header with logo
@@ -557,12 +562,10 @@
 // Surveys section
 .surveys {
   width: 100%;
-  --surveys-dropdown-reserve-space: 260px;
-  padding-bottom: var(--surveys-dropdown-reserve-space);
+}
 
-  @media (max-width: 768px) {
-    --surveys-dropdown-reserve-space: 220px;
-  }
+.surveys--toolbar-pinned {
+  padding-top: var(--surveys-sticky-offset, 0px);
 }
 
 .surveys__title {
@@ -721,14 +724,44 @@
 .surveys__sticky-header {
   position: sticky;
   top: 0;
-  z-index: 20;
+  z-index: 50;
   overflow-anchor: none;
+  width: 100%;
+
   &::after {
     content: '';
     display: block;
     height: 14px;
     background: linear-gradient(to bottom, rgba(51, 37, 65, 0.6), transparent);
     pointer-events: none;
+  }
+}
+
+.surveys__sticky-sentinel {
+  height: 1px;
+  margin-top: -1px;
+}
+
+.surveys__sticky-header--pinned {
+  position: fixed;
+  top: 0;
+  left: max(40px, calc((100vw - 1120px) / 2));
+  right: max(40px, calc((100vw - 1120px) / 2));
+  width: auto;
+  z-index: 80;
+  overflow: clip;
+  isolation: isolate;
+  background: var(--bg-surface-muted);
+  border-radius: var(--r-lg) var(--sig-sm) var(--r-lg) var(--r-lg);
+
+  @media (max-width: 768px) {
+    left: 16px;
+    right: 16px;
+  }
+
+  @media (max-width: 480px) {
+    left: 12px;
+    right: 12px;
   }
 }
 
@@ -826,6 +859,74 @@
   color: var(--color-accent);
   text-transform: uppercase;
   letter-spacing: 0.04em;
+}
+
+// ─── Toolbar collapse (mobile only) ──────────────────────────────────────────
+
+// Desktop: body is transparent — children flow directly in the flex row
+.surveys__toolbar-body {
+  display: contents;
+}
+
+// Toggle button: hidden on desktop, always in DOM
+.surveys__toolbar-toggle {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  // Body becomes an animated column on mobile
+  .surveys__toolbar-body {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    overflow: hidden;
+    max-height: 500px;
+    opacity: 1;
+    transition: max-height 280ms ease, opacity 200ms ease;
+  }
+
+  .surveys__toolbar--collapsed .surveys__toolbar-body {
+    max-height: 0;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  // Toolbar padding shrinks when collapsed
+  .surveys__toolbar--collapsed {
+    padding: 0 12px;
+    border-radius: var(--r-lg) var(--r-lg) 0 0;
+  }
+
+  // Toggle button: full-width, always visible on mobile
+  .surveys__toolbar-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    width: 100%;
+    min-height: 40px;
+    padding: 0 14px;
+    border: 0;
+    border-radius: var(--r-md);
+    background: transparent;
+    color: var(--color-accent);
+    font: 700 12px/1 var(--font-ui);
+    cursor: pointer;
+    transition: background 140ms ease;
+
+    span { flex: 1; text-align: left; }
+
+    &:hover { background: rgba(243, 168, 85, 0.1); }
+    &:active { background: rgba(243, 168, 85, 0.18); }
+  }
+
+  // When collapsed: toggle gets a background to stand out
+  .surveys__toolbar--collapsed .surveys__toolbar-toggle {
+    background: rgba(243, 168, 85, 0.1);
+    border-radius: var(--r-md);
+
+    &:hover { background: rgba(243, 168, 85, 0.2); }
+  }
 }
 
 // ─── Toolbar internals ────────────────────────────────────────────────────────

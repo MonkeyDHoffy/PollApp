@@ -153,7 +153,8 @@
             <p class="surveys__locked-text">{{ t()('loggedOutText') }}</p>
         </section>
         } @else {
-        <section class="surveys">
+        <section class="surveys" #surveysSection [class.surveys--toolbar-pinned]="toolbarPinned()"
+            [style.--surveys-sticky-offset.px]="toolbarStickyOffset()">
             <h2 class="surveys__title">{{ t()('yourSurveys') }}</h2>
 
             <!-- Carousel: ending soon -->
@@ -209,50 +210,76 @@
             </div>
 
             <!-- Sticky toolbar -->
-            <div class="surveys__sticky-header">
-                <div class="surveys__toolbar">
-                    <label class="surveys__search-wrap">
-                        <svg class="surveys__search-icon" width="15" height="15" viewBox="0 0 24 24" fill="none"
-                            stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
-                            aria-hidden="true">
-                            <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
-                        </svg>
-                        <input class="surveys__search" type="search" [placeholder]="t()('searchSurveys')"
-                            [value]="searchQuery()" (input)="searchQuery.set($any($event.target).value)" />
-                    </label>
+            <div class="surveys__sticky-sentinel" #stickySentinel aria-hidden="true"></div>
 
-                    <div class="surveys__toolbar-divider" aria-hidden="true"></div>
+            <div class="surveys__sticky-header" #stickyHeader [class.surveys__sticky-header--pinned]="toolbarPinned()">
+                <div class="surveys__toolbar" [class.surveys__toolbar--collapsed]="toolbarCollapsed()">
+                    <div class="surveys__toolbar-body">
+                        <label class="surveys__search-wrap">
+                            <svg class="surveys__search-icon" width="15" height="15" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+                                aria-hidden="true">
+                                <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+                            </svg>
+                            <input class="surveys__search" type="search" [placeholder]="t()('searchSurveys')"
+                                [value]="searchQuery()" (input)="searchQuery.set($any($event.target).value)" />
+                        </label>
 
-                    <div class="surveys__filter-buttons">
-                        <app-button [label]="t()('active')" variant="filter"
-                            [filterStyle]="selectedStatus() === 'active' ? 'active' : 'base'"
-                            (pressed)="onFilterActive()" />
-                        <app-button [label]="t()('past')" variant="filter"
-                            [filterStyle]="selectedStatus() === 'past' ? 'active' : 'base'"
-                            (pressed)="onFilterPast()" />
+                        <div class="surveys__toolbar-divider" aria-hidden="true"></div>
+
+                        <div class="surveys__filter-buttons">
+                            <app-button [label]="t()('active')" variant="filter"
+                                [filterStyle]="selectedStatus() === 'active' ? 'active' : 'base'"
+                                (pressed)="onFilterActive()" />
+                            <app-button [label]="t()('past')" variant="filter"
+                                [filterStyle]="selectedStatus() === 'past' ? 'active' : 'base'"
+                                (pressed)="onFilterPast()" />
+                        </div>
+
+                        <div class="surveys__toolbar-divider" aria-hidden="true"></div>
+
+                        <div class="surveys__sort">
+                            <app-dropdown-menu [label]="t()('category')" [options]="filterCategoryOptions()"
+                                [selected]="selectedCategoryLabel()" [showSelectionValue]="true"
+                                (selectedChange)="onCategoryChange($event)" />
+                            <app-dropdown-menu [label]="t()('sort')" [options]="sortOptionLabels()"
+                                [selected]="selectedSortLabel()" [showSelectionValue]="true"
+                                (selectedChange)="onSortChange($event)" />
+                        </div>
+
+                        @if (canCreateSurvey()) {
+                        <div class="surveys__toolbar-divider" aria-hidden="true"></div>
+                        <button class="surveys__toolbar-add-btn" (click)="openCreateSurveyModal()"
+                            [title]="t()('createSurvey')" [attr.aria-label]="t()('createSurvey')">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+                                stroke-linecap="round" aria-hidden="true">
+                                <circle cx="12" cy="12" r="9" /><path d="M12 8v8M8 12h8" />
+                            </svg>
+                        </button>
+                        }
                     </div>
 
-                    <div class="surveys__toolbar-divider" aria-hidden="true"></div>
-
-                    <div class="surveys__sort">
-                        <app-dropdown-menu [label]="t()('category')" [options]="filterCategoryOptions()"
-                            [selected]="selectedCategoryLabel()" [showSelectionValue]="true"
-                            (selectedChange)="onCategoryChange($event)" />
-                        <app-dropdown-menu [label]="t()('sort')" [options]="sortOptionLabels()"
-                            [selected]="selectedSortLabel()" [showSelectionValue]="true"
-                            (selectedChange)="onSortChange($event)" />
-                    </div>
-
-                    @if (canCreateSurvey()) {
-                    <div class="surveys__toolbar-divider" aria-hidden="true"></div>
-                    <button class="surveys__toolbar-add-btn" (click)="openCreateSurveyModal()"
-                        [title]="t()('createSurvey')" [attr.aria-label]="t()('createSurvey')">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
-                            stroke-linecap="round" aria-hidden="true">
-                            <circle cx="12" cy="12" r="9" /><path d="M12 8v8M8 12h8" />
+                    <button class="surveys__toolbar-toggle" type="button" (click)="toggleToolbar()"
+                        [attr.aria-label]="toolbarCollapsed() ? 'Filter öffnen' : 'Filter schließen'"
+                        [attr.aria-expanded]="!toolbarCollapsed()">
+                        @if (toolbarCollapsed()) {
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="14" y2="12"/>
+                            <line x1="4" y1="18" x2="11" y2="18"/>
                         </svg>
+                        <span>Suche &amp; Filter</span>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <polyline points="6 9 12 15 18 9"/>
+                        </svg>
+                        } @else {
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <polyline points="18 15 12 9 6 15"/>
+                        </svg>
+                        }
                     </button>
-                    }
                 </div>
 
                 @if (!surveysLoading()) {
@@ -302,8 +329,12 @@
                 }
             </div>
             } @else {
-            <app-survey-list-view [items]="filteredSurveys()" [heading]="t()('publicSurveys')"
-                (surveySelected)="openSurvey($event)" (shareLinkClicked)="onShareLinkClicked($event)" />
+            <app-survey-list-view [items]="visibleSurveys()" [heading]="t()('publicSurveys')"
+                [hasMore]="hasMoreSurveys()" [loadingMore]="loadingMoreSurveys()"
+                [restoreScrollTop]="listRestoreScrollTop()" [viewStateKey]="listViewKey()"
+                (surveySelected)="openSurvey($event)"
+                (shareLinkClicked)="onShareLinkClicked($event)" (listScrolled)="onListScrolled($event)"
+                (scrollTopChanged)="onListScrollTopChanged($event)" (loadMoreRequested)="loadMoreSurveys()" />
             }
         </section>
         }

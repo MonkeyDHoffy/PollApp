@@ -1,4 +1,5 @@
 import {
+  AfterViewInit,
   ChangeDetectionStrategy,
   Component,
   computed,
@@ -52,6 +53,7 @@ type HomeSurvey = {
 };
 
 const SORT_KEYS: SortKey[] = ['newest', 'oldest', 'az', 'za'];
+const SURVEY_BATCH_SIZE = 40;
 
 @Component({
   selector: 'app-home',
@@ -69,7 +71,7 @@ const SORT_KEYS: SortKey[] = ['newest', 'oldest', 'az', 'za'];
   styleUrl: './home.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class HomeComponent implements OnDestroy {
+export class HomeComponent implements AfterViewInit, OnDestroy {
   private readonly fb = inject(FormBuilder);
   private readonly surveyService = inject(SurveyService);
   private readonly authService = inject(AuthService);
@@ -131,6 +133,12 @@ export class HomeComponent implements OnDestroy {
   protected readonly selectedCategory = signal<CategoryFilter>('all');
   protected readonly selectedSortKey = signal<SortKey>('newest');
   protected readonly searchQuery = signal('');
+  protected readonly visibleSurveyCount = signal(SURVEY_BATCH_SIZE);
+  protected readonly listRestoreScrollTop = signal(0);
+  protected readonly loadingMoreSurveys = signal(false);
+  private readonly visibleCountByViewKey = signal<Record<string, number>>({});
+  private readonly scrollTopByViewKey = signal<Record<string, number>>({});
+  private activeListViewKey = '';
 
   protected readonly sortOptionLabels = computed(() => [
     this.t()('newestFirst'),
@@ -166,6 +174,19 @@ export class HomeComponent implements OnDestroy {
     this.applySortToSurveys(this.applyFiltersToSurveys())
   );
 
+  protected readonly visibleSurveys = computed(() =>
+    this.filteredSurveys().slice(0, this.visibleSurveyCount())
+  );
+
+  protected readonly hasMoreSurveys = computed(
+    () => this.visibleSurveyCount() < this.filteredSurveys().length
+  );
+
+  protected readonly listViewKey = computed(() => {
+    const query = this.searchQuery().trim().toLowerCase();
+    return `${this.selectedStatus()}|${this.selectedCategory()}|${this.selectedSortKey()}|${query}`;
+  });
+
   protected readonly categories = [
     'Team Activities',
     'Health & Wellness',
@@ -175,6 +196,72 @@ export class HomeComponent implements OnDestroy {
     'Technology & Innovation',
     'Other',
   ];
+
+  // ── Toolbar collapse (mobile) ─────────────────────────────────────────────
+
+  protected readonly toolbarCollapsed = signal(false);
+  protected readonly toolbarPinned = signal(false);
+  protected readonly toolbarStickyOffset = signal(0);
+  private _lastPageScrollY = 0;
+
+  @HostListener('window:scroll')
+  protected onWindowScroll(): void {
+    this.syncToolbarStickyState();
+
+    if (window.innerWidth >= 768) return;
+    const y = window.scrollY;
+    if (y > this._lastPageScrollY + 10 && y > 300) {
+      this.toolbarCollapsed.set(true);
+    }
+    this._lastPageScrollY = y;
+  }
+
+  @HostListener('window:resize')
+  protected onWindowResize(): void {
+    this.syncToolbarStickyState();
+  }
+
+  protected onListScrolled(dir: 'up' | 'down'): void {
+    if (window.innerWidth >= 768) return;
+    if (dir === 'down') this.toolbarCollapsed.set(true);
+  }
+
+  protected onListScrollTopChanged(scrollTop: number): void {
+    const key = this.listViewKey();
+    this.listRestoreScrollTop.set(scrollTop);
+    this.scrollTopByViewKey.update((state) => ({
+      ...state,
+      [key]: scrollTop,
+    }));
+  }
+
+  protected loadMoreSurveys(): void {
+    if (this.loadingMoreSurveys() || !this.hasMoreSurveys()) {
+      return;
+    }
+
+    this.loadingMoreSurveys.set(true);
+
+    requestAnimationFrame(() => {
+      const nextCount = Math.min(
+        this.visibleSurveyCount() + SURVEY_BATCH_SIZE,
+        this.filteredSurveys().length
+      );
+
+      this.visibleSurveyCount.set(nextCount);
+      const key = this.listViewKey();
+      this.visibleCountByViewKey.update((state) => ({
+        ...state,
+        [key]: nextCount,
+      }));
+      this.loadingMoreSurveys.set(false);
+    });
+  }
+
+  protected toggleToolbar(): void {
+    this.toolbarCollapsed.update(v => !v);
+    setTimeout(() => this.syncToolbarStickyState(), 0);
+  }
 
   // ── Modal state ───────────────────────────────────────────────────────────
 
@@ -217,6 +304,9 @@ export class HomeComponent implements OnDestroy {
 
   @ViewChild('carouselTrack') carouselTrackRef?: ElementRef<HTMLDivElement>;
   @ViewChild('heroVisuals') heroVisualsRef?: ElementRef<HTMLElement>;
+  @ViewChild('stickyHeader') private stickyHeaderRef?: ElementRef<HTMLDivElement>;
+  @ViewChild('stickySentinel') private stickySentinelRef?: ElementRef<HTMLDivElement>;
+  @ViewChild('surveysSection') private surveysSectionRef?: ElementRef<HTMLElement>;
   @ViewChild('nameEditInput') private nameEditInputRef?: ElementRef<HTMLInputElement>;
 
   private heroTargetX = 0;
@@ -230,6 +320,11 @@ export class HomeComponent implements OnDestroy {
   constructor() {
     effect(() => this.handleEditQueryParam());
     effect(() => this.handleDuplicateQueryParam());
+    effect(() => this.restoreListViewState());
+  }
+
+  ngAfterViewInit(): void {
+    setTimeout(() => this.syncToolbarStickyState(), 0);
   }
 
   // ── Keyboard ──────────────────────────────────────────────────────────────
@@ -424,6 +519,49 @@ export class HomeComponent implements OnDestroy {
 
   ngOnDestroy(): void {
     if (this.heroRafId != null) cancelAnimationFrame(this.heroRafId);
+  }
+
+  private syncToolbarStickyState(): void {
+    const stickyEl = this.stickyHeaderRef?.nativeElement;
+    const sentinelEl = this.stickySentinelRef?.nativeElement;
+    const sectionEl = this.surveysSectionRef?.nativeElement;
+
+    if (!stickyEl || !sentinelEl || !sectionEl) {
+      this.toolbarPinned.set(false);
+      this.toolbarStickyOffset.set(0);
+      return;
+    }
+
+    const stickyHeight = Math.ceil(stickyEl.getBoundingClientRect().height);
+    const sentinelTop = sentinelEl.getBoundingClientRect().top;
+    const sectionBottom = sectionEl.getBoundingClientRect().bottom;
+    const shouldPin = sentinelTop <= 0 && sectionBottom > stickyHeight;
+
+    this.toolbarPinned.set(shouldPin);
+    this.toolbarStickyOffset.set(shouldPin ? stickyHeight : 0);
+  }
+
+  private restoreListViewState(): void {
+    const key = this.listViewKey();
+
+    if (this.activeListViewKey && this.activeListViewKey !== key) {
+      const previousKey = this.activeListViewKey;
+      this.scrollTopByViewKey.update((state) => ({
+        ...state,
+        [previousKey]: this.listRestoreScrollTop(),
+      }));
+      this.visibleCountByViewKey.update((state) => ({
+        ...state,
+        [previousKey]: this.visibleSurveyCount(),
+      }));
+    }
+
+    this.activeListViewKey = key;
+    const savedVisibleCount = this.visibleCountByViewKey()[key] ?? SURVEY_BATCH_SIZE;
+    const savedScrollTop = this.scrollTopByViewKey()[key] ?? 0;
+
+    this.visibleSurveyCount.set(savedVisibleCount);
+    this.listRestoreScrollTop.set(savedScrollTop);
   }
 
   // ── Private: query-param handlers ─────────────────────────────────────────
