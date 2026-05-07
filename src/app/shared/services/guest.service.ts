@@ -44,22 +44,25 @@ export class GuestService {
     if (typeof localStorage === 'undefined') return null;
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return null;
-      const parsed = JSON.parse(raw) as unknown;
-      if (
-        parsed &&
-        typeof parsed === 'object' &&
-        'id' in parsed &&
-        'name' in parsed &&
-        typeof (parsed as GuestSession).id === 'string' &&
-        typeof (parsed as GuestSession).name === 'string'
-      ) {
-        return parsed as GuestSession;
-      }
-      return null;
+      return raw ? this.parseGuestSession(JSON.parse(raw)) : null;
     } catch {
       return null;
     }
+  }
+
+  /** Validates that a parsed JSON object is a valid GuestSession. */
+  private parseGuestSession(parsed: unknown): GuestSession | null {
+    if (
+      parsed &&
+      typeof parsed === 'object' &&
+      'id' in parsed &&
+      'name' in parsed &&
+      typeof (parsed as GuestSession).id === 'string' &&
+      typeof (parsed as GuestSession).name === 'string'
+    ) {
+      return parsed as GuestSession;
+    }
+    return null;
   }
 
   /** Generates a unique guest ID via `crypto.randomUUID` (fallback: timestamp + random). */

@@ -110,6 +110,14 @@ export class SurveyShareService {
 
   private mapSharedSurvey(raw: SharedSurveyResponse): Survey {
     return {
+      ...this.buildBaseSurveyFields(raw),
+      questions: this.mapSharedQuestions(raw.questions),
+    };
+  }
+
+  /** Builds the base survey fields (non-question fields). */
+  private buildBaseSurveyFields(raw: SharedSurveyResponse): Omit<Survey, 'questions'> {
+    return {
       id: raw.id,
       creatorId: raw.creatorId,
       title: raw.title,
@@ -120,7 +128,6 @@ export class SurveyShareService {
       isAnonymous: raw.isAnonymous ?? false,
       shareToken: raw.shareToken ?? undefined,
       accessCode: undefined,
-      questions: this.mapSharedQuestions(raw.questions),
       createdAt: raw.createdAt,
       updatedAt: raw.updatedAt,
       endsAt: raw.endsAt,

@@ -329,6 +329,14 @@ export class SurveyCrudService {
 
   private mapSurveyRow(row: SurveyRow): Survey {
     return {
+      ...this.buildBaseSurveyRowFields(row),
+      questions: this.mapQuestionRows(row.survey_questions),
+    };
+  }
+
+  /** Builds the base survey fields (non-question fields) from a row. */
+  private buildBaseSurveyRowFields(row: SurveyRow): Omit<Survey, 'questions'> {
+    return {
       id: row.id,
       creatorId: row.creator_id,
       title: row.title,
@@ -339,7 +347,6 @@ export class SurveyCrudService {
       isAnonymous: row.is_anonymous ?? false,
       shareToken: row.share_token ?? undefined,
       accessCode: row.access_code ?? undefined,
-      questions: this.mapQuestionRows(row.survey_questions),
       createdAt: row.created_at,
       updatedAt: row.updated_at,
       endsAt: row.ends_at ?? '',

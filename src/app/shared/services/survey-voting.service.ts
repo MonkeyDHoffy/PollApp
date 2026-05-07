@@ -255,16 +255,26 @@ export class SurveyVotingService {
     for (const group of answers) {
       const row = results.find((r) => r.questionId === group.questionId);
       if (!row) continue;
-      for (const answerId of group.selectedAnswerIds) {
-        const found = row.answers.find((a) => a.id === answerId);
-        if (found) found.count += 1;
-      }
-      const total = row.answers.reduce((s, a) => s + a.count, 0);
-      row.answers = row.answers.map((a) => ({
-        ...a,
-        percentage: total === 0 ? 0 : Math.round((a.count / total) * 100),
-      }));
+      this.incrementAnswerCounts(row, group.selectedAnswerIds);
+      this.updateAnswerPercentages(row);
     }
+  }
+
+  /** Increments the count for each selected answer ID in a question result. */
+  private incrementAnswerCounts(result: SurveyResult, selectedAnswerIds: string[]): void {
+    for (const answerId of selectedAnswerIds) {
+      const found = result.answers.find((a) => a.id === answerId);
+      if (found) found.count += 1;
+    }
+  }
+
+  /** Recalculates percentages for all answers in a question result. */
+  private updateAnswerPercentages(result: SurveyResult): void {
+    const total = result.answers.reduce((s, a) => s + a.count, 0);
+    result.answers = result.answers.map((a) => ({
+      ...a,
+      percentage: total === 0 ? 0 : Math.round((a.count / total) * 100),
+    }));
   }
 
   /** Increments the totalResponses counter on the current survey in state. */
