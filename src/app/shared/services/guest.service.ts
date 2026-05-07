@@ -1,5 +1,6 @@
 import { Injectable, computed, signal } from '@angular/core';
 
+/** Lokale Gast-Identität ohne Supabase-Konto — wird nur im localStorage gespeichert. */
 export interface GuestSession {
   id: string;
   name: string;
@@ -7,6 +8,10 @@ export interface GuestSession {
 
 const STORAGE_KEY = 'pollapp.guest';
 
+/**
+ * Verwaltet anonyme Gast-Sessions ohne Supabase-Authentifizierung.
+ * Session-Daten werden im localStorage gespeichert und beim Start wiederhergestellt.
+ */
 @Injectable({ providedIn: 'root' })
 export class GuestService {
   private readonly guestSignal = signal<GuestSession | null>(this.loadFromStorage());
@@ -15,6 +20,7 @@ export class GuestService {
   readonly isGuest = computed(() => !!this.guestSignal());
   readonly guestName = computed(() => this.guestSignal()?.name ?? null);
 
+  /** Startet eine neue Gast-Session mit dem angegebenen Anzeigenamen. */
   startSession(name: string): void {
     const trimmed = name.trim();
     if (!trimmed) return;
@@ -30,6 +36,7 @@ export class GuestService {
     this.guestSignal.set(session);
   }
 
+  /** Beendet die aktive Gast-Session und entfernt sie aus dem localStorage. */
   endSession(): void {
     if (typeof localStorage !== 'undefined') {
       localStorage.removeItem(STORAGE_KEY);
@@ -37,6 +44,7 @@ export class GuestService {
     this.guestSignal.set(null);
   }
 
+  /** Liest und validiert eine gespeicherte Gast-Session aus dem localStorage. */
   private loadFromStorage(): GuestSession | null {
     if (typeof localStorage === 'undefined') return null;
     try {
@@ -59,6 +67,7 @@ export class GuestService {
     }
   }
 
+  /** Erzeugt eine eindeutige Gast-ID via `crypto.randomUUID` (Fallback: timestamp + random). */
   private generateId(): string {
     if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
       return crypto.randomUUID();

@@ -3,6 +3,10 @@ import { Session, User } from '@supabase/supabase-js';
 import { supabaseClient } from './supabase-client';
 import { LangService } from './lang.service';
 
+/**
+ * Authentifizierung via Supabase Magic-Link (OTP).
+ * Verwaltet Session, OTP-Cooldown, Display-Name und Lade-/Fehlerzustände als Signals.
+ */
 @Injectable({
   providedIn: 'root',
 })
@@ -13,6 +17,7 @@ export class AuthService {
   private static readonly COOLDOWN_KEY = 'pollapp.otp.cooldown';
   private static readonly COOLDOWN_MS = 60_000;
 
+  /** Liest den gespeicherten OTP-Cooldown-Zeitstempel aus dem localStorage. */
   private static readStoredCooldown(): number | null {
     if (typeof localStorage === 'undefined') return null;
     const ts = parseInt(localStorage.getItem(AuthService.COOLDOWN_KEY) ?? '', 10);
@@ -61,6 +66,7 @@ export class AuthService {
     });
   }
 
+  /** Liest die aktuelle Supabase-Session und setzt den `initialized`-State auf true. */
   async refreshSession(): Promise<void> {
     const { data, error } = await this.supabase.auth.getSession();
     if (error) {
@@ -71,11 +77,17 @@ export class AuthService {
     this.initializedSignal.set(true);
   }
 
+  /** Setzt Fehler- und Erfolgsmeldungs-Signal zurück. */
   clearNotices(): void {
     this.messageSignal.set(null);
     this.errorSignal.set(null);
   }
 
+  /**
+   * Sendet einen Magic-Link an die angegebene E-Mail-Adresse.
+   * Blockiert während des aktiven OTP-Cooldowns und gibt `false` zurück.
+   * @returns `true` bei Erfolg, `false` bei Fehler oder aktivem Cooldown.
+   */
   async sendMagicLink(email: string): Promise<boolean> {
     const until = this.otpCooldownUntilSignal();
     if (until && until > Date.now()) {
@@ -119,6 +131,7 @@ export class AuthService {
     }
   }
 
+  /** Setzt den OTP-Cooldown-Zeitstempel im Signal und im localStorage. */
   private setOtpCooldown(): void {
     const until = Date.now() + AuthService.COOLDOWN_MS;
     this.otpCooldownUntilSignal.set(until);
@@ -127,6 +140,10 @@ export class AuthService {
     }
   }
 
+  /**
+   * Setzt den Display-Namen im Supabase-User-Metadata (nur beim ersten Mal).
+   * Hat keinen Effekt wenn der Name bereits gesetzt ist.
+   */
   async updateDisplayName(name: string): Promise<void> {
     const trimmed = name.trim();
     if (!trimmed) return;
@@ -142,6 +159,7 @@ export class AuthService {
     }
   }
 
+  /** Meldet den aktuellen Nutzer bei Supabase ab. */
   async signOut(): Promise<void> {
     this.loadingSignal.set(true);
     this.clearNotices();

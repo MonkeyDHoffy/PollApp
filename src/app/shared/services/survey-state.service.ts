@@ -43,48 +43,66 @@ export class SurveyStateService {
 
   // ── State mutations (used by sub-services) ────────────────────────────────
 
+  /** Setzt den globalen Lade-Zustand. */
   setLoading(v: boolean): void { this._loading.set(v); }
+  /** Setzt die globale Fehlermeldung (`null` = kein Fehler). */
   setError(msg: string | null): void { this._error.set(msg); }
+  /** Löscht die globale Fehlermeldung. */
   clearError(): void { this._error.set(null); }
+  /** Setzt den Schema-Hinweis (z. B. Legacy-Spalten-Warnung). */
   setSchemaNotice(msg: string): void { this._schemaNotice.set(msg); }
+  /** Setzt die aktuell angezeigte Umfrage. */
   setCurrentSurvey(survey: Survey | null): void { this._currentSurvey.set(survey); }
+  /** Ersetzt die gesamte Umfragenliste. */
   setAllSurveys(surveys: Survey[]): void { this._allSurveys.set(surveys); }
+  /** Aktualisiert die Umfragenliste per Update-Funktion. */
   updateAllSurveys(fn: (surveys: Survey[]) => Survey[]): void { this._allSurveys.update(fn); }
+  /** Leert die gespeicherten Nutzer-Antworten. */
   clearUserResponses(): void { this._userResponses.set([]); }
+  /** Hängt eine neue Nutzer-Antwort an die Liste. */
   addUserResponse(response: SurveyResponse): void {
     this._userResponses.update((rs) => [...rs, response]);
   }
 
+  /** Aktualisiert die Demo-Ergebnisse per Update-Funktion. */
   updateDemoResults(fn: (s: Record<string, SurveyResult[]>) => Record<string, SurveyResult[]>): void {
     this._demoResults.update(fn);
   }
 
+  /** Gibt den aktuellen Demo-Ergebnis-Cache zurück. */
   getDemoResults(): Record<string, SurveyResult[]> { return this._demoResults(); }
 
+  /** Gibt gecachte Ergebnisse für eine geteilte Umfrage zurück (`undefined` = kein Cache). */
   getSharedResults(surveyId: string): SurveyResult[] | undefined {
     return this._sharedResults()[surveyId];
   }
 
+  /** Speichert Ergebnisse einer geteilten Umfrage im Cache. */
   setSharedResults(surveyId: string, results: SurveyResult[]): void {
     this._sharedResults.update((s) => ({ ...s, [surveyId]: results }));
   }
 
+  /** Gibt den zwischengespeicherten Zugangscode für ein Share-Token zurück. */
   getShareAccessCode(shareToken: string): string | undefined {
     return this._shareAccessCodes()[shareToken];
   }
 
+  /** Speichert den Zugangscode für ein Share-Token im Sitzungsspeicher. */
   setShareAccessCode(shareToken: string, code: string): void {
     this._shareAccessCodes.update((s) => ({ ...s, [shareToken]: code }));
   }
 
   // ── Shared utilities ──────────────────────────────────────────────────────
 
+  /** Prüft ob die ID zu einer Demo-Umfrage gehört (Präfix `demo-`). */
   isDemoSurveyId(surveyId: string): boolean { return surveyId.startsWith('demo-'); }
 
+  /** Erstellt eine tiefe Kopie einer Ergebnis-Liste (Immutability für Signals). */
   cloneResults(results: SurveyResult[]): SurveyResult[] {
     return results.map((r) => ({ ...r, answers: r.answers.map((a) => ({ ...a })) }));
   }
 
+  /** Erstellt eine tiefe Kopie einer Umfrage inklusive Fragen und Antworten. */
   cloneSurvey(survey: Survey | null): Survey | null {
     if (!survey) return null;
     return {
@@ -93,6 +111,10 @@ export class SurveyStateService {
     };
   }
 
+  /**
+   * Gibt das gespeicherte Teilnehmer-Token für den gegebenen Schlüssel zurück.
+   * Erzeugt und speichert ein neues Token falls noch keins vorhanden ist.
+   */
   ensureParticipantToken(key: string): string {
     const storageKey = `pollapp.participant.${key}`;
     const stored = typeof localStorage !== 'undefined' ? localStorage.getItem(storageKey) : null;
@@ -102,6 +124,7 @@ export class SurveyStateService {
     return token;
   }
 
+  /** Erzeugt einen zufälligen alphanumerischen Token der angegebenen Länge. */
   generateToken(length: number): string {
     const source =
       typeof crypto !== 'undefined' && 'randomUUID' in crypto
@@ -110,6 +133,7 @@ export class SurveyStateService {
     return source.slice(0, length);
   }
 
+  /** Erstellt den initialen Demo-Ergebnis-Cache aus den statischen Demo-Fixtures. */
   private buildInitialDemoResults(): Record<string, SurveyResult[]> {
     return Object.fromEntries(
       Object.entries(DEMO_SURVEY_RESULTS).map(([id, results]) => [
