@@ -2,8 +2,8 @@
     <p class="survey-list-view__heading">{{ heading() }}</p>
 
     <div class="survey-list-view__frame" #listFrame (scroll)="onFrameScroll($event)" (wheel)="onFrameWheel($event)"
-        (touchstart)="onFrameTouchStart($event)" (touchmove)="onFrameTouchMove($event)"
-        (touchend)="onFrameTouchEnd()" (touchcancel)="onFrameTouchEnd()">
+        (touchstart)="onFrameTouchStart($event)" (touchmove)="onFrameTouchMove($event)" (touchend)="onFrameTouchEnd()"
+        (touchcancel)="onFrameTouchEnd()">
         @for (row of rows(); track row.id) {
         <article class="survey-list-view__item" [class.survey-list-view__item--muted]="row.tone === 'muted'"
             [class.survey-list-view__item--clickable]="row.tone !== 'muted'"
