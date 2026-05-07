@@ -50,3 +50,8 @@ Thumbs.db
 *.context.json
 FEATURES.md
 src/_tokens.scss
+
+# Secrets — never commit real credentials
+.env
+src/environments/environment.ts
+src/environments/environment.development.ts
