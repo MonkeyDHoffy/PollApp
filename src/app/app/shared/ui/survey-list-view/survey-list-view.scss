@@ -14,25 +14,10 @@
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 12px;
-  padding: 2px 6px 2px 2px; // right: extra room for scrollbar + shadow
-  min-height: 240px;
-  max-height: min(860px, max(320px, var(--survey-list-max-height, calc(100dvh - 220px))));
-  overflow-y: auto;
-  overflow-x: hidden;
-  overscroll-behavior: auto;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(243, 168, 85, 0.55) transparent;
-
-  &::-webkit-scrollbar { width: 3px; }
-  &::-webkit-scrollbar-track { background: transparent; }
-  &::-webkit-scrollbar-thumb {
-    background: rgba(243, 168, 85, 0.55);
-    border-radius: 99px;
-  }
+  padding: 2px;
 
   @media (max-width: 900px) {
     grid-template-columns: 1fr;
-    max-height: min(760px, max(300px, var(--survey-list-max-height, calc(100dvh - 200px))));
   }
 }
 

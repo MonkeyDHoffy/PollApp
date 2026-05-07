@@ -728,10 +728,11 @@
 
 .surveys__sticky-header {
   position: sticky;
-  top: var(--surveys-sticky-gap);
+  top: 0;
   z-index: 80;
   overflow-anchor: none;
   width: 100%;
+  background: var(--bg-primary);
 
   &::after {
     content: '';
