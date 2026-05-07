@@ -66,7 +66,10 @@
         }
 
         @if (loading() || isInitializing()) {
-        <p class="survey-detail__state">{{ t()('loadingSurvey') }}</p>
+        <div class="survey-detail__loading-state">
+            <span class="survey-detail__spinner" aria-hidden="true"></span>
+            <p class="survey-detail__state">{{ t()('loadingSurvey') }}</p>
+        </div>
         } @else if (accessCodeRequired()) {
         <div class="survey-detail__access-panel">
             <p class="survey-detail__state survey-detail__state--error">{{ error() }}</p>

@@ -216,15 +216,7 @@ export class SurveyCrudService {
     userId: string,
     email: string | null,
   ): Record<string, unknown> {
-    const base: Record<string, unknown> = {
-      creator_id: userId,
-      creator_email: email,
-      title: dto.title,
-      description: dto.description ?? null,
-      category: dto.category,
-      status: dto.status ?? 'published',
-      ends_at: dto.endsAt ?? null,
-    };
+    const base = this.buildBaseSurveyPayload(dto, userId, email);
     if (!this.useLegacySurveyColumns) {
       base['visibility'] = dto.visibility ?? 'public';
       base['is_anonymous'] = dto.isAnonymous ?? false;
@@ -234,19 +226,47 @@ export class SurveyCrudService {
     return base;
   }
 
+  /** Builds the base survey fields common to insert and update operations. */
+  private buildBaseSurveyPayload(
+    dto: CreateSurveyDTO,
+    userId: string,
+    email: string | null,
+  ): Record<string, unknown> {
+    return {
+      creator_id: userId,
+      creator_email: email,
+      title: dto.title,
+      description: dto.description ?? null,
+      category: dto.category,
+      status: dto.status ?? 'published',
+      ends_at: dto.endsAt ?? null,
+    };
+  }
+
   private buildSurveyUpdatePayload(updates: UpdateSurveyDTO): Record<string, unknown> {
+    const payload = this.buildBaseUpdateFields(updates);
+    if (!this.useLegacySurveyColumns) {
+      this.buildModernUpdateFields(payload, updates);
+    }
+    return payload;
+  }
+
+  /** Sets the base survey update fields (title, description, category, status, ends_at). */
+  private buildBaseUpdateFields(updates: UpdateSurveyDTO): Record<string, unknown> {
     const payload: Record<string, unknown> = {};
     if (updates.title !== undefined) payload['title'] = updates.title;
     if (updates.description !== undefined) payload['description'] = updates.description ?? null;
     if (updates.category !== undefined) payload['category'] = updates.category;
     if (updates.status !== undefined) payload['status'] = updates.status;
     if (updates.endsAt !== undefined) payload['ends_at'] = updates.endsAt ?? null;
-    if (!this.useLegacySurveyColumns) {
-      if (updates.visibility !== undefined) payload['visibility'] = updates.visibility;
-      if (updates.accessCode !== undefined) payload['access_code'] = updates.accessCode || null;
-      if (updates.isAnonymous !== undefined) payload['is_anonymous'] = updates.isAnonymous;
-    }
     return payload;
+  }
+
+  /** Sets the modern-schema update fields (visibility, access_code, is_anonymous). */
+  private buildModernUpdateFields(payload: Record<string, unknown>, updates: UpdateSurveyDTO): void {
+    if (updates.visibility !== undefined) payload['visibility'] = updates.visibility;
+    if (updates.accessCode !== undefined) payload['access_code'] = updates.accessCode || null;
+    if (updates.isAnonymous !== undefined) payload['is_anonymous'] = updates.isAnonymous;
   }
 
   // ── Private: DB inserts ───────────────────────────────────────────────────

@@ -67,6 +67,7 @@ function pastDateValidator(control: AbstractControl): ValidationErrors | null {
  * Modal for creating or editing a survey.
  * Handles the full flow: form entry → publish confirmation → share link.
  * In edit mode (editSurveyId is set), saving is immediate without a confirm step.
+ * Supports dynamic question and answer add/remove with validation.
  */
 @Component({
   selector: 'app-create-survey-modal',

@@ -59,6 +59,11 @@ const SURVEY_BATCH_SIZE = 40;
  * a filterable survey list. Manages the auth panel, guest mode, create-survey modal,
  * and virtual-batch pagination.
  */
+/**
+ * Home page: renders hero section, "ending soon" carousel, and filterable survey list.
+ * Manages authentication, guest mode, create-survey modal, and virtual-batch pagination.
+ * Sticky toolbar collapses on mobile scroll; desktop shows all controls.
+ */
 @Component({
   selector: 'app-home',
   imports: [
@@ -207,6 +212,7 @@ export class HomeComponent implements OnDestroy {
   private _lastPageScrollY = 0;
   private toolbarManualExpanded = false;
 
+  /** Collapses the sticky toolbar on downward mobile scroll, if not manually expanded. */
   @HostListener('window:scroll')
   protected onWindowScroll(): void {
     if (window.innerWidth >= 768) return;
@@ -214,12 +220,14 @@ export class HomeComponent implements OnDestroy {
       this._lastPageScrollY = window.scrollY;
       return;
     }
-
     const y = window.scrollY;
-    if (y > this._lastPageScrollY + 10 && y > 300) {
-      this.toolbarCollapsed.set(true);
-    }
+    if (this.isScrollingDown(y)) this.toolbarCollapsed.set(true);
     this._lastPageScrollY = y;
+  }
+
+  /** Returns true if scrolled down by >10px and past 300px from top. */
+  private isScrollingDown(currentY: number): boolean {
+    return currentY > this._lastPageScrollY + 10 && currentY > 300;
   }
 
   protected onListScrolled(dir: 'up' | 'down'): void {

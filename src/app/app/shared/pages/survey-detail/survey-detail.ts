@@ -36,6 +36,7 @@ type QuestionView = {
  * Survey detail page: renders questions, collects responses, and shows live results.
  * Supports public and private surveys (share token + access code),
  * demo mode, and real-time result updates after submission.
+ * Handles creator tools (edit, duplicate, export, delete) and participant management.
  */
 @Component({
   selector: 'app-survey-detail',
@@ -193,6 +194,7 @@ export class SurveyDetailComponent implements AfterViewInit {
       : Promise.resolve();
     void load.finally(() => this.isInitializing.set(false));
     effect(() => this.flashResultsOnChange());
+    window.scrollTo({ top: 0, behavior: 'instant' });
   }
 
   ngAfterViewInit(): void {
@@ -304,19 +306,25 @@ export class SurveyDetailComponent implements AfterViewInit {
   /** Submits the user's answers and updates the UI to show results. */
   protected async completeSurvey(): Promise<void> {
     this.showCompleteConfirm.set(false);
-    const survey = this.survey();
-    if (!survey) { this.submitMessage.set(this.t()('responseError')); return; }
-    const answers = this.buildAnswerPayload();
-    if (answers.length === 0) { this.submitMessage.set(this.t()('selectAtLeastOne')); return; }
+    if (!this.validateBeforeSubmit()) return;
     this.submitting.set(true);
-    this.submitMessage.set(null);
+    const survey = this.survey();
     const saved = await this.surveyService.submitSurveyResponse({
-      surveyId: survey.id,
-      answers,
+      surveyId: survey!.id,
+      answers: this.buildAnswerPayload(),
       respondentName: this.resolveRespondentName(),
     });
     if (!saved) { this.handleSubmitError(); return; }
-    await this.handleSubmitSuccess(survey.id);
+    await this.handleSubmitSuccess(survey!.id);
+  }
+
+  /** Checks survey existence and answers before submission. Sets error if invalid. */
+  private validateBeforeSubmit(): boolean {
+    const survey = this.survey();
+    if (!survey) { this.submitMessage.set(this.t()('responseError')); return false; }
+    if (this.buildAnswerPayload().length === 0) { this.submitMessage.set(this.t()('selectAtLeastOne')); return false; }
+    this.submitMessage.set(null);
+    return true;
   }
 
   // ── Navigation & sharing ──────────────────────────────────────────────────
