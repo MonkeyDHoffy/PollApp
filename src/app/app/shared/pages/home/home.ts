@@ -55,11 +55,6 @@ const SORT_KEYS: SortKey[] = ['newest', 'oldest', 'az', 'za'];
 const SURVEY_BATCH_SIZE = 40;
 
 /**
- * Home page of the app: renders the hero section, the "ending soon" carousel, and
- * a filterable survey list. Manages the auth panel, guest mode, create-survey modal,
- * and virtual-batch pagination.
- */
-/**
  * Home page: renders hero section, "ending soon" carousel, and filterable survey list.
  * Manages authentication, guest mode, create-survey modal, and virtual-batch pagination.
  * Sticky toolbar collapses on mobile scroll; desktop shows all controls.
