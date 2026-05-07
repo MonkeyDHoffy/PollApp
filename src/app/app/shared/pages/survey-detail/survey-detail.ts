@@ -85,6 +85,7 @@ export class SurveyDetailComponent implements AfterViewInit {
   protected readonly accessCode = signal('');
   protected readonly accessCodeRequired = signal(false);
   protected readonly selectedAnswers = signal<Record<string, string[]>>({});
+  protected readonly isInitializing = signal(true);
   protected readonly liveResults = signal<SurveyResult[]>([]);
   protected readonly isLive = signal(false);
   protected readonly resultsLoading = signal(false);
@@ -166,11 +167,12 @@ export class SurveyDetailComponent implements AfterViewInit {
   // ── Constructor ───────────────────────────────────────────────────────────
 
   constructor() {
-    if (this.surveyId) {
-      void this.loadSurveyContext(this.surveyId);
-    } else if (this.joinToken) {
-      void this.loadSurveyByJoinToken(this.joinToken, this.joinCode ?? undefined);
-    }
+    const load = this.surveyId
+      ? this.loadSurveyContext(this.surveyId)
+      : this.joinToken
+      ? this.loadSurveyByJoinToken(this.joinToken, this.joinCode ?? undefined)
+      : Promise.resolve();
+    void load.finally(() => this.isInitializing.set(false));
     effect(() => this.flashResultsOnChange());
   }
 
@@ -382,7 +384,7 @@ export class SurveyDetailComponent implements AfterViewInit {
   private async refreshResults(surveyId: string): Promise<void> {
     this.resultsLoading.set(true);
     const [results, count] = await Promise.all([
-      this.surveyService.loadSurveyResults(surveyId),
+      this.surveyService.loadSurveyResults(surveyId, true),
       this.surveyService.loadParticipantCount(surveyId),
     ]);
     this.liveResults.set(results);

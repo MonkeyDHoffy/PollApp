@@ -65,7 +65,7 @@
         <p class="survey-detail__state">{{ schemaNotice() }}</p>
         }
 
-        @if (loading()) {
+        @if (loading() || isInitializing()) {
         <p class="survey-detail__state">{{ t()('loadingSurvey') }}</p>
         } @else if (accessCodeRequired()) {
         <div class="survey-detail__access-panel">
