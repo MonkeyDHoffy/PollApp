@@ -39,8 +39,8 @@ type SurveyListRow = {
 };
 
 /**
- * Paginierte Umfragenliste mit internem Scroll, Scroll-getriebenen Kartenanimationen
- * und Events für Auswahl, Share-Link und Nachladen weiterer Einträge.
+ * Paginated survey list with internal scroll, scroll-driven card animations,
+ * and events for selection, share-link, and loading more items.
  */
 @Component({
   selector: 'app-survey-list-view',
@@ -177,28 +177,23 @@ export class SurveyListViewComponent implements AfterViewInit {
 
   protected onFrameTouchMove(event: TouchEvent): void {
     if (event.touches.length !== 1) return;
-
     const frame = this.listFrameRef?.nativeElement;
     const touch = event.touches[0];
     if (!frame || !touch) return;
-
-    if (this.lastTouchClientY == null) {
-      this.lastTouchClientY = touch.clientY;
-      return;
-    }
-
+    if (this.lastTouchClientY == null) { this.lastTouchClientY = touch.clientY; return; }
     const deltaY = this.lastTouchClientY - touch.clientY;
     this.lastTouchClientY = touch.clientY;
-    if (deltaY === 0) return;
+    if (deltaY !== 0) this.handleTouchScroll(frame, deltaY, event);
+  }
 
+  /** Hands off scroll momentum to the window when the list frame is at its boundary. */
+  private handleTouchScroll(frame: HTMLElement, deltaY: number, event: TouchEvent): void {
     const atTop = frame.scrollTop <= 0;
     const atBottom = frame.scrollTop + frame.clientHeight >= frame.scrollHeight - 1;
     const scrollingUp = deltaY < 0;
     const scrollingDown = deltaY > 0;
     const shouldHandoff = (scrollingUp && atTop) || (scrollingDown && atBottom);
-
     if (!shouldHandoff) return;
-
     event.preventDefault();
     window.scrollBy({ top: deltaY, behavior: 'auto' });
   }

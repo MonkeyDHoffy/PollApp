@@ -2,7 +2,10 @@ import { ChangeDetectionStrategy, Component, effect, input, output, signal } fro
 
 type DropdownAppearance = 'ghost' | 'filled';
 
-/** Dropdown-Auswahlmenü mit Trigger-Button, animierter Option-Liste und aktiver Auswahl-Anzeige. */
+/**
+ * Dropdown selection menu with a trigger button, animated option list,
+ * and an active-selection indicator.
+ */
 @Component({
   selector: 'app-dropdown-menu',
   imports: [],
@@ -25,36 +28,29 @@ export class DropdownMenuComponent {
   readonly showSelectionValue = input(false);
   readonly startOpen = input(false);
   readonly accentArrow = input(false);
+  /** When true, the dropdown is non-interactive. */
   readonly locked = input(false);
 
+  /** Emits the newly selected option label. */
   readonly selectedChange = output<string>();
 
   protected readonly open = signal(false);
   protected readonly currentSelection = signal('');
 
   constructor() {
-    effect(() => {
-      this.open.set(this.startOpen());
-    });
-
-    effect(() => {
-      this.currentSelection.set(this.selected());
-    });
+    effect(() => { this.open.set(this.startOpen()); });
+    effect(() => { this.currentSelection.set(this.selected()); });
   }
 
+  /** Toggles the dropdown open/closed. Does nothing when locked. */
   protected onToggle(): void {
-    if (this.locked()) {
-      return;
-    }
-
+    if (this.locked()) return;
     this.open.update((value) => !value);
   }
 
+  /** Selects an option, closes the dropdown, and emits the change. */
   protected onSelect(option: string): void {
-    if (this.locked()) {
-      return;
-    }
-
+    if (this.locked()) return;
     this.currentSelection.set(option);
     this.open.set(false);
     this.selectedChange.emit(option);

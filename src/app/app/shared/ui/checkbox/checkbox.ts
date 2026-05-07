@@ -1,7 +1,12 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 
+/** Visual state of the checkbox. */
 type CheckboxState = 'default' | 'highlight' | 'checked';
 
+/**
+ * Presentational checkbox component used inside {@link AnswerItemComponent}.
+ * Controlled entirely through the `state` input — no internal toggle logic.
+ */
 @Component({
   selector: 'app-checkbox',
   imports: [],

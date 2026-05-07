@@ -1,3 +1,4 @@
+/** Top-level route definitions for the application. */
 import { Routes } from '@angular/router';
 import { HomeComponent } from './app/shared/pages/home/home';
 import { SurveyDetailComponent } from './app/shared/pages/survey-detail/survey-detail';

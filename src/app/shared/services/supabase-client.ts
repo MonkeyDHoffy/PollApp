@@ -1,3 +1,7 @@
+/**
+ * Singleton Supabase client configured for PKCE auth flow with session persistence.
+ * Import this constant wherever a Supabase connection is needed.
+ */
 import { createClient } from '@supabase/supabase-js';
 import { environment } from '../../../environments/environment';
 

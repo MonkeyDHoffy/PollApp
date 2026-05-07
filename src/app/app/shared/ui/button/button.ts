@@ -9,7 +9,10 @@ type FilterStyle = 'base' | 'active';
 type TertiaryStyle = 'base' | 'muted';
 type DeleteStyle = 'base' | 'hover';
 
-/** Universelle Button-Komponente mit Varianten (primary, secondary, filter, delete …) und Größen. */
+/**
+ * Universal button component with variants (primary, secondary, filter, delete, …) and sizes.
+ * The `edit` variant toggles an internal confirmed state on each click.
+ */
 @Component({
   selector: 'app-button',
   imports: [],
@@ -30,6 +33,7 @@ export class ButtonComponent {
   readonly deleteStyle = input<DeleteStyle>('base');
   readonly ariaLabel = input('Button');
 
+  /** Emits when the button is clicked (and not disabled). */
   readonly pressed = output<void>();
 
   protected readonly isEditConfirmed = signal(false);
@@ -40,46 +44,35 @@ export class ButtonComponent {
   protected readonly isAddStyle = computed(
     () => this.variant() === 'primary' && this.primaryStyle() === 'add'
   );
-
   protected readonly isConfirmStyle = computed(
     () => this.variant() === 'primary' && this.primaryStyle() === 'confirm'
   );
-
   protected readonly isSecondaryMuted = computed(
     () => this.variant() === 'secondary' && this.secondaryStyle() === 'muted'
   );
-
   protected readonly isFilterActive = computed(
     () => this.variant() === 'filter' && this.filterStyle() === 'active'
   );
-
   protected readonly isTertiaryMuted = computed(
     () => this.variant() === 'tertiary' && this.tertiaryStyle() === 'muted'
   );
-
   protected readonly editIconSrc = computed(() =>
     this.isEditConfirmed() ? '/assets/edit/confirm.png' : '/assets/edit/edit.png'
   );
-
   protected readonly isAddIcon = computed(
     () =>
       (this.variant() === 'primary' && this.primaryStyle() === 'add') ||
       this.variant() === 'tertiary'
   );
-
   protected readonly isCheckIcon = computed(
     () => this.variant() === 'primary' && this.primaryStyle() === 'confirm'
   );
 
   protected onClick(): void {
-    if (this.disabled()) {
-      return;
-    }
-
+    if (this.disabled()) return;
     if (this.variant() === 'edit') {
       this.isEditConfirmed.update((value) => !value);
     }
-
     this.pressed.emit();
   }
 }

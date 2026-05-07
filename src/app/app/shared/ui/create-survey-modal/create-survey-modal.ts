@@ -55,6 +55,7 @@ const CATEGORIES = [
   'Other',
 ] as const;
 
+/** Validator that rejects dates before today. */
 function pastDateValidator(control: AbstractControl): ValidationErrors | null {
   if (!control.value) return null;
   const d = new Date();

@@ -1,17 +1,22 @@
 /**
- * Survey Models & Types
- * Definiert die Datenstruktur für die Supabase-Integration
+ * Survey domain models and DTOs used throughout the application.
+ * These types mirror the Supabase database schema.
  */
 
+/** Lifecycle state of a survey. */
 export type SurveyStatus = 'draft' | 'published' | 'closed';
+
+/** Access level of a survey. */
 export type SurveyVisibility = 'public' | 'private';
 
+/** A single selectable answer option within a question. */
 export interface SurveyAnswer {
   id: string;
   text: string;
   order: number;
 }
 
+/** A question belonging to a survey, with its answer options. */
 export interface SurveyQuestion {
   id: string;
   text: string;
@@ -22,6 +27,7 @@ export interface SurveyQuestion {
   allowMultiple?: boolean;
 }
 
+/** A complete survey record as returned by the database. */
 export interface Survey {
   id: string;
   creatorId: string;
@@ -36,10 +42,12 @@ export interface Survey {
   questions: SurveyQuestion[];
   createdAt: string;
   updatedAt: string;
-  endsAt: string; // ISO Date
+  /** ISO 8601 date string for when the survey closes. */
+  endsAt: string;
   totalResponses: number;
 }
 
+/** The set of answers submitted by one participant. */
 export interface SurveyResponse {
   id?: string;
   surveyId: string;
@@ -53,11 +61,13 @@ export interface SurveyResponse {
   respondedAt?: string;
 }
 
+/** Lightweight participant record shown in the participants popup. */
 export interface SurveyParticipant {
   name: string | null;
   respondedAt: string;
 }
 
+/** Aggregated result data for a single question. */
 export interface SurveyResult {
   questionId: string;
   questionText: string;
@@ -69,6 +79,7 @@ export interface SurveyResult {
   }[];
 }
 
+/** Payload for creating a new survey. */
 export interface CreateSurveyDTO {
   title: string;
   description?: string;
@@ -87,6 +98,7 @@ export interface CreateSurveyDTO {
   }[];
 }
 
+/** Payload for updating an existing survey's metadata. */
 export interface UpdateSurveyDTO {
   title?: string;
   description?: string;
@@ -98,14 +110,13 @@ export interface UpdateSurveyDTO {
   accessCode?: string;
 }
 
+/** Return value from a successful survey creation. */
 export interface CreateSurveyResult {
   id: string;
   shareToken?: string;
 }
 
-/**
- * UI-spezifische Modelle
- */
+/** UI-specific survey shape used in the home page list. */
 export interface SurveyListItem {
   id: string;
   category: string;

@@ -33,9 +33,9 @@ type QuestionView = {
 };
 
 /**
- * Detailansicht einer Umfrage: zeigt Fragen, nimmt Antworten entgegen und stellt
- * Live-Ergebnisse dar. Unterstützt öffentliche und private Umfragen (Share-Token + Code),
- * Demo-Modus sowie Realtime-Updates nach Abstimmung.
+ * Survey detail page: renders questions, collects responses, and shows live results.
+ * Supports public and private surveys (share token + access code),
+ * demo mode, and real-time result updates after submission.
  */
 @Component({
   selector: 'app-survey-detail',
@@ -487,31 +487,33 @@ export class SurveyDetailComponent implements AfterViewInit {
 
   // ── Private: result map & flash ───────────────────────────────────────────
 
+  /**
+   * Builds a questionId → answerId → answer-data map for result rendering.
+   * When the user has not yet voted, selected answers are speculatively included.
+   */
   private buildResultMap() {
     const base = this.liveResults();
-    const canPreview = !this.alreadyVoted() && !this.submitted();
-    const selections = canPreview ? this.selectedAnswers() : {};
+    const selections = (!this.alreadyVoted() && !this.submitted()) ? this.selectedAnswers() : {};
     const hasSelections = Object.values(selections).some((ids) => ids.length > 0);
-
     if (!hasSelections) {
       return new Map(base.map((r) => [r.questionId, new Map(r.answers.map((a) => [a.id, a]))]));
     }
+    return new Map(base.map((r) => this.buildPreviewResultEntry(r, selections)));
+  }
 
-    return new Map(
-      base.map((r) => {
-        const selectedIds = selections[r.questionId] ?? [];
-        const augmented = r.answers.map((a) => ({
-          ...a,
-          count: a.count + (selectedIds.includes(a.id) ? 1 : 0),
-        }));
-        const total = augmented.reduce((sum, a) => sum + a.count, 0);
-        const previewed = augmented.map((a) => ({
-          ...a,
-          percentage: total > 0 ? Math.round((a.count / total) * 100) : 0,
-        }));
-        return [r.questionId, new Map(previewed.map((a) => [a.id, a]))] as const;
-      })
-    );
+  private buildPreviewResultEntry(
+    r: { questionId: string; answers: Array<{ id: string; count: number; percentage: number; text: string }> },
+    selections: Record<string, string[]>,
+  ) {
+    const selectedIds = selections[r.questionId] ?? [];
+    const augmented = r.answers.map((a) => ({
+      ...a, count: a.count + (selectedIds.includes(a.id) ? 1 : 0),
+    }));
+    const total = augmented.reduce((sum, a) => sum + a.count, 0);
+    const previewed = augmented.map((a) => ({
+      ...a, percentage: total > 0 ? Math.round((a.count / total) * 100) : 0,
+    }));
+    return [r.questionId, new Map(previewed.map((a) => [a.id, a]))] as const;
   }
 
   private flashResultsOnChange(): void {

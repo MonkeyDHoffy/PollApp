@@ -3,6 +3,10 @@ import { ChangeDetectionStrategy, Component, computed, input, output, signal } f
 type InputType = 'text' | 'email' | 'password' | 'date';
 type InputVisualState = 'default' | 'active' | 'filled';
 
+/**
+ * Labelled text input with focus tracking, optional hint and error text,
+ * and an auto-generated `id` attribute derived from the label.
+ */
 @Component({
   selector: 'app-input',
   imports: [],
@@ -22,7 +26,9 @@ export class InputComponent {
   readonly visualState = input<InputVisualState>('default');
   readonly readonly = input(false);
 
+  /** Emits the new string value whenever the input changes. */
   readonly valueChange = output<string>();
+  /** Emits when the input loses focus. */
   readonly blurred = output<void>();
 
   private readonly focused = signal(false);
@@ -31,17 +37,14 @@ export class InputComponent {
     () => this.visualState() === 'active' || this.focused()
   );
 
+  /** Unique element ID, either from the `id` input or auto-generated from the label. */
   protected readonly fieldId = computed(() => {
     const customId = this.id().trim();
-    if (customId) {
-      return customId;
-    }
-
+    if (customId) return customId;
     const normalizedLabel = this.label()
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/(^-|-$)/g, '');
-
     return `field-${normalizedLabel || 'input'}`;
   });
 

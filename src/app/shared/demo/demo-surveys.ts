@@ -1,18 +1,22 @@
 import { Survey, SurveyResult } from '../models/survey.model';
 
+/** Internal helper shape for building demo result fixtures. */
 type DemoAnswerCount = {
   id: string;
   text: string;
   count: number;
 };
 
+/**
+ * Constructs a {@link SurveyResult} from raw answer counts,
+ * computing the percentage for each answer automatically.
+ */
 function buildSurveyResult(
   questionId: string,
   questionText: string,
   answers: DemoAnswerCount[]
 ): SurveyResult {
   const total = answers.reduce((sum, answer) => sum + answer.count, 0);
-
   return {
     questionId,
     questionText,
@@ -25,6 +29,7 @@ function buildSurveyResult(
   };
 }
 
+/** Static demo surveys shown to unauthenticated and guest users. */
 export const DEMO_SURVEYS: Survey[] = [
   {
     id: 'demo-team-retreat',
@@ -186,6 +191,7 @@ export const DEMO_SURVEYS: Survey[] = [
   },
 ];
 
+/** Pre-computed result fixtures for the demo surveys. */
 export const DEMO_SURVEY_RESULTS: Record<string, SurveyResult[]> = {
   'demo-team-retreat': [
     buildSurveyResult('demo-q1', 'Which retreat format sounds best to you?', [

@@ -2,7 +2,9 @@ import { ChangeDetectionStrategy, Component, Input, inject, output } from '@angu
 import { SurveyParticipant } from '../../../../shared/models/survey.model';
 import { LangService } from '../../../../shared/services/lang.service';
 
-/** Popup-Liste aller Umfrage-Teilnehmer mit Anzeigename und Teilnahme-Zeitstempel. */
+/**
+ * Popup list of all survey participants showing display name and response timestamp.
+ */
 @Component({
   selector: 'app-participants-popup',
   templateUrl: './participants-popup.html',
@@ -10,8 +12,10 @@ import { LangService } from '../../../../shared/services/lang.service';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ParticipantsPopupComponent {
+  /** List of participants to display. */
   @Input({ required: true }) participants!: SurveyParticipant[];
 
+  /** Emits when the popup should close. */
   readonly closed = output<void>();
 
   protected readonly langService = inject(LangService);

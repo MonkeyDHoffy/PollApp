@@ -10,8 +10,8 @@ import { supabaseClient } from './supabase-client';
 import { SurveyStateService } from './survey-state.service';
 
 /**
- * Kapselt alle Datenbank-CRUD-Operationen für Umfragen.
- * Liest und schreibt State ausschließlich über {@link SurveyStateService}.
+ * Encapsulates all database CRUD operations for surveys.
+ * Reads and writes state exclusively through {@link SurveyStateService}.
  */
 @Injectable({ providedIn: 'root' })
 export class SurveyCrudService {
@@ -22,26 +22,12 @@ export class SurveyCrudService {
 
   // ── Public CRUD ───────────────────────────────────────────────────────────
 
-  /** Lädt alle Umfragen aus der Datenbank und speichert sie im State. */
+  /** Loads all surveys from the database and stores them in state. */
   async loadAllSurveys(): Promise<void> {
     this.state.setLoading(true);
     this.state.setError(null);
     try {
-      const { data, error } = await this.supabase
-        .from('surveys')
-        .select(this.buildSelectQuery())
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        if (!this.useLegacySurveyColumns && this.isLegacySchemaError(error)) {
-          this.useLegacySurveyColumns = true;
-          this.state.setSchemaNotice(this.schemaNoticeText());
-          await this.loadAllSurveys();
-          return;
-        }
-        throw error;
-      }
-      this.state.setAllSurveys((data ?? []).map((row) => this.mapSurveyRow(row)));
+      await this.fetchAndStoreAllSurveys();
     } catch (err) {
       this.state.setError(err instanceof Error ? err.message : 'Failed to load surveys');
     } finally {
@@ -49,37 +35,15 @@ export class SurveyCrudService {
     }
   }
 
-  /** Lädt eine einzelne Umfrage anhand der ID und setzt den currentSurvey-State. */
+  /** Loads a single survey by ID and sets the currentSurvey state. */
   async loadSurveyById(surveyId: string): Promise<void> {
     if (this.state.isDemoSurveyId(surveyId)) {
-      this.state.setLoading(true);
-      this.state.setError(null);
-      const demo = DEMO_SURVEYS.find((s) => s.id === surveyId) ?? null;
-      this.state.setCurrentSurvey(this.state.cloneSurvey(demo));
-      if (!demo) this.state.setError('Demo survey not found');
-      this.state.setLoading(false);
-      return;
+      return this.loadDemoSurvey(surveyId);
     }
-
     this.state.setLoading(true);
     this.state.setError(null);
     try {
-      const { data, error } = await this.supabase
-        .from('surveys')
-        .select(this.buildSelectQuery())
-        .eq('id', surveyId)
-        .single();
-
-      if (error) {
-        if (!this.useLegacySurveyColumns && this.isLegacySchemaError(error)) {
-          this.useLegacySurveyColumns = true;
-          this.state.setSchemaNotice(this.schemaNoticeText());
-          await this.loadSurveyById(surveyId);
-          return;
-        }
-        throw error;
-      }
-      this.state.setCurrentSurvey(this.mapSurveyRow(data));
+      await this.fetchAndStoreSurveyById(surveyId);
     } catch (err) {
       this.state.setError(err instanceof Error ? err.message : 'Failed to load survey');
     } finally {
@@ -87,17 +51,12 @@ export class SurveyCrudService {
     }
   }
 
-  /** Erstellt eine neue Umfrage mit Fragen und Antworten. */
+  /** Creates a new survey with questions and answers. */
   async createSurvey(dto: CreateSurveyDTO): Promise<CreateSurveyResult | null> {
     this.state.setLoading(true);
     this.state.setError(null);
     try {
-      const { id: userId, email } = await this.getAuthUser();
-      const payload = this.buildSurveyInsertPayload(dto, userId, email ?? null);
-      const created = await this.insertSurveyRow(payload);
-      await this.insertQuestionsWithAnswers(created.id, dto.questions);
-      await this.loadAllSurveys();
-      return { id: created.id, shareToken: created.share_token ?? undefined };
+      return await this.performCreateSurvey(dto);
     } catch (err) {
       this.state.setError(err instanceof Error ? err.message : 'Failed to create survey');
       return null;
@@ -106,17 +65,12 @@ export class SurveyCrudService {
     }
   }
 
-  /** Aktualisiert Metadaten einer bestehenden Umfrage. */
+  /** Updates metadata of an existing survey. */
   async updateSurvey(surveyId: string, updates: UpdateSurveyDTO): Promise<boolean> {
     this.state.setLoading(true);
     this.state.setError(null);
     try {
-      const payload = this.buildSurveyUpdatePayload(updates);
-      const { error } = await this.supabase.from('surveys').update(payload).eq('id', surveyId);
-      if (error) throw error;
-      await this.loadAllSurveys();
-      if (this.state.currentSurvey()?.id === surveyId) await this.loadSurveyById(surveyId);
-      return true;
+      return await this.performUpdateSurvey(surveyId, updates);
     } catch (err) {
       this.state.setError(err instanceof Error ? err.message : 'Failed to update survey');
       return false;
@@ -125,22 +79,83 @@ export class SurveyCrudService {
     }
   }
 
-  /** Löscht eine Umfrage und entfernt sie aus dem lokalen State. */
+  /** Deletes a survey and removes it from local state. */
   async deleteSurvey(surveyId: string): Promise<boolean> {
     this.state.setLoading(true);
     this.state.setError(null);
     try {
-      const { error } = await this.supabase.from('surveys').delete().eq('id', surveyId);
-      if (error) throw error;
-      this.state.updateAllSurveys((surveys) => surveys.filter((s) => s.id !== surveyId));
-      if (this.state.currentSurvey()?.id === surveyId) this.state.setCurrentSurvey(null);
-      return true;
+      return await this.performDeleteSurvey(surveyId);
     } catch (err) {
       this.state.setError(err instanceof Error ? err.message : 'Failed to delete survey');
       return false;
     } finally {
       this.state.setLoading(false);
     }
+  }
+
+  // ── Private: fetch helpers ────────────────────────────────────────────────
+
+  private async fetchAndStoreAllSurveys(): Promise<void> {
+    const { data, error } = await this.supabase
+      .from('surveys')
+      .select(this.buildSelectQuery())
+      .order('created_at', { ascending: false });
+    if (error) {
+      if (await this.handleLegacyFallback(error, () => this.loadAllSurveys())) return;
+      throw error;
+    }
+    this.state.setAllSurveys((data ?? []).map((row) => this.mapSurveyRow(row)));
+  }
+
+  private async fetchAndStoreSurveyById(surveyId: string): Promise<void> {
+    const { data, error } = await this.supabase
+      .from('surveys')
+      .select(this.buildSelectQuery())
+      .eq('id', surveyId)
+      .single();
+    if (error) {
+      if (await this.handleLegacyFallback(error, () => this.loadSurveyById(surveyId))) return;
+      throw error;
+    }
+    this.state.setCurrentSurvey(this.mapSurveyRow(data));
+  }
+
+  /** Resolves a demo survey synchronously and stores it in state. */
+  private loadDemoSurvey(surveyId: string): void {
+    this.state.setLoading(true);
+    this.state.setError(null);
+    const demo = DEMO_SURVEYS.find((s) => s.id === surveyId) ?? null;
+    this.state.setCurrentSurvey(this.state.cloneSurvey(demo));
+    if (!demo) this.state.setError('Demo survey not found');
+    this.state.setLoading(false);
+  }
+
+  // ── Private: CRUD helpers ─────────────────────────────────────────────────
+
+  private async performCreateSurvey(dto: CreateSurveyDTO): Promise<CreateSurveyResult> {
+    const { id: userId, email } = await this.getAuthUser();
+    const payload = this.buildSurveyInsertPayload(dto, userId, email ?? null);
+    const created = await this.insertSurveyRow(payload);
+    await this.insertQuestionsWithAnswers(created.id, dto.questions);
+    await this.loadAllSurveys();
+    return { id: created.id, shareToken: created.share_token ?? undefined };
+  }
+
+  private async performUpdateSurvey(surveyId: string, updates: UpdateSurveyDTO): Promise<boolean> {
+    const payload = this.buildSurveyUpdatePayload(updates);
+    const { error } = await this.supabase.from('surveys').update(payload).eq('id', surveyId);
+    if (error) throw error;
+    await this.loadAllSurveys();
+    if (this.state.currentSurvey()?.id === surveyId) await this.loadSurveyById(surveyId);
+    return true;
+  }
+
+  private async performDeleteSurvey(surveyId: string): Promise<boolean> {
+    const { error } = await this.supabase.from('surveys').delete().eq('id', surveyId);
+    if (error) throw error;
+    this.state.updateAllSurveys((surveys) => surveys.filter((s) => s.id !== surveyId));
+    if (this.state.currentSurvey()?.id === surveyId) this.state.setCurrentSurvey(null);
+    return true;
   }
 
   // ── Private: auth helpers ─────────────────────────────────────────────────
@@ -199,20 +214,23 @@ export class SurveyCrudService {
   ): Promise<{ id: string; share_token?: string | null }> {
     const select = this.useLegacySurveyColumns ? 'id' : 'id, share_token';
     const { data, error } = await this.supabase
-      .from('surveys')
-      .insert(payload)
-      .select(select)
-      .single();
-
-    if (error) {
-      if (!this.useLegacySurveyColumns && this.isLegacySchemaError(error)) {
-        this.useLegacySurveyColumns = true;
-        this.state.setSchemaNotice(this.schemaNoticeText());
-        return this.insertSurveyRow({ ...payload, visibility: undefined, is_anonymous: undefined, share_token: undefined, access_code: undefined });
-      }
-      throw error;
-    }
+      .from('surveys').insert(payload).select(select).single();
+    if (error) return this.handleInsertRowError(error, payload);
     return data as unknown as { id: string; share_token?: string | null };
+  }
+
+  private async handleInsertRowError(
+    error: unknown,
+    payload: Record<string, unknown>,
+  ): Promise<{ id: string; share_token?: string | null }> {
+    if (!this.useLegacySurveyColumns && this.isLegacySchemaError(error)) {
+      this.useLegacySurveyColumns = true;
+      this.state.setSchemaNotice(this.schemaNoticeText());
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { visibility, is_anonymous, share_token, access_code, ...rest } = payload as Record<string, unknown>;
+      return this.insertSurveyRow(rest);
+    }
+    throw error;
   }
 
   private async insertQuestionsWithAnswers(
@@ -220,23 +238,35 @@ export class SurveyCrudService {
     questions: CreateSurveyDTO['questions'],
   ): Promise<void> {
     for (let i = 0; i < questions.length; i++) {
-      const question = questions[i];
-      const { data: created, error: qErr } = await this.supabase
-        .from('survey_questions')
-        .insert({
-          survey_id: surveyId,
-          question_text: question.text,
-          question_description: question.description ?? null,
-          question_type: question.type,
-          allow_multiple: question.allowMultiple ?? false,
-          sort_order: i,
-        })
-        .select('id')
-        .single();
-
-      if (qErr) throw qErr;
-      await this.insertAnswers(created.id, question.answers);
+      await this.insertQuestion(surveyId, questions[i], i);
     }
+  }
+
+  private async insertQuestion(
+    surveyId: string,
+    question: CreateSurveyDTO['questions'][0],
+    index: number,
+  ): Promise<void> {
+    const row = this.buildQuestionRow(surveyId, question, index);
+    const { data: created, error } = await this.supabase
+      .from('survey_questions').insert(row).select('id').single();
+    if (error) throw error;
+    await this.insertAnswers(created.id, question.answers);
+  }
+
+  private buildQuestionRow(
+    surveyId: string,
+    question: CreateSurveyDTO['questions'][0],
+    index: number,
+  ): Record<string, unknown> {
+    return {
+      survey_id: surveyId,
+      question_text: question.text,
+      question_description: question.description ?? null,
+      question_type: question.type,
+      allow_multiple: question.allowMultiple ?? false,
+      sort_order: index,
+    };
   }
 
   private async insertAnswers(
@@ -297,14 +327,20 @@ export class SurveyCrudService {
       .map((a) => ({ id: a.id, text: a.answer_text, order: a.sort_order }));
   }
 
+  /** Extracts the total response count from a Supabase aggregate result. */
   private extractResponseCount(raw: any): number {
     return Array.isArray(raw) && raw.length > 0 ? (raw[0]?.count ?? 0) : 0;
   }
 
   // ── Private: schema helpers ───────────────────────────────────────────────
 
+  /** Returns the appropriate SELECT query based on the detected schema version. */
   private buildSelectQuery(): string {
-    const base = `
+    return this.useLegacySurveyColumns ? this.legacySelectQuery() : this.fullSelectQuery();
+  }
+
+  private legacySelectQuery(): string {
+    return `
       id, creator_id, title, description, category, status,
       ends_at, created_at, updated_at,
       survey_questions (
@@ -312,7 +348,9 @@ export class SurveyCrudService {
         survey_answers ( id, answer_text, sort_order )
       )
     `;
-    if (this.useLegacySurveyColumns) return base;
+  }
+
+  private fullSelectQuery(): string {
     return `
       id, creator_id, title, description, category, status,
       visibility, is_anonymous, share_token, access_code,
@@ -323,6 +361,21 @@ export class SurveyCrudService {
         survey_answers ( id, answer_text, sort_order )
       )
     `;
+  }
+
+  /**
+   * Switches to legacy schema mode, sets the notice, and retries the given operation.
+   * Returns true when the fallback was applied.
+   */
+  private async handleLegacyFallback(
+    error: unknown,
+    retryFn: () => Promise<void>,
+  ): Promise<boolean> {
+    if (this.useLegacySurveyColumns || !this.isLegacySchemaError(error)) return false;
+    this.useLegacySurveyColumns = true;
+    this.state.setSchemaNotice(this.schemaNoticeText());
+    await retryFn();
+    return true;
   }
 
   private isLegacySchemaError(err: unknown): boolean {

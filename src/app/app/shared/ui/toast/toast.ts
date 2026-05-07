@@ -1,7 +1,9 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { ToastService } from '../../../../shared/services/toast.service';
 
-/** Globale Toast-Benachrichtigungsleiste — rendert alle aktiven Toasts aus dem ToastService. */
+/**
+ * Global toast notification bar — renders all active toasts from {@link ToastService}.
+ */
 @Component({
   selector: 'app-toast',
   imports: [],

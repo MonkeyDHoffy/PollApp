@@ -1,7 +1,11 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 
+/** Survey lifecycle state shown by this chip. */
 type SurveyStatus = 'published' | 'draft';
 
+/**
+ * Small inline badge indicating the publish status of a survey.
+ */
 @Component({
   selector: 'app-status-chip',
   imports: [],

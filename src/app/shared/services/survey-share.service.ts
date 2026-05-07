@@ -6,7 +6,7 @@ import { SurveyStateService } from './survey-state.service';
 type RealtimeStatus = 'SUBSCRIBED' | 'TIMED_OUT' | 'CLOSED' | 'CHANNEL_ERROR';
 
 /**
- * Verwaltet den Zugriff auf geteilte Umfragen und Echtzeit-Abonnements.
+ * Manages access to shared surveys and real-time subscriptions.
  */
 @Injectable({ providedIn: 'root' })
 export class SurveyShareService {
@@ -15,23 +15,14 @@ export class SurveyShareService {
   constructor(private readonly state: SurveyStateService) {}
 
   /**
-   * Lädt eine Umfrage über einen Share-Token (öffentlich oder privat).
-   * @returns true wenn die Umfrage erfolgreich geladen wurde
+   * Loads a survey via a share token (public or private).
+   * @returns `true` when the survey was loaded successfully.
    */
   async loadSurveyByShareToken(shareToken: string, accessCode?: string): Promise<boolean> {
     this.state.setLoading(true);
     this.state.setError(null);
     try {
-      const participantToken = this.state.ensureParticipantToken(`share-${shareToken}`);
-      const { data, error } = await this.supabase.functions.invoke('survey-access', {
-        body: { shareToken, accessCode, participantToken },
-      });
-      if (error) throw new Error(error.message || 'Failed to load survey');
-      if (!data?.survey) throw new Error('SURVEY_NOT_FOUND');
-      if (accessCode) this.state.setShareAccessCode(shareToken, accessCode);
-      this.state.setCurrentSurvey(this.mapSharedSurvey(data.survey));
-      const surveyId = data.survey.id as string;
-      this.state.setSharedResults(surveyId, Array.isArray(data.results) ? data.results : []);
+      await this.fetchAndStoreSurveyByToken(shareToken, accessCode);
       return true;
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Failed to load survey';
@@ -43,8 +34,8 @@ export class SurveyShareService {
   }
 
   /**
-   * Abonniert Echtzeit-Updates für neue Antworten auf eine Umfrage.
-   * @returns Cleanup-Funktion zum Beenden des Abonnements
+   * Subscribes to real-time updates for new responses on a survey.
+   * @returns Cleanup function to cancel the subscription.
    */
   subscribeToSurveyUpdates(
     surveyId: string,
@@ -59,8 +50,24 @@ export class SurveyShareService {
         () => onUpdate(),
       )
       .subscribe((status) => onStatusChange?.(status as RealtimeStatus));
-
     return () => { void this.supabase.removeChannel(channel); };
+  }
+
+  // ── Private: fetch ────────────────────────────────────────────────────────
+
+  private async fetchAndStoreSurveyByToken(shareToken: string, accessCode?: string): Promise<void> {
+    const participantToken = this.state.ensureParticipantToken(`share-${shareToken}`);
+    const { data, error } = await this.supabase.functions.invoke('survey-access', {
+      body: { shareToken, accessCode, participantToken },
+    });
+    if (error) throw new Error(error.message || 'Failed to load survey');
+    if (!data?.survey) throw new Error('SURVEY_NOT_FOUND');
+    if (accessCode) this.state.setShareAccessCode(shareToken, accessCode);
+    this.state.setCurrentSurvey(this.mapSharedSurvey(data.survey));
+    this.state.setSharedResults(
+      data.survey.id as string,
+      Array.isArray(data.results) ? data.results : [],
+    );
   }
 
   // ── Private: mappers ──────────────────────────────────────────────────────
@@ -100,6 +107,7 @@ export class SurveyShareService {
     }));
   }
 
+  /** Maps server error codes to user-facing messages. */
   private normalizeError(message: string): string {
     if (message.includes('ACCESS_CODE_REQUIRED')) return 'Access code required.';
     if (message.includes('INVALID_ACCESS_CODE')) return 'Invalid access code.';

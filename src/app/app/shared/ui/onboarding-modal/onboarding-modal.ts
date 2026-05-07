@@ -8,7 +8,10 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AuthService } from '../../../../shared/services/auth.service';
 import { LangService } from '../../../../shared/services/lang.service';
 
-/** First-login modal that prompts a new user to choose their display name. */
+/**
+ * First-login modal that prompts a newly signed-in user to choose their display name.
+ * Disappears automatically once {@link AuthService.needsDisplayName} becomes false.
+ */
 @Component({
   selector: 'app-onboarding-modal',
   imports: [ReactiveFormsModule],
@@ -30,7 +33,7 @@ export class OnboardingModalComponent {
   ]);
   protected readonly form = this.fb.group({ name: this.nameControl });
 
-  /** Validates and saves the chosen display name via AuthService. */
+  /** Validates and saves the chosen display name via {@link AuthService}. */
   protected async submitName(): Promise<void> {
     this.nameControl.markAsTouched();
     const name = this.nameControl.value.trim();

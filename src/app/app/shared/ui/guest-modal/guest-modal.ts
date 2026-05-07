@@ -8,7 +8,10 @@ import {
 import { GuestService } from '../../../../shared/services/guest.service';
 import { LangService } from '../../../../shared/services/lang.service';
 
-/** Modal for entering a display name to start a guest session. */
+/**
+ * Modal for entering a display name to start a guest session.
+ * Emits `closed` when the user confirms or cancels.
+ */
 @Component({
   selector: 'app-guest-modal',
   templateUrl: './guest-modal.html',
@@ -36,10 +39,7 @@ export class GuestModalComponent {
   /** Validates the name, starts the guest session, and closes the modal. */
   protected confirm(): void {
     const name = this.nameInput().trim();
-    if (!name) {
-      this.hasError.set(true);
-      return;
-    }
+    if (!name) { this.hasError.set(true); return; }
     this.guestService.startSession(name);
     this.closed.emit();
   }

@@ -55,9 +55,9 @@ const SORT_KEYS: SortKey[] = ['newest', 'oldest', 'az', 'za'];
 const SURVEY_BATCH_SIZE = 40;
 
 /**
- * Hauptseite der App: zeigt Hero-Bereich, "Ending Soon"-Karussell und die filterbare
- * Umfragenliste. Verwaltet Auth-Panel, Gastmodus, Umfrage-Erstellen-Modal und
- * paginiertes Nachladen per virtuellem Batch.
+ * Home page of the app: renders the hero section, the "ending soon" carousel, and
+ * a filterable survey list. Manages the auth panel, guest mode, create-survey modal,
+ * and virtual-batch pagination.
  */
 @Component({
   selector: 'app-home',
@@ -237,27 +237,22 @@ export class HomeComponent implements OnDestroy {
     }));
   }
 
+  /** Loads the next batch of surveys into the visible list. */
   protected loadMoreSurveys(): void {
-    if (this.loadingMoreSurveys() || !this.hasMoreSurveys()) {
-      return;
-    }
-
+    if (this.loadingMoreSurveys() || !this.hasMoreSurveys()) return;
     this.loadingMoreSurveys.set(true);
+    requestAnimationFrame(() => this.applyNextBatch());
+  }
 
-    requestAnimationFrame(() => {
-      const nextCount = Math.min(
-        this.visibleSurveyCount() + SURVEY_BATCH_SIZE,
-        this.filteredSurveys().length
-      );
-
-      this.visibleSurveyCount.set(nextCount);
-      const key = this.listViewKey();
-      this.visibleCountByViewKey.update((state) => ({
-        ...state,
-        [key]: nextCount,
-      }));
-      this.loadingMoreSurveys.set(false);
-    });
+  private applyNextBatch(): void {
+    const nextCount = Math.min(
+      this.visibleSurveyCount() + SURVEY_BATCH_SIZE,
+      this.filteredSurveys().length
+    );
+    this.visibleSurveyCount.set(nextCount);
+    const key = this.listViewKey();
+    this.visibleCountByViewKey.update((state) => ({ ...state, [key]: nextCount }));
+    this.loadingMoreSurveys.set(false);
   }
 
   protected toggleToolbar(): void {
@@ -524,25 +519,23 @@ export class HomeComponent implements OnDestroy {
 
   private restoreListViewState(): void {
     const key = this.listViewKey();
-
     if (this.activeListViewKey && this.activeListViewKey !== key) {
-      const previousKey = this.activeListViewKey;
-      this.scrollTopByViewKey.update((state) => ({
-        ...state,
-        [previousKey]: this.listRestoreScrollTop(),
-      }));
-      this.visibleCountByViewKey.update((state) => ({
-        ...state,
-        [previousKey]: this.visibleSurveyCount(),
-      }));
+      this.persistCurrentViewState(this.activeListViewKey);
     }
-
     this.activeListViewKey = key;
-    const savedVisibleCount = this.visibleCountByViewKey()[key] ?? SURVEY_BATCH_SIZE;
-    const savedScrollTop = this.scrollTopByViewKey()[key] ?? 0;
+    this.visibleSurveyCount.set(this.visibleCountByViewKey()[key] ?? SURVEY_BATCH_SIZE);
+    this.listRestoreScrollTop.set(this.scrollTopByViewKey()[key] ?? 0);
+  }
 
-    this.visibleSurveyCount.set(savedVisibleCount);
-    this.listRestoreScrollTop.set(savedScrollTop);
+  private persistCurrentViewState(previousKey: string): void {
+    this.scrollTopByViewKey.update((state) => ({
+      ...state,
+      [previousKey]: this.listRestoreScrollTop(),
+    }));
+    this.visibleCountByViewKey.update((state) => ({
+      ...state,
+      [previousKey]: this.visibleSurveyCount(),
+    }));
   }
 
   // ── Private: query-param handlers ─────────────────────────────────────────
@@ -615,18 +608,17 @@ export class HomeComponent implements OnDestroy {
   private applyFiltersToSurveys(): HomeSurvey[] {
     const category = this.selectedCategory();
     const isMySurveys = category === 'my-surveys';
-    const userId = this.authUser()?.id;
-    let list: HomeSurvey[] = isMySurveys
-      ? (userId ? this.allSurveys().filter((s) => s.creatorId === userId) : [])
-      : this.publicSurveys();
-    if (this.selectedStatus() !== 'all') {
-      list = list.filter((s) => s.status === this.selectedStatus());
-    }
-    if (!isMySurveys && category !== 'all') {
-      list = list.filter((s) => s.category.toLowerCase() === (category as string).toLowerCase());
-    }
+    let list = this.resolveBaseList(isMySurveys);
+    if (this.selectedStatus() !== 'all') list = list.filter((s) => s.status === this.selectedStatus());
+    if (!isMySurveys && category !== 'all') list = list.filter((s) => s.category.toLowerCase() === (category as string).toLowerCase());
     const query = this.searchQuery().toLowerCase().trim();
     return query ? list.filter((s) => s.title.toLowerCase().includes(query)) : list;
+  }
+
+  private resolveBaseList(isMySurveys: boolean): HomeSurvey[] {
+    if (!isMySurveys) return this.publicSurveys();
+    const userId = this.authUser()?.id;
+    return userId ? this.allSurveys().filter((s) => s.creatorId === userId) : [];
   }
 
   private applySortToSurveys(list: HomeSurvey[]): HomeSurvey[] {
@@ -648,31 +640,29 @@ export class HomeComponent implements OnDestroy {
   // ── Private: survey mapping ───────────────────────────────────────────────
 
   private mapSurveyToHomeSurvey(survey: AppSurvey): HomeSurvey {
-    const now = new Date();
-    const endsAt = new Date(survey.endsAt);
-    const validDate = !Number.isNaN(endsAt.getTime());
-    const isPast = validDate && endsAt.getTime() < now.getTime();
-    const daysLeft = validDate
-      ? Math.ceil((endsAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
-      : null;
+    const { isPast, daysLeft, validDate, endsAtDate } = this.computeDateMeta(survey.endsAt);
+    const isActive = survey.status === 'published' && !isPast;
     return {
-      id: survey.id,
-      creatorId: survey.creatorId,
-      category: survey.category,
-      title: survey.title,
-      description: survey.description,
-      badgeLabel: this.toBadgeLabel(validDate ? endsAt : null),
+      id: survey.id, creatorId: survey.creatorId, category: survey.category,
+      title: survey.title, description: survey.description,
+      badgeLabel: this.toBadgeLabel(validDate ? endsAtDate : null),
       badgeTone: this.resolveBadgeTone(isPast, daysLeft, validDate),
-      status: survey.status === 'published' && !isPast ? 'active' : 'past',
-      tone: survey.status === 'published' && !isPast ? 'base' : 'muted',
-      visibility: survey.visibility,
-      shareToken: survey.shareToken,
-      accessCode: survey.accessCode,
-      endsAt: survey.endsAt,
-      createdAt: survey.createdAt,
-      questions: survey.questions,
+      status: isActive ? 'active' : 'past', tone: isActive ? 'base' : 'muted',
+      visibility: survey.visibility, shareToken: survey.shareToken, accessCode: survey.accessCode,
+      endsAt: survey.endsAt, createdAt: survey.createdAt, questions: survey.questions,
       responseCount: survey.totalResponses,
     };
+  }
+
+  private computeDateMeta(endsAtStr: string) {
+    const now = new Date();
+    const endsAtDate = new Date(endsAtStr);
+    const validDate = !Number.isNaN(endsAtDate.getTime());
+    const isPast = validDate && endsAtDate.getTime() < now.getTime();
+    const daysLeft = validDate
+      ? Math.ceil((endsAtDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+      : null;
+    return { isPast, daysLeft, validDate, endsAtDate };
   }
 
   private resolveBadgeTone(isPast: boolean, daysLeft: number | null, validDate: boolean): BadgeTone {

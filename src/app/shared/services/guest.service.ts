@@ -1,6 +1,6 @@
 import { Injectable, computed, signal } from '@angular/core';
 
-/** Lokale Gast-Identität ohne Supabase-Konto — wird nur im localStorage gespeichert. */
+/** Local guest identity without a Supabase account — stored only in localStorage. */
 export interface GuestSession {
   id: string;
   name: string;
@@ -9,8 +9,8 @@ export interface GuestSession {
 const STORAGE_KEY = 'pollapp.guest';
 
 /**
- * Verwaltet anonyme Gast-Sessions ohne Supabase-Authentifizierung.
- * Session-Daten werden im localStorage gespeichert und beim Start wiederhergestellt.
+ * Manages anonymous guest sessions without Supabase authentication.
+ * Session data is stored in localStorage and restored on startup.
  */
 @Injectable({ providedIn: 'root' })
 export class GuestService {
@@ -20,23 +20,18 @@ export class GuestService {
   readonly isGuest = computed(() => !!this.guestSignal());
   readonly guestName = computed(() => this.guestSignal()?.name ?? null);
 
-  /** Startet eine neue Gast-Session mit dem angegebenen Anzeigenamen. */
+  /** Starts a new guest session with the given display name. */
   startSession(name: string): void {
     const trimmed = name.trim();
     if (!trimmed) return;
-
-    const session: GuestSession = {
-      id: this.generateId(),
-      name: trimmed,
-    };
-
+    const session: GuestSession = { id: this.generateId(), name: trimmed };
     if (typeof localStorage !== 'undefined') {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
     }
     this.guestSignal.set(session);
   }
 
-  /** Beendet die aktive Gast-Session und entfernt sie aus dem localStorage. */
+  /** Ends the active guest session and removes it from localStorage. */
   endSession(): void {
     if (typeof localStorage !== 'undefined') {
       localStorage.removeItem(STORAGE_KEY);
@@ -44,7 +39,7 @@ export class GuestService {
     this.guestSignal.set(null);
   }
 
-  /** Liest und validiert eine gespeicherte Gast-Session aus dem localStorage. */
+  /** Reads and validates a stored guest session from localStorage. */
   private loadFromStorage(): GuestSession | null {
     if (typeof localStorage === 'undefined') return null;
     try {
@@ -67,7 +62,7 @@ export class GuestService {
     }
   }
 
-  /** Erzeugt eine eindeutige Gast-ID via `crypto.randomUUID` (Fallback: timestamp + random). */
+  /** Generates a unique guest ID via `crypto.randomUUID` (fallback: timestamp + random). */
   private generateId(): string {
     if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
       return crypto.randomUUID();

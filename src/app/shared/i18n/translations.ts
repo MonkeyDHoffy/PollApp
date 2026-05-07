@@ -1,3 +1,7 @@
+/**
+ * All UI translation strings keyed by language code.
+ * Use {@link LangService} to access the active language's dictionary.
+ */
 export const TRANSLATIONS = {
   en: {
     // Header

@@ -1,15 +1,21 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 
+/** A single result bar item (label + raw percentage). */
 type ResultItem = {
   label: string;
   percentage: number;
 };
 
+/** A result bar row enriched with a stable ID and formatted percentage text. */
 type ResultRow = ResultItem & {
   id: string;
   percentageText: string;
 };
 
+/**
+ * Displays the aggregated results for one survey question as a bar chart.
+ * Percentages are clamped to [0, 100] before rendering.
+ */
 @Component({
   selector: 'app-results-card',
   imports: [],

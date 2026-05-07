@@ -3,7 +3,7 @@ import { SurveyStateService } from './survey-state.service';
 import { SurveyVotingService } from './survey-voting.service';
 
 /**
- * Erstellt CSV-Exports der Umfrageergebnisse zum Download im Browser.
+ * Builds CSV exports of survey results for download in the browser.
  */
 @Injectable({ providedIn: 'root' })
 export class SurveyExportService {
@@ -13,8 +13,8 @@ export class SurveyExportService {
   ) {}
 
   /**
-   * Erstellt einen CSV-String mit allen Ergebnissen einer Umfrage.
-   * Beginnt mit UTF-8-BOM damit Excel Umlaute korrekt anzeigt.
+   * Builds a CSV string containing all results of a survey.
+   * Prepends a UTF-8 BOM so that Excel renders umlauts correctly.
    */
   async buildResultsCsv(surveyId: string): Promise<string> {
     const results = await this.voting.loadSurveyResults(surveyId);
@@ -56,6 +56,7 @@ export class SurveyExportService {
     return lines;
   }
 
+  /** Wraps a CSV cell value in double quotes and escapes inner quotes. */
   private escape(value: string): string {
     return `"${value.replace(/"/g, '""')}"`;
   }
