@@ -145,6 +145,20 @@ export class SurveyDetailComponent implements AfterViewInit {
     this.resultsRows().some((row) => row.answers.some((a) => a.count > 0))
   );
 
+  protected readonly answerPercentageMap = computed(() => {
+    const map = new Map<string, number>();
+    for (const row of this.resultsRows()) {
+      for (const answer of row.answers) {
+        map.set(`${row.questionId}:${answer.id}`, answer.percentage);
+      }
+    }
+    return map;
+  });
+
+  protected answerPct(questionId: string, answerId: string): number {
+    return this.answerPercentageMap().get(`${questionId}:${answerId}`) ?? 0;
+  }
+
   protected readonly isSurveyEnded = computed(() => {
     const endsAt = this.survey()?.endsAt;
     return endsAt ? new Date(endsAt) < new Date() : false;

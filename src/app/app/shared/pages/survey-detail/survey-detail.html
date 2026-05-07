@@ -151,7 +151,8 @@
                                 <input type="checkbox" [checked]="isSelected(question.id, answer.id)"
                                     [disabled]="alreadyVoted() || isSurveyEnded()"
                                     (change)="toggleAnswer(question.id, answer.id, question.allowMultiple)" />
-                                <span>{{ answer.optionLabel }}. {{ answer.text }}</span>
+                                <span class="survey-detail__answer-text">{{ answer.optionLabel }}. {{ answer.text }}</span>
+                                <span class="survey-detail__answer-pct">{{ answerPct(question.id, answer.id) }}%</span>
                             </label>
                             }
                         </div>

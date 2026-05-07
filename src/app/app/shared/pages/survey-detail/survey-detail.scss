@@ -250,11 +250,19 @@
   cursor: pointer;
   min-width: 0;
 
-  span {
+  .survey-detail__answer-text {
     overflow-wrap: break-word;
     word-break: break-word;
     min-width: 0;
     flex: 1;
+  }
+
+  .survey-detail__answer-pct {
+    flex-shrink: 0;
+    min-width: 36px;
+    text-align: right;
+    color: var(--paper-ink-muted, color-mix(in srgb, var(--paper-ink) 50%, transparent));
+    font-weight: 500;
   }
 
   input {
