@@ -24,6 +24,13 @@ html, body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+// ─── App shell — sticky-footer layout ────────────────────────────────────────
+.app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+}
+
 // ─── App Footer ──────────────────────────────────────────────────────────────
 .app-footer {
   display: flex;
@@ -32,7 +39,7 @@ html, body {
   gap: 7px;
   padding: 22px 16px 32px;
   border-top: 1px solid var(--hairline-soft);
-  margin-top: 12px;
+  margin-top: auto; // pushes footer to bottom when content is short
 }
 
 .app-footer__text {
@@ -80,7 +87,7 @@ html, body {
 }
 
 .legal-page__container {
-  max-width: 760px;
+  max-width: 1200px;
   margin: 0 auto;
   display: grid;
   gap: 36px;

@@ -35,7 +35,7 @@
                             <input type="text" formControlName="title" [placeholder]="t()('surveyNamePlaceholder')"
                                 maxlength="120" />
                             @if (form.controls.title.touched && form.controls.title.hasError('required')) {
-                            <span class="create-survey-modal__inline-error">Required</span>
+                            <span class="create-survey-modal__inline-error">{{ t()('fieldRequired') }}</span>
                             }
                         </div>
                         <app-button variant="delete" (pressed)="form.controls.title.setValue('')" />
@@ -45,7 +45,7 @@
                 <div class="create-survey-modal__field">
                     <span>{{ t()('describingText') }}</span>
                     <div class="create-survey-modal__input-row create-survey-modal__input-row--textarea">
-                        <textarea formControlName="description" rows="3" placeholder="Short survey description"
+                        <textarea formControlName="description" rows="3" [placeholder]="t()('descriptionPlaceholder')"
                             maxlength="300"></textarea>
                         <app-button variant="delete" (pressed)="form.controls.description.setValue('')" />
                     </div>
@@ -123,11 +123,11 @@
                         <div class="create-survey-modal__input-wrap"
                             [class.create-survey-modal__input-wrap--error]="$any(question).get('questionText').touched && $any(question).get('questionText').hasError('required')">
                             <input type="text" formControlName="questionText"
-                                placeholder="Which date would work best for you?" [readonly]="isEditMode()"
+                                [placeholder]="t()('questionPlaceholder')" [readonly]="isEditMode()"
                                 maxlength="160" />
                             @if ($any(question).get('questionText').touched &&
                             $any(question).get('questionText').hasError('required')) {
-                            <span class="create-survey-modal__inline-error">Required</span>
+                            <span class="create-survey-modal__inline-error">{{ t()('fieldRequired') }}</span>
                             }
                         </div>
                         @if (!isEditMode()) {
@@ -137,7 +137,7 @@
 
                     <div class="create-survey-modal__input-row create-survey-modal__input-row--textarea">
                         <textarea formControlName="questionDescription" rows="2"
-                            placeholder="Short question description (optional)"
+                            [placeholder]="t()('questionDescPlaceholder')"
                             class="create-survey-modal__question-desc" [readonly]="isEditMode()"
                             maxlength="200"></textarea>
                         @if (!isEditMode()) {
@@ -159,11 +159,11 @@
                             <span>{{ answerLabel(aIdx) }}.</span>
                             <div class="create-survey-modal__answer-input-wrap"
                                 [class.create-survey-modal__answer-input-wrap--error]="$any(questionAnswersArray(qIdx).at(aIdx)).touched && $any(questionAnswersArray(qIdx).at(aIdx)).hasError('required')">
-                                <input [formControlName]="aIdx" type="text" placeholder="Answer option"
+                                <input [formControlName]="aIdx" type="text" [placeholder]="t()('answerPlaceholder')"
                                     [readonly]="isEditMode()" maxlength="120" />
                                 @if ($any(questionAnswersArray(qIdx).at(aIdx)).touched &&
                                 $any(questionAnswersArray(qIdx).at(aIdx)).hasError('required')) {
-                                <span class="create-survey-modal__answer-inline-error">Required</span>
+                                <span class="create-survey-modal__answer-inline-error">{{ t()('fieldRequired') }}</span>
                                 }
                             </div>
                             @if (!isEditMode()) {
