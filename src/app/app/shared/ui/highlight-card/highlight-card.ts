@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, input, output } from '@an
 
 type HighlightCardTone = 'base' | 'muted';
 
+/** Hervorgehobene Umfrage-Karte für das "Ending Soon"-Karussell mit Kategorie, Titel und Badge. */
 @Component({
   selector: 'app-highlight-card',
   imports: [],

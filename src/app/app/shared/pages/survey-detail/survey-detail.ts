@@ -32,6 +32,11 @@ type QuestionView = {
   answers: Array<{ id: string; text: string; optionLabel: string }>;
 };
 
+/**
+ * Detailansicht einer Umfrage: zeigt Fragen, nimmt Antworten entgegen und stellt
+ * Live-Ergebnisse dar. Unterstützt öffentliche und private Umfragen (Share-Token + Code),
+ * Demo-Modus sowie Realtime-Updates nach Abstimmung.
+ */
 @Component({
   selector: 'app-survey-detail',
   imports: [ButtonComponent, RouterLink, ConfirmDialogComponent, ParticipantsPopupComponent],
@@ -469,8 +474,29 @@ export class SurveyDetailComponent implements AfterViewInit {
   // ── Private: result map & flash ───────────────────────────────────────────
 
   private buildResultMap() {
+    const base = this.liveResults();
+    const canPreview = !this.alreadyVoted() && !this.submitted();
+    const selections = canPreview ? this.selectedAnswers() : {};
+    const hasSelections = Object.values(selections).some((ids) => ids.length > 0);
+
+    if (!hasSelections) {
+      return new Map(base.map((r) => [r.questionId, new Map(r.answers.map((a) => [a.id, a]))]));
+    }
+
     return new Map(
-      this.liveResults().map((r) => [r.questionId, new Map(r.answers.map((a) => [a.id, a]))])
+      base.map((r) => {
+        const selectedIds = selections[r.questionId] ?? [];
+        const augmented = r.answers.map((a) => ({
+          ...a,
+          count: a.count + (selectedIds.includes(a.id) ? 1 : 0),
+        }));
+        const total = augmented.reduce((sum, a) => sum + a.count, 0);
+        const previewed = augmented.map((a) => ({
+          ...a,
+          percentage: total > 0 ? Math.round((a.count / total) * 100) : 0,
+        }));
+        return [r.questionId, new Map(previewed.map((a) => [a.id, a]))] as const;
+      })
     );
   }
 

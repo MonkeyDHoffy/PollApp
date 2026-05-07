@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, Input, inject, output } from '@angu
 import { SurveyParticipant } from '../../../../shared/models/survey.model';
 import { LangService } from '../../../../shared/services/lang.service';
 
+/** Popup-Liste aller Umfrage-Teilnehmer mit Anzeigename und Teilnahme-Zeitstempel. */
 @Component({
   selector: 'app-participants-popup',
   templateUrl: './participants-popup.html',

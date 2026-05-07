@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, effect, input, output, signal } fro
 
 type DropdownAppearance = 'ghost' | 'filled';
 
+/** Dropdown-Auswahlmenü mit Trigger-Button, animierter Option-Liste und aktiver Auswahl-Anzeige. */
 @Component({
   selector: 'app-dropdown-menu',
   imports: [],

@@ -54,6 +54,11 @@ type HomeSurvey = {
 const SORT_KEYS: SortKey[] = ['newest', 'oldest', 'az', 'za'];
 const SURVEY_BATCH_SIZE = 40;
 
+/**
+ * Hauptseite der App: zeigt Hero-Bereich, "Ending Soon"-Karussell und die filterbare
+ * Umfragenliste. Verwaltet Auth-Panel, Gastmodus, Umfrage-Erstellen-Modal und
+ * paginiertes Nachladen per virtuellem Batch.
+ */
 @Component({
   selector: 'app-home',
   imports: [

@@ -38,6 +38,10 @@ type SurveyListRow = {
   shareToken?: string;
 };
 
+/**
+ * Paginierte Umfragenliste mit internem Scroll, Scroll-getriebenen Kartenanimationen
+ * und Events für Auswahl, Share-Link und Nachladen weiterer Einträge.
+ */
 @Component({
   selector: 'app-survey-list-view',
   imports: [],

@@ -9,6 +9,7 @@ type FilterStyle = 'base' | 'active';
 type TertiaryStyle = 'base' | 'muted';
 type DeleteStyle = 'base' | 'hover';
 
+/** Universelle Button-Komponente mit Varianten (primary, secondary, filter, delete …) und Größen. */
 @Component({
   selector: 'app-button',
   imports: [],

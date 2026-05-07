@@ -3,6 +3,7 @@ import { CheckboxComponent } from '../checkbox/checkbox';
 
 type AnswerItemState = 'default' | 'highlight' | 'checked';
 
+/** Einzelne Antwort-Option in der Umfrage-Detailansicht mit Checkbox und optionalem Buchstaben-Label. */
 @Component({
   selector: 'app-answer-item',
   imports: [CheckboxComponent],
