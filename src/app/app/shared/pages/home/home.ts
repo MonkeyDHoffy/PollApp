@@ -225,12 +225,14 @@ export class HomeComponent implements OnDestroy {
     return currentY > this._lastPageScrollY + 10 && currentY > 300;
   }
 
+  /** Collapses the toolbar when the list is scrolled down on mobile. */
   protected onListScrolled(dir: 'up' | 'down'): void {
     if (window.innerWidth >= 768) return;
     if (this.toolbarManualExpanded) return;
     if (dir === 'down') this.toolbarCollapsed.set(true);
   }
 
+  /** Persists the current list scroll position for the active view key. */
   protected onListScrollTopChanged(scrollTop: number): void {
     const key = this.listViewKey();
     this.listRestoreScrollTop.set(scrollTop);
@@ -258,6 +260,7 @@ export class HomeComponent implements OnDestroy {
     this.loadingMoreSurveys.set(false);
   }
 
+  /** Manually toggles the toolbar collapsed state and marks it as user-controlled. */
   protected toggleToolbar(): void {
     const willCollapse = !this.toolbarCollapsed();
     this.toolbarCollapsed.set(willCollapse);
@@ -328,6 +331,7 @@ export class HomeComponent implements OnDestroy {
 
   // ── Keyboard ──────────────────────────────────────────────────────────────
 
+  /** Closes the topmost open panel or modal when Escape is pressed. */
   @HostListener('document:keydown.escape')
   protected onEscapeKey(): void {
     if (this.editingDisplayName()) { this.cancelEditName(); return; }
@@ -363,6 +367,7 @@ export class HomeComponent implements OnDestroy {
 
   // ── Auth handlers ─────────────────────────────────────────────────────────
 
+  /** Opens the authentication panel and resets the email form. */
   protected openAuthPanel(): void {
     this.authService.clearNotices();
     this.authEmailControl.reset('');
@@ -370,6 +375,7 @@ export class HomeComponent implements OnDestroy {
     this.authPanelOpen.set(true);
   }
 
+  /** Closes the authentication panel. */
   protected closeAuthPanel(): void {
     this.authPanelOpen.set(false);
   }
@@ -388,22 +394,26 @@ export class HomeComponent implements OnDestroy {
     }
   }
 
+  /** Signs the current user out. */
   protected async signOut(): Promise<void> {
     await this.authService.signOut();
   }
 
+  /** Clears auth error notices when the user edits the email input. */
   protected onAuthInputChange(): void {
     if (this.authError()) this.authService.clearNotices();
   }
 
   // ── Display name editing ──────────────────────────────────────────────────
 
+  /** Enters display-name edit mode and focuses the input on the next tick. */
   protected startEditName(): void {
     this.displayNameEditValue.set(this.authDisplayName() ?? '');
     this.editingDisplayName.set(true);
     setTimeout(() => this.nameEditInputRef?.nativeElement?.focus(), 0);
   }
 
+  /** Exits display-name edit mode without saving. */
   protected cancelEditName(): void {
     this.editingDisplayName.set(false);
   }
@@ -421,14 +431,17 @@ export class HomeComponent implements OnDestroy {
 
   // ── Guest mode ────────────────────────────────────────────────────────────
 
+  /** Opens the guest-name entry modal. */
   protected openGuestModal(): void {
     this.guestModalOpen.set(true);
   }
 
+  /** Ends the active guest session. */
   protected endGuestMode(): void {
     this.guestService.endSession();
   }
 
+  /** Ends the guest session and immediately opens the auth panel. */
   protected endGuestModeAndSignIn(): void {
     this.guestService.endSession();
     this.openAuthPanel();
@@ -436,6 +449,7 @@ export class HomeComponent implements OnDestroy {
 
   // ── Create / Edit modal ───────────────────────────────────────────────────
 
+  /** Opens the create-survey modal in blank creation mode. */
   protected openCreateSurveyModal(): void {
     if (!this.canCreateSurvey()) return;
     this.editSurveyId.set(null);
@@ -443,6 +457,7 @@ export class HomeComponent implements OnDestroy {
     this.createSurveyOpen.set(true);
   }
 
+  /** Opens the create-survey modal pre-filled with the given survey for editing. */
   protected openEditSurveyModal(surveyId: string): void {
     const survey = this.mySurveys().find((s) => s.id === surveyId);
     if (!survey) return;
@@ -451,6 +466,7 @@ export class HomeComponent implements OnDestroy {
     this.createSurveyOpen.set(true);
   }
 
+  /** Opens the create-survey modal with a copy of the given survey (duplicate mode). */
   protected openDuplicateSurveyModal(surveyId: string): void {
     const survey = this.allSurveys().find((s) => s.id === surveyId);
     if (!survey) return;
@@ -459,6 +475,7 @@ export class HomeComponent implements OnDestroy {
     this.createSurveyOpen.set(true);
   }
 
+  /** Resets modal state after the create/edit modal emits its closed event. */
   protected onCreateSurveyModalClosed(): void {
     this.editSurveyId.set(null);
     this.activeSurveyData.set(null);
@@ -467,6 +484,7 @@ export class HomeComponent implements OnDestroy {
 
   // ── Navigation ────────────────────────────────────────────────────────────
 
+  /** Navigates to the detail page of the selected survey. */
   protected openSurvey(surveyId: string): void {
     void this.router.navigate(['/survey', surveyId]);
   }
@@ -485,6 +503,7 @@ export class HomeComponent implements OnDestroy {
 
   // ── Carousel ──────────────────────────────────────────────────────────────
 
+  /** Scrolls the "ending soon" carousel by two card widths in the given direction. */
   protected carouselScroll(dir: -1 | 1): void {
     const el = this.carouselTrackRef?.nativeElement;
     if (!el) return;
@@ -495,27 +514,32 @@ export class HomeComponent implements OnDestroy {
 
   // ── Hero parallax ─────────────────────────────────────────────────────────
 
+  /** Updates the hero parallax target from a mouse move event. */
   protected onHeroMouseMove(event: MouseEvent): void {
     this.updateHeroTarget(event.clientX, event.clientY);
   }
 
+  /** Resets the hero parallax target when the pointer leaves the hero area. */
   protected onHeroMouseLeave(): void {
     this.heroTargetX = 0;
     this.heroTargetY = 0;
     this.scheduleHeroLerp();
   }
 
+  /** Updates the hero parallax target from a touch move event. */
   protected onHeroTouchMove(event: TouchEvent): void {
     const touch = event.touches[0];
     if (touch) this.updateHeroTarget(touch.clientX, touch.clientY);
   }
 
+  /** Resets the hero parallax target when the touch ends. */
   protected onHeroTouchEnd(): void {
     this.heroTargetX = 0;
     this.heroTargetY = 0;
     this.scheduleHeroLerp();
   }
 
+  /** Cancels any pending hero parallax animation frame on destroy. */
   ngOnDestroy(): void {
     if (this.heroRafId != null) cancelAnimationFrame(this.heroRafId);
   }

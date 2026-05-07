@@ -135,6 +135,7 @@ export class CreateSurveyModalComponent implements OnInit {
 
   // ── Lifecycle ─────────────────────────────────────────────────────────────
 
+  /** Initialises the form, pre-filling it from surveyData when provided. */
   ngOnInit(): void {
     this.surveyService.clearError();
     if (this.surveyData) {
@@ -147,6 +148,7 @@ export class CreateSurveyModalComponent implements OnInit {
 
   // ── Question form helpers ─────────────────────────────────────────────────
 
+  /** Returns the top-level questions FormArray. */
   protected get questionsArray(): FormArray {
     return this.form.controls.questions as FormArray;
   }
@@ -156,25 +158,30 @@ export class CreateSurveyModalComponent implements OnInit {
     return this.questionsArray.at(questionIndex).get('answers') as FormArray;
   }
 
+  /** Clears the access code when visibility is switched back to public. */
   protected onVisibilityChange(): void {
     if (this.form.controls.visibility.value === 'public') {
       this.form.controls.accessCode.setValue('');
     }
   }
 
+  /** Appends a blank question group to the form. */
   protected addQuestion(): void {
     this.questionsArray.push(this.createQuestionGroup());
   }
 
+  /** Removes the question at the given index. Does nothing if only one question remains. */
   protected removeQuestion(index: number): void {
     if (this.questionsArray.length <= 1) return;
     this.questionsArray.removeAt(index);
   }
 
+  /** Appends a blank answer control to the question at the given index. */
   protected addAnswer(questionIndex: number): void {
     this.questionAnswersArray(questionIndex).push(this.createAnswerControl());
   }
 
+  /** Removes an answer from a question. Does nothing if only two answers remain. */
   protected removeAnswer(questionIndex: number, answerIndex: number): void {
     const answers = this.questionAnswersArray(questionIndex);
     if (answers.length <= 2) return;
@@ -197,11 +204,13 @@ export class CreateSurveyModalComponent implements OnInit {
     this.close();
   }
 
+  /** Confirms the discard dialog: closes the modal without saving. */
   protected confirmDiscard(): void {
     this.confirmDiscardOpen.set(false);
     this.close();
   }
 
+  /** Cancels the discard dialog and returns to the form. */
   protected cancelDiscard(): void {
     this.confirmDiscardOpen.set(false);
   }
@@ -231,6 +240,7 @@ export class CreateSurveyModalComponent implements OnInit {
     this.publishStep.set('success');
   }
 
+  /** Dismisses the publish confirmation dialog without submitting. */
   protected cancelPublishConfirm(): void {
     this.publishConfirmOpen.set(false);
   }

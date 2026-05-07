@@ -156,6 +156,7 @@ export class SurveyDetailComponent implements AfterViewInit {
     return map;
   });
 
+  /** Returns the result percentage for a specific answer option. */
   protected answerPct(questionId: string, answerId: string): number {
     return this.answerPercentageMap().get(`${questionId}:${answerId}`) ?? 0;
   }
@@ -197,6 +198,7 @@ export class SurveyDetailComponent implements AfterViewInit {
     window.scrollTo({ top: 0, behavior: 'instant' });
   }
 
+  /** Wires up the IntersectionObserver for the sticky progress bar after the view renders. */
   ngAfterViewInit(): void {
     this.progressSentinels.changes.subscribe(() => this.setupProgressObserver());
     this.setupProgressObserver();
@@ -204,6 +206,7 @@ export class SurveyDetailComponent implements AfterViewInit {
 
   // ── Creator actions ───────────────────────────────────────────────────────
 
+  /** Toggles the creator action menu open/closed. */
   protected toggleCreatorMenu(): void {
     this.creatorMenuOpen.update((open) => !open);
   }
@@ -219,6 +222,7 @@ export class SurveyDetailComponent implements AfterViewInit {
     await this.writeShareLinkToClipboard(shareToken);
   }
 
+  /** Navigates to the home page with an `edit` query param to open the edit modal. */
   protected editCurrentSurvey(): void {
     const surveyId = this.survey()?.id;
     if (!surveyId) return;
@@ -226,6 +230,7 @@ export class SurveyDetailComponent implements AfterViewInit {
     void this.router.navigate(['/'], { queryParams: { edit: surveyId } });
   }
 
+  /** Navigates to the home page with a `duplicate` query param to open the duplicate modal. */
   protected duplicateCurrentSurvey(): void {
     const surveyId = this.survey()?.id;
     if (!surveyId) return;
@@ -249,11 +254,13 @@ export class SurveyDetailComponent implements AfterViewInit {
     }
   }
 
+  /** Opens the delete confirmation dialog. */
   protected openDeleteConfirm(): void {
     this.creatorMenuOpen.set(false);
     this.showDeleteConfirm.set(true);
   }
 
+  /** Dismisses the delete confirmation dialog without deleting. */
   protected cancelDelete(): void {
     this.showDeleteConfirm.set(false);
   }
@@ -299,6 +306,7 @@ export class SurveyDetailComponent implements AfterViewInit {
     this.showCompleteConfirm.set(true);
   }
 
+  /** Dismisses the submit confirmation dialog without submitting. */
   protected cancelCompleteConfirm(): void {
     this.showCompleteConfirm.set(false);
   }
@@ -329,15 +337,18 @@ export class SurveyDetailComponent implements AfterViewInit {
 
   // ── Navigation & sharing ──────────────────────────────────────────────────
 
+  /** Navigates back to the home page. */
   protected goHome(): void {
     void this.router.navigate(['/']);
   }
 
+  /** Toggles the results panel open/closed on desktop. */
   protected toggleResults(): void {
     this.resultsOpen.update((v) => !v);
   }
   private readonly resultsOpen = signal(true);
 
+  /** Switches between the form and results tabs on mobile. */
   protected switchTab(tab: 'form' | 'results'): void {
     this.mobileActiveTab.set(tab);
   }
@@ -363,14 +374,17 @@ export class SurveyDetailComponent implements AfterViewInit {
     this.participantsOpen.set(true);
   }
 
+  /** Closes the participants popup. */
   protected closeParticipants(): void {
     this.participantsOpen.set(false);
   }
 
+  /** Updates the access code input value in state. */
   protected updateAccessCode(value: string): void {
     this.accessCode.set(value);
   }
 
+  /** Submits the entered access code to reload the private survey. */
   protected applyAccessCode(): void {
     if (!this.joinToken) return;
     const code = this.accessCode().trim();
