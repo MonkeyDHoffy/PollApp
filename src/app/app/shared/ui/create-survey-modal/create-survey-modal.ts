@@ -285,7 +285,7 @@ export class CreateSurveyModalComponent implements OnInit {
   private checkForUnsavedChanges(): boolean {
     const { title, description, category, questions } = this.form.value;
     const hasQuestionText = (questions ?? []).some(
-      (q: any) => ((q.questionText ?? '') as string).trim().length > 0
+      (q: Record<string, unknown>) => ((q['questionText'] ?? '') as string).trim().length > 0
     );
     return (
       (title ?? '').trim().length > 0 ||

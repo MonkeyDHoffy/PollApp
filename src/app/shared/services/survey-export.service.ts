@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { SurveyStateService } from './survey-state.service';
 import { SurveyVotingService } from './survey-voting.service';
+import { SurveyResult } from '../models/survey.model';
 
 /**
  * Builds CSV exports of survey results for download in the browser.
@@ -42,10 +43,10 @@ export class SurveyExportService {
   private buildCsvLines(
     title: string,
     exported: string,
-    results: ReturnType<typeof Array.prototype.map>,
+    results: SurveyResult[],
   ): string[] {
     const lines: string[] = [this.escape(`Umfrage: ${title}`), this.escape(`Exportiert: ${exported}`)];
-    results.forEach((result: any, i: number) => {
+    results.forEach((result: SurveyResult, i: number) => {
       lines.push('');
       lines.push(this.escape(`${i + 1}. ${result.questionText}`));
       lines.push(['Antwort', 'Stimmen', 'Anteil'].map((h) => this.escape(h)).join(','));

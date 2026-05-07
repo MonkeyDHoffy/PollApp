@@ -9,6 +9,48 @@ import { DEMO_SURVEYS } from '../demo/demo-surveys';
 import { supabaseClient } from './supabase-client';
 import { SurveyStateService } from './survey-state.service';
 
+/** Supabase row structure for a survey with nested relations. */
+interface SurveyRow {
+  id: string;
+  creator_id: string;
+  title: string;
+  description: string | null;
+  category: string;
+  status: 'draft' | 'published' | 'closed';
+  visibility: 'public' | 'private' | null;
+  is_anonymous: boolean | null;
+  share_token: string | null;
+  access_code: string | null;
+  created_at: string;
+  updated_at: string;
+  ends_at: string | null;
+  survey_questions: QuestionRow[];
+  survey_responses: Array<ResponseCountResult>;
+}
+
+/** Supabase row structure for a question with nested answers. */
+interface QuestionRow {
+  id: string;
+  question_text: string;
+  question_description: string | null;
+  question_type: 'multiple_choice' | 'checkboxes';
+  allow_multiple: boolean;
+  sort_order: number;
+  survey_answers: AnswerRow[];
+}
+
+/** Supabase row structure for an answer. */
+interface AnswerRow {
+  id: string;
+  answer_text: string;
+  sort_order: number;
+}
+
+/** Response count aggregate from Supabase. */
+interface ResponseCountResult {
+  count: number;
+}
+
 /**
  * Encapsulates all database CRUD operations for surveys.
  * Reads and writes state exclusively through {@link SurveyStateService}.
@@ -104,7 +146,7 @@ export class SurveyCrudService {
       if (await this.handleLegacyFallback(error, () => this.loadAllSurveys())) return;
       throw error;
     }
-    this.state.setAllSurveys((data ?? []).map((row) => this.mapSurveyRow(row)));
+    this.state.setAllSurveys(((data as unknown as SurveyRow[]) ?? []).map((row) => this.mapSurveyRow(row)));
   }
 
   private async fetchAndStoreSurveyById(surveyId: string): Promise<void> {
@@ -117,7 +159,7 @@ export class SurveyCrudService {
       if (await this.handleLegacyFallback(error, () => this.loadSurveyById(surveyId))) return;
       throw error;
     }
-    this.state.setCurrentSurvey(this.mapSurveyRow(data));
+    this.state.setCurrentSurvey(this.mapSurveyRow(data as unknown as SurveyRow));
   }
 
   /** Resolves a demo survey synchronously and stores it in state. */
@@ -285,7 +327,7 @@ export class SurveyCrudService {
 
   // ── Private: row mappers ──────────────────────────────────────────────────
 
-  private mapSurveyRow(row: any): Survey {
+  private mapSurveyRow(row: SurveyRow): Survey {
     return {
       id: row.id,
       creatorId: row.creator_id,
@@ -305,8 +347,8 @@ export class SurveyCrudService {
     };
   }
 
-  private mapQuestionRows(raw: any): Survey['questions'] {
-    const rows: any[] = Array.isArray(raw) ? raw : [];
+  private mapQuestionRows(raw: QuestionRow[]): Survey['questions'] {
+    const rows: QuestionRow[] = Array.isArray(raw) ? raw : [];
     return rows
       .sort((a, b) => a.sort_order - b.sort_order)
       .map((q) => ({
@@ -320,15 +362,15 @@ export class SurveyCrudService {
       }));
   }
 
-  private mapAnswerRows(raw: any): Survey['questions'][0]['answers'] {
-    const rows: any[] = Array.isArray(raw) ? raw : [];
+  private mapAnswerRows(raw: AnswerRow[]): Survey['questions'][0]['answers'] {
+    const rows: AnswerRow[] = Array.isArray(raw) ? raw : [];
     return rows
       .sort((a, b) => a.sort_order - b.sort_order)
       .map((a) => ({ id: a.id, text: a.answer_text, order: a.sort_order }));
   }
 
   /** Extracts the total response count from a Supabase aggregate result. */
-  private extractResponseCount(raw: any): number {
+  private extractResponseCount(raw: ResponseCountResult[]): number {
     return Array.isArray(raw) && raw.length > 0 ? (raw[0]?.count ?? 0) : 0;
   }
 

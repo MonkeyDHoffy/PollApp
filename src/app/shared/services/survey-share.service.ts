@@ -5,6 +5,42 @@ import { SurveyStateService } from './survey-state.service';
 
 type RealtimeStatus = 'SUBSCRIBED' | 'TIMED_OUT' | 'CLOSED' | 'CHANNEL_ERROR';
 
+/** API response structure for a shared survey from survey-access function. */
+interface SharedSurveyResponse {
+  id: string;
+  creatorId: string;
+  title: string;
+  description?: string;
+  category: string;
+  status: 'draft' | 'published' | 'closed';
+  visibility: 'public' | 'private';
+  isAnonymous?: boolean;
+  shareToken?: string;
+  createdAt: string;
+  updatedAt: string;
+  endsAt: string;
+  totalResponses?: number;
+  questions: SharedQuestion[];
+}
+
+/** Nested question structure in shared survey response. */
+interface SharedQuestion {
+  id: string;
+  text: string;
+  description?: string;
+  type: 'multiple_choice' | 'checkboxes';
+  allowMultiple?: boolean;
+  order: number;
+  answers: SharedAnswer[];
+}
+
+/** Nested answer structure in shared question. */
+interface SharedAnswer {
+  id: string;
+  text: string;
+  order: number;
+}
+
 /**
  * Manages access to shared surveys and real-time subscriptions.
  */
@@ -72,7 +108,7 @@ export class SurveyShareService {
 
   // ── Private: mappers ──────────────────────────────────────────────────────
 
-  private mapSharedSurvey(raw: any): Survey {
+  private mapSharedSurvey(raw: SharedSurveyResponse): Survey {
     return {
       id: raw.id,
       creatorId: raw.creatorId,
@@ -92,9 +128,9 @@ export class SurveyShareService {
     };
   }
 
-  private mapSharedQuestions(raw: any): Survey['questions'] {
+  private mapSharedQuestions(raw: SharedQuestion[]): Survey['questions'] {
     if (!Array.isArray(raw)) return [];
-    return raw.map((q: any) => ({
+    return raw.map((q: SharedQuestion) => ({
       id: q.id,
       text: q.text,
       description: q.description ?? undefined,
@@ -102,7 +138,7 @@ export class SurveyShareService {
       allowMultiple: !!q.allowMultiple,
       order: q.order,
       answers: Array.isArray(q.answers)
-        ? q.answers.map((a: any) => ({ id: a.id, text: a.text, order: a.order }))
+        ? q.answers.map((a: SharedAnswer) => ({ id: a.id, text: a.text, order: a.order }))
         : [],
     }));
   }

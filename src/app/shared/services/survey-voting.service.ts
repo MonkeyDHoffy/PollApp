@@ -3,6 +3,21 @@ import { SurveyParticipant, SurveyResponse, SurveyResult } from '../models/surve
 import { supabaseClient } from './supabase-client';
 import { SurveyStateService } from './survey-state.service';
 
+/** Database representation of a survey question with its answers. */
+interface DbQuestion {
+  id: string;
+  question_text: string;
+  sort_order: number;
+  survey_answers: DbAnswer[];
+}
+
+/** Database representation of a survey answer option. */
+interface DbAnswer {
+  id: string;
+  answer_text: string;
+  sort_order: number;
+}
+
 /**
  * Encapsulates all voting and result operations.
  * Manages the voting history via localStorage and Supabase.
@@ -273,7 +288,7 @@ export class SurveyVotingService {
     }
   }
 
-  private async fetchQuestions(surveyId: string): Promise<any[]> {
+  private async fetchQuestions(surveyId: string): Promise<DbQuestion[]> {
     const { data, error } = await this.supabase
       .from('survey_questions')
       .select('id, question_text, sort_order, survey_answers ( id, answer_text, sort_order )')
@@ -297,12 +312,12 @@ export class SurveyVotingService {
     return map;
   }
 
-  private buildResults(questions: any[], answerCounts: Map<string, number>): SurveyResult[] {
+  private buildResults(questions: DbQuestion[], answerCounts: Map<string, number>): SurveyResult[] {
     return questions.map((q) => this.buildQuestionResult(q, answerCounts));
   }
 
-  private buildQuestionResult(q: any, answerCounts: Map<string, number>): SurveyResult {
-    const answers: any[] = Array.isArray(q.survey_answers) ? q.survey_answers : [];
+  private buildQuestionResult(q: DbQuestion, answerCounts: Map<string, number>): SurveyResult {
+    const answers: DbAnswer[] = Array.isArray(q.survey_answers) ? q.survey_answers : [];
     const total = answers.reduce((s, a) => s + (answerCounts.get(a.id) ?? 0), 0);
     return {
       questionId: q.id,
@@ -313,7 +328,7 @@ export class SurveyVotingService {
     };
   }
 
-  private buildAnswerResult(a: any, answerCounts: Map<string, number>, total: number) {
+  private buildAnswerResult(a: DbAnswer, answerCounts: Map<string, number>, total: number): { id: string; text: string; count: number; percentage: number } {
     const count = answerCounts.get(a.id) ?? 0;
     return {
       id: a.id,
